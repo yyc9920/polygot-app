@@ -18,7 +18,6 @@ import {
   Grid as GridIcon,
   ChevronLeft,
   ChevronRight,
-  Play,
   Search,
   Link as LinkIcon,
   Sparkles,
