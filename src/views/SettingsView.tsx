@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
-  Volume2, 
   Check, 
   X, 
   RefreshCw,
@@ -30,7 +29,6 @@ export function SettingsView() {
   } = useVocabAppContext();
 
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
   const [voiceFilter, setVoiceFilter] = useState('');
 

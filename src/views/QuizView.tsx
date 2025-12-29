@@ -1,6 +1,10 @@
 
-import React, { useState } from 'react';
-import { Brain, Filter, Type } from 'lucide-react';
+import React from 'react';
+import { 
+  Brain, 
+  Filter, 
+  Type 
+} from 'lucide-react';
 import type { LearningStatus, VocabItem, QuizItem, QuizType } from '../types';
 import { checkAnswer } from '../lib/utils';
 import { useVocabAppContext } from '../context/VocabContext';
@@ -150,7 +154,7 @@ export function QuizView() {
 
     setFeedback(isCorrect ? 'correct' : 'incorrect');
 
-    setStatus(prev => {
+    setStatus((prev: LearningStatus) => {
       const newCompleted = isCorrect 
         ? [...new Set([...prev.completedIds, currentItem.id])]
         : prev.completedIds;
@@ -167,7 +171,7 @@ export function QuizView() {
 
   const nextQuestion = () => {
     if (currentIndex < quizQueue.length - 1) {
-      setCurrentIndex(prev => prev + 1);
+      setCurrentIndex((prev: number) => prev + 1);
       setInput('');
       setFeedback('none');
     } else {

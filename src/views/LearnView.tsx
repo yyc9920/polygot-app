@@ -87,7 +87,7 @@ export function LearnView() {
     setIsFlipped(false);
     setAiExplanation('');
     setShowAiModal(false);
-    setCurrentIndex((prev) => (prev + 1) % displayList.length);
+    setCurrentIndex((prev: number) => (prev + 1) % displayList.length);
   };
 
   const handlePrev = () => {
@@ -95,7 +95,7 @@ export function LearnView() {
     setIsFlipped(false);
     setAiExplanation('');
     setShowAiModal(false);
-    setCurrentIndex((prev) => (prev - 1 + displayList.length) % displayList.length);
+    setCurrentIndex((prev: number) => (prev - 1 + displayList.length) % displayList.length);
   };
 
   const handleAiExplain = async (e: React.MouseEvent) => {
