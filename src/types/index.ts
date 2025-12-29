@@ -6,6 +6,7 @@ export interface VocabItem {
   sentence: string;
   pronunciation?: string;
   tags: string[];
+  memo?: string;
 }
 
 // Extended Quiz Item to support multiple types

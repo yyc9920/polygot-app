@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Volume2, 
@@ -12,6 +11,11 @@ import {
   Sparkles,
   MessageCircleQuestion,
   Loader2,
+  BookOpen,
+  Save,
+  CheckSquare, 
+  Square,
+  ChevronDown
 } from 'lucide-react';
 import type { LearningStatus, VocabItem } from '../types';
 import { callGemini } from '../lib/gemini';
@@ -20,27 +24,30 @@ import useLocalStorage from '../hooks/useLocalStorage';
 
 // --- Learn View ---
 export function LearnView() {
-  const { vocabList, voiceURI, status, apiKey } = useVocabAppContext();
+  const { vocabList, setVocabList, voiceURI, status, apiKey } = useVocabAppContext();
 
   const [viewMode, setViewMode] = useLocalStorage<'card' | 'list'>('learnViewMode', 'card');
   const [currentIndex, setCurrentIndex] = useLocalStorage<number>('learnCurrentIndex', 0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isShuffled, setIsShuffled] = useLocalStorage<boolean>('learnIsShuffled', false);
   const [displayList, setDisplayList] = useState<VocabItem[]>(vocabList);
-  const [filterTag, setFilterTag] = useLocalStorage<string>('learnFilterTag', 'All');
+  const [selectedTags, setSelectedTags] = useLocalStorage<string[]>('learnSelectedTags', []);
   const [searchTerm, setSearchTerm] = useLocalStorage<string>('learnSearchTerm', '');
   const [aiExplanation, setAiExplanation] = useState<string>('');
   const [isLoadingAi, setIsLoadingAi] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false);
+  const [showMemoList, setShowMemoList] = useState(false);
 
-  const tags = ['All', ...Array.from(new Set(vocabList.flatMap(v => v.tags)))];
+  // Extract all unique tags
+  const allTags = Array.from(new Set(vocabList.flatMap(v => v.tags)));
 
   useEffect(() => {
     let list = vocabList;
     
-    // 1. Filter by Tag
-    if (filterTag !== 'All') {
-      list = vocabList.filter(v => v.tags.includes(filterTag));
+    // 1. Filter by Tags (Multiple)
+    if (selectedTags.length > 0) {
+      // Show items that have AT LEAST ONE of the selected tags
+      list = vocabList.filter(v => v.tags.some(tag => selectedTags.includes(tag)));
     }
 
     // 2. Filter by Search Term
@@ -55,10 +62,6 @@ export function LearnView() {
 
     // 3. Shuffle (only if enabled)
     if (isShuffled) {
-      // Use a consistent seed or just re-shuffle? 
-      // If we re-shuffle every time dependencies change, the list order changes wildly.
-      // But here we just want to apply shuffle if the flag is on.
-      // Ideally we'd persist the shuffled order too, but for now simple shuffle is fine.
       list = [...list].sort(() => Math.random() - 0.5);
     }
 
@@ -69,7 +72,7 @@ export function LearnView() {
     }
     setIsFlipped(false);
     setAiExplanation('');
-  }, [vocabList, filterTag, isShuffled, searchTerm]); // Removed currentIndex to avoid loop
+  }, [vocabList, selectedTags, isShuffled, searchTerm]);
 
 
   const speak = (text: string) => {
@@ -106,6 +109,13 @@ export function LearnView() {
     }
     
     setShowAiModal(true);
+    // If the item already has a memo, show it? 
+    // Requirement says "save the AI tutor's generated content to the sentence card in background".
+    // So if it exists, we might want to load it or just generate new. 
+    // Let's generate new but show existing memo if user wants? 
+    // Actually, usually AI Explain is dynamic. Let's just generate.
+    // If we want to show existing memo, we can do that in the card.
+
     if (aiExplanation) return;
 
     setIsLoadingAi(true);
@@ -121,7 +131,27 @@ export function LearnView() {
     }
   };
 
-  if (displayList.length === 0 && !searchTerm) {
+  const handleSaveMemo = () => {
+      if (!aiExplanation) return;
+      const currentItem = displayList[currentIndex];
+      setVocabList(prev => prev.map(item => 
+          item.id === currentItem.id ? { ...item, memo: aiExplanation } : item
+      ));
+      alert("Memo saved!");
+  };
+
+  const toggleTag = (tag: string) => {
+      if (selectedTags.includes(tag)) {
+          setSelectedTags(selectedTags.filter(t => t !== tag));
+      } else {
+          setSelectedTags([...selectedTags, tag]);
+      }
+  };
+
+  // Memo List Filter
+  const memoList = vocabList.filter(v => v.memo);
+
+  if (displayList.length === 0 && !searchTerm && selectedTags.length === 0 && !showMemoList) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-gray-500">
         <p>표시할 데이터가 없습니다.</p>
@@ -133,16 +163,30 @@ export function LearnView() {
   return (
     <div className="flex flex-col h-full gap-4 relative">
       {/* Unified Controls Container */}
-      <div className="flex-none flex items-center justify-between gap-2 bg-white dark:bg-gray-800 p-2 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+      <div className="flex-none flex items-center justify-between gap-2 bg-white dark:bg-gray-800 p-2 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 z-10">
         
-        {/* Left: Tag Filter */}
-        <select 
-          value={filterTag} 
-          onChange={(e) => setFilterTag(e.target.value)}
-          className="bg-transparent text-sm font-medium focus:outline-none max-w-[80px] sm:max-w-[100px] truncate"
-        >
-          {tags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
-        </select>
+        {/* Left: Multi-Tag Select */}
+        <div className="relative group">
+            <button className="flex items-center gap-1 text-sm font-medium bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 min-w-[100px] justify-between">
+                <span className="truncate max-w-[80px]">
+                    {selectedTags.length === 0 ? "All Tags" : `${selectedTags.length} Selected`}
+                </span>
+                <ChevronDown size={14} className="text-gray-400" />
+            </button>
+            <div className="hidden group-hover:block absolute top-full left-0 mt-1 w-48 max-h-60 overflow-y-auto bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 z-50 p-2">
+                {allTags.map(tag => (
+                    <div 
+                        key={tag} 
+                        onClick={() => toggleTag(tag)}
+                        className="flex items-center gap-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg cursor-pointer text-sm"
+                    >
+                        {selectedTags.includes(tag) ? <CheckSquare size={16} className="text-blue-500" /> : <Square size={16} className="text-gray-300" />}
+                        <span className="truncate">{tag}</span>
+                    </div>
+                ))}
+                {allTags.length === 0 && <div className="text-xs text-gray-400 p-2">No tags available</div>}
+            </div>
+        </div>
 
         {/* Middle: Search Bar (Flexible width) */}
         <div className="flex-1 relative min-w-0">
@@ -175,6 +219,16 @@ export function LearnView() {
               <Shuffle size={18} />
           </button>
           <div className="w-[1px] bg-gray-200 dark:bg-gray-700 mx-1"></div>
+          
+           <button 
+              onClick={() => setShowMemoList(true)}
+              className={`p-2 rounded-lg transition-colors text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20`}
+              title="Memo List"
+              type="button"
+          >
+              <BookOpen size={18} />
+          </button>
+
           <button 
               onClick={() => setViewMode('card')}
               className={`p-2 rounded-lg transition-colors ${viewMode === 'card' ? 'text-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-400'}`}
@@ -202,6 +256,46 @@ export function LearnView() {
           </div>
       )}
 
+      {/* Memo List Overlay */}
+      {showMemoList && (
+          <div className="absolute inset-0 z-50 bg-white dark:bg-gray-900 overflow-hidden flex flex-col animate-in fade-in slide-in-from-bottom-4">
+              <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
+                  <h2 className="text-lg font-bold flex items-center gap-2"><BookOpen className="text-blue-500"/> My Memos</h2>
+                  <button onClick={() => setShowMemoList(false)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+                      <X size={20} />
+                  </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  {memoList.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                          <BookOpen size={48} className="mb-4 opacity-20"/>
+                          <p>No saved memos yet.</p>
+                          <p className="text-sm">Use the AI Tutor to save explanations.</p>
+                      </div>
+                  ) : (
+                      memoList.map(item => (
+                          <div key={item.id} className="p-4 bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-100 dark:border-yellow-900/30 rounded-xl relative">
+                               <h4 className="font-bold text-gray-800 dark:text-gray-200 mb-1">{item.sentence}</h4>
+                               <p className="text-xs text-gray-500 mb-2">{item.meaning}</p>
+                               <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed p-3 bg-white dark:bg-gray-800 rounded-lg border border-yellow-100 dark:border-gray-700">
+                                   {item.memo}
+                               </div>
+                               <button 
+                                 onClick={() => {
+                                     // Delete memo
+                                     setVocabList(prev => prev.map(v => v.id === item.id ? { ...v, memo: undefined } : v));
+                                 }}
+                                 className="absolute top-2 right-2 text-gray-300 hover:text-red-400"
+                               >
+                                   <X size={14} />
+                               </button>
+                          </div>
+                      ))
+                  )}
+              </div>
+          </div>
+      )}
+
       {/* AI Explanation Modal */}
       {showAiModal && (
         <div className="absolute inset-x-0 top-16 z-20 mx-4 p-4 bg-white/95 dark:bg-gray-800/95 backdrop-blur shadow-2xl rounded-2xl border border-blue-100 dark:border-gray-700 animate-in fade-in slide-in-from-bottom-4">
@@ -209,9 +303,16 @@ export function LearnView() {
             <h4 className="font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
               <Sparkles size={16} /> AI Tutor
             </h4>
-            <button onClick={() => setShowAiModal(false)} className="text-gray-400 hover:text-gray-600">
-              <X size={16} />
-            </button>
+            <div className="flex gap-2">
+                {!isLoadingAi && aiExplanation && (
+                    <button onClick={handleSaveMemo} className="text-blue-500 hover:text-blue-600 text-sm font-bold flex items-center gap-1 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded">
+                        <Save size={14}/> Save
+                    </button>
+                )}
+                <button onClick={() => setShowAiModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={16} />
+                </button>
+            </div>
           </div>
           <div className="text-sm leading-relaxed text-gray-700 dark:text-gray-200 min-h-[60px]">
             {isLoadingAi ? (
@@ -270,6 +371,12 @@ export function LearnView() {
                          </span>
                        ))}
                     </div>
+                    {/* Memo Indicator */}
+                    {displayList[currentIndex].memo && (
+                        <div className="mt-4 flex items-center gap-1 text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20 px-2 py-1 rounded-full text-xs font-medium">
+                            <BookOpen size={12} /> Memo Saved
+                        </div>
+                    )}
                   </div>
                   <div className="flex-none mt-4 pt-2">
                     <div className="flex justify-center gap-4">
@@ -312,8 +419,13 @@ export function LearnView() {
                          <span className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs rounded-full font-medium flex-shrink-0">Review</span>
                        )}
                     </div>
+                    {displayList[currentIndex].memo && (
+                        <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/10 text-left w-full rounded-lg text-sm text-gray-600 dark:text-gray-300 border border-yellow-100 dark:border-yellow-900/30">
+                            <span className="font-bold flex items-center gap-1 mb-1 text-yellow-600"><BookOpen size={12}/> Memo</span>
+                            {displayList[currentIndex].memo}
+                        </div>
+                    )}
                   </div>
-                  {/* Spacer to match front height visual balance if needed, or just let flex handle it */}
                   <div className="flex-none mt-20"></div> 
                 </div>
               </div>
@@ -383,6 +495,7 @@ function FlipListItem({ item, idx, status, speak }: { item: VocabItem, idx: numb
         <div className="flex gap-1 mt-1 pl-8">
            {status.completedIds.includes(item.id) && <div className="w-2 h-2 rounded-full bg-green-500" title="Learned"/>}
            {status.incorrectIds.includes(item.id) && <div className="w-2 h-2 rounded-full bg-red-500" title="Incorrect"/>}
+           {item.memo && <div className="w-2 h-2 rounded-full bg-yellow-500" title="Has Memo"/>}
         </div>
       </div>
       <button

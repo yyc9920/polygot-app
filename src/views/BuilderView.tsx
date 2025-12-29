@@ -1,22 +1,23 @@
-
 import React, { useState } from 'react';
-import { 
-  PlusCircle, 
-  Upload, 
-  Download, 
-  Trash2, 
+import {
+  PlusCircle,
+  Upload,
+  Download,
+  Trash2,
   Link as LinkIcon,
   Sparkles,
   Loader2,
   Tag,
+  RefreshCw
 } from 'lucide-react';
 import type { VocabItem } from '../types';
 import { callGemini } from '../lib/gemini';
 import { generateId, parseCSV } from '../lib/utils';
 import { useVocabAppContext } from '../context/VocabContext';
+import { ConfirmationModal } from '../components/ConfirmationModal';
 
 export function BuilderView() {
-  const { vocabList, setVocabList, apiKey, setSavedUrl } = useVocabAppContext();
+  const { vocabList, setVocabList, apiKey, setSavedUrl, savedUrl } = useVocabAppContext();
 
   const [activeTab, setActiveTab] = useState<'manual' | 'ai'>('ai'); 
   const [form, setForm] = useState({ meaning: '', sentence: '', pronunciation: '', tags: '' });
@@ -27,6 +28,27 @@ export function BuilderView() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showDeleteInput, setShowDeleteInput] = useState(false);
   const [deleteTagsInput, setDeleteTagsInput] = useState('');
+  
+  // Confirmation Modal State
+  const [generatedItems, setGeneratedItems] = useState<VocabItem[] | null>(null);
+
+  const handleUpdateFromSaved = async () => {
+    if (!savedUrl) return;
+    setIsLoading(true);
+    try {
+      const fetchUrl = new URL(savedUrl);
+      fetchUrl.searchParams.append('_t', String(Date.now()));
+      const response = await fetch(fetchUrl.toString());
+      if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+      const text = await response.text();
+      processCSVText(text);
+      // Optional: alert success if processCSVText doesn't
+    } catch (error: any) {
+       alert(`Update failed: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,16 +111,7 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
       }
 
       if (newItems.length > 0) {
-         setVocabList((prev: VocabItem[]) => {
-             const existingIds = new Set(prev.map(p => p.id));
-             const uniqueNew = newItems.filter(item => !existingIds.has(item.id));
-             if (uniqueNew.length === 0) {
-               alert("All generated items were duplicates!");
-               return prev;
-             }
-             alert(`✨ Successfully generated ${uniqueNew.length} new items!`);
-             return [...prev, ...uniqueNew];
-         });
+         setGeneratedItems(newItems);
          setAiPrompt('');
       } else {
         alert("Failed to parse generated content. Please try again.");
@@ -108,6 +121,20 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const confirmGeneratedItems = () => {
+      if (!generatedItems) return;
+      setVocabList((prev: VocabItem[]) => {
+          const existingIds = new Set(prev.map(p => p.id));
+          const uniqueNew = generatedItems.filter(item => !existingIds.has(item.id));
+          if (uniqueNew.length === 0) {
+             alert("All generated items were duplicates!");
+             return prev;
+          }
+          return [...prev, ...uniqueNew];
+      });
+      setGeneratedItems(null);
   };
 
   const processCSVText = (text: string) => {
@@ -229,7 +256,8 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
   };
 
   return (
-    <div className="h-full flex flex-col gap-6">
+    <div className="h-full flex flex-col gap-6 relative">
+      {/* Tabs */}
       <div className="flex p-1 bg-gray-100 dark:bg-gray-800 rounded-xl">
         <button onClick={() => setActiveTab('ai')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'ai' ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-500' : 'text-gray-500'}`}>
           <Sparkles size={16} /> AI Generator
@@ -238,6 +266,17 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
           <PlusCircle size={16} /> Manual
         </button>
       </div>
+
+      {/* Confirmation Modal */}
+      {generatedItems && (
+        <ConfirmationModal 
+          items={generatedItems}
+          onConfirm={confirmGeneratedItems}
+          onCancel={() => setGeneratedItems(null)}
+        />
+      )}
+
+      {/* AI Form */}
       {activeTab === 'ai' ? (
         <div className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-gray-800 dark:to-gray-800 p-6 rounded-2xl shadow-sm border border-blue-100 dark:border-gray-700">
           <div className="flex items-center gap-2 mb-4"><Sparkles className="text-blue-500" /><h3 className="font-bold text-lg">AI Vocabulary Generator</h3></div>
@@ -263,6 +302,7 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
           </form>
         </div>
       )}
+
       <div className="grid grid-cols-1 gap-4">
         <label className="flex flex-col items-center justify-center p-6 bg-gray-100 dark:bg-gray-800 rounded-xl cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors border border-dashed border-gray-300 dark:border-gray-600 group">
           <Upload size={32} className="text-gray-500 mb-2 group-hover:scale-110 transition-transform" />
@@ -270,7 +310,14 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
           <input type="file" accept=".csv" className="hidden" onChange={handleFileUpload} />
         </label>
         <div className="flex flex-col p-6 bg-gray-100 dark:bg-gray-800 rounded-xl border border-dashed border-gray-300 dark:border-gray-600">
-          <div className="flex items-center gap-2 mb-4 justify-center text-gray-500"><LinkIcon size={24} /><span className="text-sm font-bold text-gray-600 dark:text-gray-400">CSV from URL</span></div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2 text-gray-500"><LinkIcon size={24} /><span className="text-sm font-bold text-gray-600 dark:text-gray-400">CSV from URL</span></div>
+            {savedUrl && (
+                 <button onClick={handleUpdateFromSaved} disabled={isLoading} className="text-xs flex items-center gap-1 text-blue-500 hover:text-blue-600 font-bold bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded transition-colors" type="button">
+                     <RefreshCw size={12} className={isLoading ? "animate-spin" : ""} /> Update from Saved
+                 </button>
+             )}
+          </div>
           <form onSubmit={handleUrlUpload} className="flex gap-2 w-full">
             <input type="url" placeholder="https://gist.githubusercontent.com/..." className="flex-1 min-w-0 p-3 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500" value={urlInput} onChange={(e) => setUrlInput(e.target.value)} required />
             <button type="submit" disabled={isLoading} className="px-4 py-2 bg-blue-500 text-white text-sm font-bold rounded-lg hover:bg-blue-600 disabled:opacity-50 whitespace-nowrap flex-shrink-0">{isLoading ? '...' : 'Load'}</button>
@@ -278,8 +325,11 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
         </div>
       </div>
       <button onClick={exportCSV} className="w-full py-3 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center gap-2" type="button"><Download size={20} className="text-gray-500" /><span className="text-sm font-medium text-gray-600 dark:text-gray-400">Download CSV (Export)</span></button>
+      
+      {/* Stored Items List */}
       <div className="flex-1 overflow-auto bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 min-h-[500px]">
-        <h3 className="text-sm font-bold text-gray-400 uppercase mb-4 sticky top-0 bg-white dark:bg-gray-800 py-2 flex justify-between items-center">
+        {/* Fixed z-index for sticky header */}
+        <h3 className="text-sm font-bold text-gray-400 uppercase mb-4 sticky top-0 bg-white dark:bg-gray-800 py-2 flex justify-between items-center z-10">
           <span>Stored Items ({vocabList.length})</span>
           <button onClick={() => setShowDeleteInput(!showDeleteInput)} className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded">
             <Tag size={12} /> {showDeleteInput ? 'Cancel' : 'Delete by Tag'}

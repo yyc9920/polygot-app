@@ -1,63 +1,34 @@
 # Requirements
 
-## Requirements for handleAiGenerate in BuilderView.tsx
+## Requirements for LearnView.tsx
 
-### 1. Modify system prompt
+### 1. Add a memo feature using AI tutor
 
-The system prompt should be modified based on the following instructions:
-Note that this is just example for japanese language. The final prompt will be different for desired language.
+* If user use AI tutor on sentence card, add a save button on modal, and save the AI tutor's generated content to the sentence card in background. This data will shown in memo view.
+* In Add a memo icon button next to list view button, if user touch that button the memo list will be shown.
 
-```plaintext
-Act like a function that generates a Japanese phrase with a given situation or context.
-Input: Curtain situation or context, number of output data.
-Output: Corresponding Japanese phrases with given format. Generate a given number of datas.
-Format: CSV in markdown, newline in end of each rows
-Columns: Meaning,Sentence,Pronunciation,Tags
-Contents:
-Meaning: Korean translation
-Sentence: Japanese sentence
-Pronunciation: Romaji
-Tags: Tags in Korean such as "일상,회사,식당“. Can be multiple tags separated by comma. ”일본어“ is default tag. If tags are given add that tags after default tag.
-Enclose each data point in double quotation marks(“”).
-Format example
-"따뜻한 아메리카노 한 잔 주세요","ホットコーヒーを一つください","Hotto kōhī o hitotsu kudasai","카페,주문,일본어"
-"메뉴판 좀 보여주시겠어요?","メニューを見せていただけますか？","Menyū o misete itadakemasu ka?","카페,주문,일본어"
-Make sure that there isn't format error.
-```
+### 2. Multiple Tags choice
 
-### 2. Make it work
+* Make Tag choice dropdown button to be able to choose multiple tags.
 
-This feature is not working as expected yet.
+## Requirements for BuilderView.tsx
 
-Please make it work as expected.
+### 1. Add confirmation step when generate sentence data by AI
+
+* Add a modal UI to confirm after generation to clarify if the datas are correct and expected result.
+
+### 2. Fix the slight bug - When scrolling STORED ITEMS up, the items are shown behind the header of its block.
+
+* Make sure that the stored item lists are not shown behind the header when scrolling up.
 
 ## Requirements for SettingsView.tsx
 
-### 1. Learning Progress Dashboard
+### 1. Add a tag filter in Learning Progress
 
-* **Visual Statistics:** Displays the overall learning progress as a percentage.
-* **Detailed Counts:** Shows the specific number of words **Completed** versus words **To Review** (incorrect items).
-* **Progress Bar:** A visual bar indicating the ratio of completed items against the total vocabulary count.
+* Add a tag filter in learning progress block.
 
-### 2. AI Configuration (Gemini API)
+### 2. Add a Save and Load button that saves all the data in local storage and loads that save data if needed.
 
-* **API Key Management:** Provides a secure input field (`type="password"`) for users to enter their own **Google Gemini API Key**.
-* **Local Storage:** Implements logic to save the key locally in the browser (`localStorage`), enabling AI features like the "AI Vocabulary Generator" and "AI Tutor" without server-side storage.
-
-### 3. Text-to-Speech (TTS) Settings
-
-* **Voice Selection:** Allows users to select a specific voice engine from the browser's available options (essential for learning correct pronunciation in Japanese or Portuguese).
-* **Search Functionality:** Includes a search bar to filter the list of system voices by name or language code (e.g., "en-US", "ja-JP"), addressing the issue of finding a specific voice among many installed options.
-* **Automatically choose a voice via Tag:** Automatically set a voice if there are specific languages in the vocabulary list's tag (e.g., "Japanese" or "일본어" => "ja-JP").
-
-### 4. Data Management
-
-* **Reset Progress:** A function to clear only the learning history (completed/incorrect status) while preserving the stored vocabulary list.
-* **Delete All Data:** A "Hard Reset" function that wipes all data, including the vocabulary list and settings, returning the app to its initial state.
-
-
-## Other Requirements
-
-* **Get csv data from saved url when reloaded:** The CSV data should be retrieved from the saved URL when the app is reloaded.
-* **Save the status of LearnView and QuizView:** The status of LearnView and QuizView should be saved to localStorage and restored when user came back to LearnView or QuizView after using another features.
-* **Save TTS Settings:** The TTS settings (voice selection) should be saved to localStorage and restored.
+* Add a Save button to save all the local storage data to cirtain format.
+* Add a Load button to load the local storage data using saved file.
+* The save file should be well formed and easy to read and modify.
