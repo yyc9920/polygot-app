@@ -1,20 +1,20 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import type { LearningStatus, VocabItem, ViewMode } from '../types';
+import React, { createContext, useContext, useEffect, type ReactNode, type Dispatch, type SetStateAction } from 'react';
+import type { LearningStatus, VocabItem } from '../types';
 import { SAMPLE_DATA } from '../constants';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { parseCSV, generateId } from '../lib/utils';
 
 interface VocabAppContextType {
   vocabList: VocabItem[];
-  setVocabList: (vocabList: VocabItem[]) => void;
+  setVocabList: Dispatch<SetStateAction<VocabItem[]>>;
   status: LearningStatus;
-  setStatus: (status: LearningStatus) => void;
+  setStatus: Dispatch<SetStateAction<LearningStatus>>;
   voiceURI: string | null;
-  setVoiceURI: (voiceURI: string | null) => void;
+  setVoiceURI: Dispatch<SetStateAction<string | null>>;
   apiKey: string;
-  setApiKey: (apiKey: string) => void;
+  setApiKey: Dispatch<SetStateAction<string>>;
   savedUrl: string;
-  setSavedUrl: (url: string) => void;
+  setSavedUrl: Dispatch<SetStateAction<string>>;
   handleReset: () => void;
   handleDeleteAllData: () => void;
   totalCount: number;
@@ -64,7 +64,7 @@ export const VocabAppProvider: React.FC<{ children: ReactNode }> = ({ children }
         }
 
         if (newItems.length > 0) {
-            setVocabList(prev => {
+            setVocabList((prev: VocabItem[]) => {
                 const existingIds = new Set(prev.map(p => p.id));
                 const uniqueNew = newItems.filter(item => !existingIds.has(item.id));
                 if (uniqueNew.length === 0) return prev;

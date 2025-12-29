@@ -38,7 +38,7 @@ export function BuilderView() {
       pronunciation: form.pronunciation,
       tags: form.tags.split(',').map(t => t.trim()).filter(Boolean)
     };
-    setVocabList(prev => {
+    setVocabList((prev: VocabItem[]) => {
         if (prev.some(v => v.id === newItem.id)) {
             alert(`"${form.meaning}" is already in your list!`);
             return prev;
@@ -89,7 +89,7 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
       }
 
       if (newItems.length > 0) {
-         setVocabList(prev => {
+         setVocabList((prev: VocabItem[]) => {
              const existingIds = new Set(prev.map(p => p.id));
              const uniqueNew = newItems.filter(item => !existingIds.has(item.id));
              if (uniqueNew.length === 0) {
@@ -129,7 +129,7 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
       });
     }
     if (newItems.length > 0) {
-      setVocabList(prev => {
+      setVocabList((prev: VocabItem[]) => {
          const existingIds = new Set(prev.map(p => p.id));
          const uniqueNew = newItems.filter(item => !existingIds.has(item.id));
          const reallyUnique: VocabItem[] = [];
@@ -211,7 +211,7 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
     }
 
     if (confirm(`Are you sure you want to delete items containing tags: "${tagsToDelete.join(', ')}"?`)) {
-      setVocabList(prev => {
+      setVocabList((prev: VocabItem[]) => {
         const initialLength = prev.length;
         const filtered = prev.filter(item => !item.tags.some(tag => tagsToDelete.includes(tag)));
         
@@ -305,7 +305,7 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
           {vocabList.slice().reverse().map((item) => (
             <div key={item.id} className="flex justify-between items-start p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
               <div><p className="font-bold text-sm">{item.meaning}</p><p className="text-blue-600 dark:text-blue-300 text-sm">{item.sentence}</p><div className="flex gap-1 mt-1">{item.tags.map(t => <span key={t} className="text-[10px] bg-gray-200 dark:bg-gray-600 px-1.5 py-0.5 rounded text-gray-600 dark:text-gray-300">{t}</span>)}</div></div>
-              <button onClick={() => setVocabList(prev => prev.filter(v => v.id !== item.id))} className="text-gray-400 hover:text-red-500 p-1" type="button"><Trash2 size={16} /></button>
+              <button onClick={() => setVocabList((prev: VocabItem[]) => prev.filter(v => v.id !== item.id))} className="text-gray-400 hover:text-red-500 p-1" type="button"><Trash2 size={16} /></button>
             </div>
           ))}
         </div>
