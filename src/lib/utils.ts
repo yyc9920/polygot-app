@@ -1,0 +1,67 @@
+
+export const generateId = (meaning: string, sentence: string): string => {
+  const input = `${meaning.trim()}|${sentence.trim()}`;
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16);
+};
+
+// Enhanced Fuzzy Matching
+export const checkAnswer = (input: string, answer: string): boolean => {
+  const normalize = (str: string) => 
+    str.toLowerCase()
+       .replace(/[.,?!:;"'(){}\[\]<>~`\-\u3000-\u303F]/g, '') // punctuation
+       .replace(/\s+/g, ''); // spaces
+  return normalize(input) === normalize(answer);
+};
+
+// Improved CSV Parser
+export const parseCSV = (text: string) => {
+  const rows: string[][] = [];
+  let currentRow: string[] = [];
+  let currentVal = '';
+  let inQuotes = false;
+  
+  const normalizedText = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  
+  for (let i = 0; i < normalizedText.length; i++) {
+    const char = normalizedText[i];
+    
+    if (inQuotes) {
+      if (char === '"' && normalizedText[i + 1] === '"') {
+        currentVal += '"';
+        i++;
+      } else if (char === '"') {
+        inQuotes = false;
+      } else {
+        currentVal += char;
+      }
+    } else {
+      if (char === '"') {
+        inQuotes = true;
+      } else if (char === ',') {
+        currentRow.push(currentVal.trim());
+        currentVal = '';
+      } else if (char === '\n') {
+        currentRow.push(currentVal.trim());
+        if (currentRow.length > 0 && (currentRow.length > 1 || currentRow[0] !== '')) {
+            rows.push(currentRow);
+        }
+        currentRow = [];
+        currentVal = '';
+      } else {
+        currentVal += char;
+      }
+    }
+  }
+  if (currentVal || currentRow.length > 0) {
+    currentRow.push(currentVal.trim());
+    if (currentRow.length > 0 && (currentRow.length > 1 || currentRow[0] !== '')) {
+        rows.push(currentRow);
+    }
+  }
+  return rows;
+};
