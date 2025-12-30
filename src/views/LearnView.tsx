@@ -40,6 +40,10 @@ export function LearnView() {
   const [showAiModal, setShowAiModal] = useState(false);
   const [showMemoList, setShowMemoList] = useState(false);
 
+  // Ref to track current displayList without adding to useEffect deps (avoids infinite loop)
+  const displayListRef = React.useRef(displayList);
+  useEffect(() => { displayListRef.current = displayList; }, [displayList]);
+
   // Extract all unique tags
   const allTags = Array.from(new Set(vocabList.flatMap(v => v.tags)));
 
@@ -67,18 +71,49 @@ export function LearnView() {
         );
     }
 
-    // 3. Shuffle (only if enabled)
+    // 3. Shuffle logic (Stable update)
     if (isShuffled) {
-      list = [...list].sort(() => Math.random() - 0.5);
+      const currentList = displayListRef.current;
+      const currentIds = new Set(currentList.map(v => v.id));
+      const newIds = new Set(list.map(v => v.id));
+
+      // Check if the set of items is effectively the same (ignoring updates to content like memo)
+      const isSameSet = currentIds.size === newIds.size && list.every(v => currentIds.has(v.id));
+
+      if (isSameSet && currentList.length > 0) {
+        // Preserve the current shuffled order, but update the item data
+        const itemMap = new Map(list.map(v => [v.id, v]));
+        list = currentList.map(v => itemMap.get(v.id)!);
+      } else {
+        // New set of items -> Re-shuffle
+        list = [...list].sort(() => Math.random() - 0.5);
+      }
     }
 
     setDisplayList(list);
-    // Only reset index if it's out of bounds
+
+    // 4. Handle UI State Reset
+    // Only reset UI if the *current item* has changed ID or index is invalid
+    // This allows updating data (like adding a memo) without closing the modal or flipping the card
+    const prevItem = displayListRef.current[currentIndex];
+    
+    // Check if index needs reset
     if (currentIndex >= list.length) {
       setCurrentIndex(0);
+      setIsFlipped(false);
+      setAiExplanation('');
+      setShowAiModal(false);
+    } else {
+      const newItem = list[currentIndex];
+      // If the item ID at the current index changed, reset the view
+      if (!prevItem || newItem.id !== prevItem.id) {
+         setIsFlipped(false);
+         setAiExplanation('');
+         setShowAiModal(false);
+      }
+      // Otherwise (same item ID), keep the UI state (modal open, card flipped, etc.)
     }
-    setIsFlipped(false);
-    setAiExplanation('');
+    
   }, [vocabList, selectedTags, isShuffled, searchTerm, reviewMode, status.incorrectIds]);
 
 
