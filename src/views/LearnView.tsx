@@ -157,7 +157,24 @@ export function LearnView() {
     setIsLoadingAi(true);
     try {
       const item = displayList[currentIndex];
-      const prompt = `Please act as a language tutor. Explain the grammar, nuance, and vocabulary of this sentence: "${item.sentence}" (Meaning: "${item.meaning}"). Provide the breakdown in Korean. Keep it concise (under 200 characters if possible) and helpful.`;
+      const tagsStr = item.tags && item.tags.length > 0 ? `Tags: ${item.tags.join(', ')}` : '';
+      const pronStr = item.pronunciation ? `Pronunciation: ${item.pronunciation}` : '';
+      
+      const prompt = `
+      Analyze this sentence as a friendly language tutor.
+      
+      Sentence: "${item.sentence}"
+      Meaning: "${item.meaning}"
+      ${pronStr}
+      ${tagsStr}
+
+      Please provide a structured explanation in Korean using the following format:
+      1. 🧩 문법 (Grammar): Brief breakdown of sentence structure.
+      2. 💡 뉘앙스 (Nuance): Contextual usage or tone.
+      3. 📖 단어 (Vocabulary): Key words and their definitions.
+
+      Keep the total response concise and easy to read.
+      `;
       const text = await callGemini(prompt, apiKey);
       setAiExplanation(text);
     } catch (err: any) {
@@ -331,9 +348,20 @@ export function LearnView() {
                   ) : (
                       memoList.map(item => (
                           <div key={item.id} className="p-4 bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-100 dark:border-yellow-900/30 rounded-xl relative">
-                               <h4 className="font-bold text-gray-800 dark:text-gray-200 mb-1">{item.sentence}</h4>
-                               <p className="text-xs text-gray-500 mb-2">{item.meaning}</p>
-                               <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed p-3 bg-white dark:bg-gray-800 rounded-lg border border-yellow-100 dark:border-gray-700">
+                               <h4 className="font-bold text-gray-800 dark:text-gray-200 mb-1 text-lg">{item.sentence}</h4>
+                               
+                               <div className="flex flex-wrap gap-2 mb-2">
+                                  {item.pronunciation && (
+                                    <span className="text-xs text-gray-500 font-mono bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">/{item.pronunciation}/</span>
+                                  )}
+                                  {item.tags.map(tag => (
+                                    <span key={tag} className="text-xs text-blue-500 border border-blue-200 dark:border-blue-900 px-2 py-0.5 rounded">#{tag}</span>
+                                  ))}
+                               </div>
+
+                               <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 italic">Meaning: {item.meaning}</p>
+                               
+                               <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed p-3 bg-white dark:bg-gray-800 rounded-lg border border-yellow-100 dark:border-gray-700 whitespace-pre-wrap">
                                    {item.memo}
                                </div>
                                <button 
