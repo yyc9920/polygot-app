@@ -215,12 +215,22 @@ export function LearnView() {
 
       Keep the total response concise.
       `;
-      const text = await callGemini(prompt, apiKey);
+      const text = await callGemini(prompt, apiKey, 500);
       setAiExplanation(text);
     } catch (err: any) {
       setAiExplanation(`Error: ${err.message}`);
     } finally {
       setIsLoadingAi(false);
+    }
+  };
+
+  const handleOpenMemo = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const item = displayList[currentIndex];
+    if (item && item.memo) {
+      setAiExplanation(item.memo);
+      setShowAiModal(true);
+      setIsAiEditing(false);
     }
   };
 
@@ -276,105 +286,129 @@ export function LearnView() {
       )}
 
       {/* Unified Controls Container */}
-      <div className="flex-none flex items-center justify-between gap-2 bg-white dark:bg-gray-800 p-2 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 z-10">
+      <div className="flex-none flex flex-col gap-3 bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 z-10">
         
-        {/* Left: Multi-Tag Select */}
-        <div className="relative">
-            <button 
-                onClick={() => setIsTagDropdownOpen(!isTagDropdownOpen)}
-                className={`flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-lg min-w-[100px] justify-between transition-colors ${
-                    isTagDropdownOpen 
-                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-500' 
-                    : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
-                }`}
-            >
-                <span className="truncate max-w-[80px]">
-                    {selectedTags.length === 0 ? "All Tags" : `${selectedTags.length} Selected`}
-                </span>
-                <ChevronDown size={14} className={`transition-transform ${isTagDropdownOpen ? 'rotate-180' : ''}`} />
-            </button>
+        {/* Row 1: Search and Tools */}
+        <div className="flex items-center gap-2 w-full">
+            {/* Search Bar (Flexible width) */}
+            <div className="flex-1 relative min-w-0">
+                <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input 
+                    type="text" 
+                    placeholder="Search..." 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-8 pr-7 p-2 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                />
+                {searchTerm && (
+                    <button 
+                        onClick={() => setSearchTerm('')}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-0.5"
+                    >
+                        <X size={12} />
+                    </button>
+                )}
+            </div>
             
-            {/* Tag Dropdown Overlay */}
-            {isTagDropdownOpen && (
-                <>
-                    <div 
-                        className="fixed inset-0 z-40" 
-                        onClick={() => setIsTagDropdownOpen(false)}
-                    />
-                    <div className="absolute top-full left-0 mt-1 w-48 max-h-60 overflow-y-auto bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 z-50 p-2 animate-in fade-in zoom-in-95 duration-200">
-                        {allTags.map(tag => (
-                            <div 
-                                key={tag} 
-                                onClick={() => toggleTag(tag)}
-                                className="flex items-center gap-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg cursor-pointer text-sm"
-                            >
-                                {selectedTags.includes(tag) ? <CheckSquare size={16} className="text-blue-500" /> : <Square size={16} className="text-gray-300" />}
-                                <span className="truncate">{tag}</span>
-                            </div>
-                        ))}
-                        {allTags.length === 0 && <div className="text-xs text-gray-400 p-2">No tags available</div>}
-                    </div>
-                </>
-            )}
+            {/* Right: Toggles */}
+            <div className="flex gap-1 flex-none">
+            <button 
+                onClick={() => setIsShuffled(!isShuffled)}
+                className={`p-2 rounded-lg transition-colors ${isShuffled ? 'text-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-400'}`}
+                title="Shuffle"
+                type="button"
+            >
+                <Shuffle size={18} />
+            </button>
+            <div className="w-[1px] bg-gray-200 dark:bg-gray-700 mx-1"></div>
+            
+            <button 
+                onClick={() => setShowMemoList(true)}
+                className={`p-2 rounded-lg transition-colors text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20`}
+                title="Memo List"
+                type="button"
+            >
+                <BookOpen size={18} />
+            </button>
+
+            <button 
+                onClick={() => setViewMode('card')}
+                className={`p-2 rounded-lg transition-colors ${viewMode === 'card' ? 'text-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-400'}`}
+                title="Card View"
+                type="button"
+            >
+                <GridIcon size={18} />
+            </button>
+            <button 
+                onClick={() => setViewMode('list')}
+                className={`p-2 rounded-lg transition-colors ${viewMode === 'list' ? 'text-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-400'}`}
+                title="List View"
+                type="button"
+            >
+                <ListIcon size={18} />
+            </button>
+            </div>
         </div>
 
-        {/* Middle: Search Bar (Flexible width) */}
-        <div className="flex-1 relative min-w-0">
-            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input 
-                type="text" 
-                placeholder="Search..." 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-8 pr-7 p-2 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-            />
-            {searchTerm && (
+        {/* Row 2: Tag Filters */}
+        <div className="flex items-center gap-2 w-full">
+            <div className="relative flex-none z-20">
                 <button 
-                    onClick={() => setSearchTerm('')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-0.5"
+                    onClick={() => setIsTagDropdownOpen(!isTagDropdownOpen)}
+                    className={`flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-lg transition-colors ${
+                        isTagDropdownOpen 
+                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-500' 
+                        : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
+                    }`}
                 >
-                    <X size={12} />
+                    <span className="whitespace-nowrap">
+                        Tags
+                    </span>
+                    <ChevronDown size={14} className={`transition-transform ${isTagDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
-            )}
-        </div>
-        
-        {/* Right: Toggles */}
-        <div className="flex gap-1 flex-none">
-          <button 
-              onClick={() => setIsShuffled(!isShuffled)}
-              className={`p-2 rounded-lg transition-colors ${isShuffled ? 'text-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-400'}`}
-              title="Shuffle"
-              type="button"
-          >
-              <Shuffle size={18} />
-          </button>
-          <div className="w-[1px] bg-gray-200 dark:bg-gray-700 mx-1"></div>
-          
-           <button 
-              onClick={() => setShowMemoList(true)}
-              className={`p-2 rounded-lg transition-colors text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20`}
-              title="Memo List"
-              type="button"
-          >
-              <BookOpen size={18} />
-          </button>
+                
+                {/* Tag Dropdown Overlay */}
+                {isTagDropdownOpen && (
+                    <>
+                        <div 
+                            className="fixed inset-0 z-40" 
+                            onClick={() => setIsTagDropdownOpen(false)}
+                        />
+                        <div className="absolute top-full left-0 mt-1 w-48 max-h-60 overflow-y-auto bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 z-50 p-2 animate-in fade-in zoom-in-95 duration-200">
+                            {allTags.map(tag => (
+                                <div 
+                                    key={tag} 
+                                    onClick={() => toggleTag(tag)}
+                                    className="flex items-center gap-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg cursor-pointer text-sm"
+                                >
+                                    {selectedTags.includes(tag) ? <CheckSquare size={16} className="text-blue-500" /> : <Square size={16} className="text-gray-300" />}
+                                    <span className="truncate">{tag}</span>
+                                </div>
+                            ))}
+                            {allTags.length === 0 && <div className="text-xs text-gray-400 p-2">No tags available</div>}
+                        </div>
+                    </>
+                )}
+            </div>
 
-          <button 
-              onClick={() => setViewMode('card')}
-              className={`p-2 rounded-lg transition-colors ${viewMode === 'card' ? 'text-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-400'}`}
-              title="Card View"
-              type="button"
-          >
-              <GridIcon size={18} />
-          </button>
-          <button 
-              onClick={() => setViewMode('list')}
-              className={`p-2 rounded-lg transition-colors ${viewMode === 'list' ? 'text-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-400'}`}
-              title="List View"
-              type="button"
-          >
-              <ListIcon size={18} />
-          </button>
+            {/* Selected Tags Chips */}
+            <div className="flex-1 overflow-x-auto flex items-center gap-2 scrollbar-hide">
+                {selectedTags.length > 0 ? (
+                    selectedTags.map(tag => (
+                        <button
+                            key={tag}
+                            onClick={() => toggleTag(tag)}
+                            className="flex-none flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 text-xs rounded-full border border-blue-100 dark:border-blue-800 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors group animate-in fade-in zoom-in-95 duration-200"
+                            title="Remove tag"
+                        >
+                            <span className="font-medium">#{tag}</span>
+                            <X size={12} className="opacity-60 group-hover:opacity-100" />
+                        </button>
+                    ))
+                ) : (
+                    <span className="text-xs text-gray-400 italic pl-1">No tags selected</span>
+                )}
+            </div>
         </div>
       </div>
 
@@ -564,22 +598,39 @@ export function LearnView() {
                          </span>
                        ))}
                     </div>
-                    {/* Memo Indicator */}
+                    {/* Memo Indicator / Button */}
                     {displayList[currentIndex].memo && (
-                        <div className="mt-4 flex items-center gap-1 text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20 px-2 py-1 rounded-full text-xs font-medium">
-                            <BookOpen size={12} /> Memo Saved
-                        </div>
+                        <button 
+                            type="button"
+                            onClick={handleOpenMemo}
+                            className="mt-4 flex items-center gap-1 text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 px-3 py-1.5 rounded-full text-xs font-bold border border-yellow-200 dark:border-yellow-900/50 hover:bg-yellow-100 dark:hover:bg-yellow-900/40 transition-colors"
+                        >
+                            <BookOpen size={12} /> View Memo
+                        </button>
                     )}
                   </div>
                   <div className="flex-none mt-4 pt-2">
-                    <div className="flex justify-center gap-4">
+                    <div className="flex justify-center gap-3">
                       <button 
                         type="button"
                         onClick={(e) => { e.stopPropagation(); speak(displayList[currentIndex].sentence); }}
                         className="p-4 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 active:scale-95 transition-all"
+                        title="Speak"
                       >
                         <Volume2 size={24} />
                       </button>
+                      
+                      {displayList[currentIndex].memo && (
+                        <button 
+                          type="button"
+                          onClick={handleOpenMemo}
+                          className="p-4 bg-yellow-500 text-white rounded-full shadow-lg hover:bg-yellow-600 active:scale-95 transition-all animate-in zoom-in duration-300"
+                          title="View Memo"
+                        >
+                          <BookOpen size={24} />
+                        </button>
+                      )}
+
                       <button 
                         type="button"
                         onClick={handleAiExplain}
@@ -656,6 +707,12 @@ export function LearnView() {
                  idx={idx} 
                  status={status} 
                  speak={speak} 
+                 onOpenMemo={() => {
+                    setCurrentIndex(idx);
+                    setAiExplanation(item.memo || '');
+                    setShowAiModal(true);
+                    setIsAiEditing(false);
+                 }}
                />
              ))}
            </div>
@@ -665,7 +722,13 @@ export function LearnView() {
   );
 }
 
-function FlipListItem({ item, idx, status, speak }: { item: VocabItem, idx: number, status: LearningStatus, speak: (t:string)=>void }) {
+function FlipListItem({ item, idx, status, speak, onOpenMemo }: { 
+    item: VocabItem, 
+    idx: number, 
+    status: LearningStatus, 
+    speak: (t:string)=>void,
+    onOpenMemo?: () => void
+}) {
   const [showMeaning, setShowMeaning] = useState(false);
 
   return (
@@ -687,10 +750,17 @@ function FlipListItem({ item, idx, status, speak }: { item: VocabItem, idx: numb
              <span className="opacity-50 text-xs">Tap to reveal meaning</span>
           )}
         </p>
-        <div className="flex gap-1 mt-1 pl-8">
+        <div className="flex gap-1 mt-1 pl-8 items-center">
            {status.completedIds.includes(item.id) && <CheckCircle size={14} className="text-green-500" />}
            {status.incorrectIds.includes(item.id) && <AlertCircle size={14} className="text-red-500" />}
-           {item.memo && <div className="w-2 h-2 rounded-full bg-yellow-500" title="Has Memo"/>}
+           {item.memo && (
+               <button 
+                onClick={(e) => { e.stopPropagation(); onOpenMemo?.(); }}
+                className="flex items-center gap-1 text-[10px] font-bold text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/30 px-1.5 py-0.5 rounded hover:bg-yellow-200 dark:hover:bg-yellow-900/50 transition-colors"
+               >
+                 <BookOpen size={10} /> MEMO
+               </button>
+           )}
         </div>
       </div>
       <button
