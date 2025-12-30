@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { 
   Volume2, 
   X, 
@@ -17,7 +18,8 @@ import {
   Square,
   ChevronDown,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Pencil
 } from 'lucide-react';
 import type { LearningStatus, VocabItem } from '../types';
 import { callGemini } from '../lib/gemini';
@@ -39,6 +41,12 @@ export function LearnView() {
   const [isLoadingAi, setIsLoadingAi] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false);
   const [showMemoList, setShowMemoList] = useState(false);
+  const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
+  
+  // Editing states
+  const [isAiEditing, setIsAiEditing] = useState(false);
+  const [editingMemoId, setEditingMemoId] = useState<string | null>(null);
+  const [editBuffer, setEditBuffer] = useState('');
 
   // Ref to track current displayList without adding to useEffect deps (avoids infinite loop)
   const displayListRef = React.useRef(displayList);
@@ -103,6 +111,7 @@ export function LearnView() {
       setIsFlipped(false);
       setAiExplanation('');
       setShowAiModal(false);
+      setIsAiEditing(false);
     } else {
       const newItem = list[currentIndex];
       // If the item ID at the current index changed, reset the view
@@ -110,6 +119,8 @@ export function LearnView() {
          setIsFlipped(false);
          setAiExplanation('');
          setShowAiModal(false);
+         setIsAiEditing(false);
+         setEditingMemoId(null);
       }
       // Otherwise (same item ID), keep the UI state (modal open, card flipped, etc.)
     }
@@ -132,6 +143,8 @@ export function LearnView() {
     setIsFlipped(false);
     setAiExplanation('');
     setShowAiModal(false);
+    setIsAiEditing(false);
+    setEditingMemoId(null);
     setCurrentIndex((prev: number) => (prev + 1) % displayList.length);
   };
 
@@ -140,7 +153,27 @@ export function LearnView() {
     setIsFlipped(false);
     setAiExplanation('');
     setShowAiModal(false);
+    setIsAiEditing(false);
+    setEditingMemoId(null);
     setCurrentIndex((prev: number) => (prev - 1 + displayList.length) % displayList.length);
+  };
+
+  const startEditing = (id: string, currentText: string) => {
+      setEditingMemoId(id);
+      setEditBuffer(currentText);
+  };
+
+  const saveEdit = (id: string) => {
+      setVocabList(prev => prev.map(item => 
+          item.id === id ? { ...item, memo: editBuffer } : item
+      ));
+      setEditingMemoId(null);
+      setEditBuffer('');
+  };
+
+  const cancelEdit = () => {
+      setEditingMemoId(null);
+      setEditBuffer('');
   };
 
   const handleAiExplain = async (e: React.MouseEvent) => {
@@ -151,6 +184,7 @@ export function LearnView() {
     }
     
     setShowAiModal(true);
+    setIsAiEditing(false);
 
     if (aiExplanation) return;
 
@@ -168,12 +202,18 @@ export function LearnView() {
       ${pronStr}
       ${tagsStr}
 
-      Please provide a structured explanation in Korean using the following format:
-      1. 🧩 문법 (Grammar): Brief breakdown of sentence structure.
-      2. 💡 뉘앙스 (Nuance): Contextual usage or tone.
-      3. 📖 단어 (Vocabulary): Key words and their definitions.
+      Please provide a structured explanation in Korean using **Markdown** format:
+      - Use **bold** for key terms.
+      - Use lists for multiple points.
+      - Structure:
+        ### 🧩 문법 (Grammar)
+        Brief breakdown...
+        ### 💡 뉘앙스 (Nuance)
+        Contextual usage...
+        ### 📖 단어 (Vocabulary)
+        Key words...
 
-      Keep the total response concise and easy to read.
+      Keep the total response concise.
       `;
       const text = await callGemini(prompt, apiKey);
       setAiExplanation(text);
@@ -239,26 +279,43 @@ export function LearnView() {
       <div className="flex-none flex items-center justify-between gap-2 bg-white dark:bg-gray-800 p-2 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 z-10">
         
         {/* Left: Multi-Tag Select */}
-        <div className="relative group">
-            <button className="flex items-center gap-1 text-sm font-medium bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 min-w-[100px] justify-between">
+        <div className="relative">
+            <button 
+                onClick={() => setIsTagDropdownOpen(!isTagDropdownOpen)}
+                className={`flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-lg min-w-[100px] justify-between transition-colors ${
+                    isTagDropdownOpen 
+                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-500' 
+                    : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
+                }`}
+            >
                 <span className="truncate max-w-[80px]">
                     {selectedTags.length === 0 ? "All Tags" : `${selectedTags.length} Selected`}
                 </span>
-                <ChevronDown size={14} className="text-gray-400" />
+                <ChevronDown size={14} className={`transition-transform ${isTagDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
-            <div className="hidden group-hover:block absolute top-full left-0 mt-1 w-48 max-h-60 overflow-y-auto bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 z-50 p-2">
-                {allTags.map(tag => (
+            
+            {/* Tag Dropdown Overlay */}
+            {isTagDropdownOpen && (
+                <>
                     <div 
-                        key={tag} 
-                        onClick={() => toggleTag(tag)}
-                        className="flex items-center gap-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg cursor-pointer text-sm"
-                    >
-                        {selectedTags.includes(tag) ? <CheckSquare size={16} className="text-blue-500" /> : <Square size={16} className="text-gray-300" />}
-                        <span className="truncate">{tag}</span>
+                        className="fixed inset-0 z-40" 
+                        onClick={() => setIsTagDropdownOpen(false)}
+                    />
+                    <div className="absolute top-full left-0 mt-1 w-48 max-h-60 overflow-y-auto bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 z-50 p-2 animate-in fade-in zoom-in-95 duration-200">
+                        {allTags.map(tag => (
+                            <div 
+                                key={tag} 
+                                onClick={() => toggleTag(tag)}
+                                className="flex items-center gap-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg cursor-pointer text-sm"
+                            >
+                                {selectedTags.includes(tag) ? <CheckSquare size={16} className="text-blue-500" /> : <Square size={16} className="text-gray-300" />}
+                                <span className="truncate">{tag}</span>
+                            </div>
+                        ))}
+                        {allTags.length === 0 && <div className="text-xs text-gray-400 p-2">No tags available</div>}
                     </div>
-                ))}
-                {allTags.length === 0 && <div className="text-xs text-gray-400 p-2">No tags available</div>}
-            </div>
+                </>
+            )}
         </div>
 
         {/* Middle: Search Bar (Flexible width) */}
@@ -361,9 +418,34 @@ export function LearnView() {
 
                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 italic">Meaning: {item.meaning}</p>
                                
-                               <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed p-3 bg-white dark:bg-gray-800 rounded-lg border border-yellow-100 dark:border-gray-700 whitespace-pre-wrap">
-                                   {item.memo}
-                               </div>
+                               {editingMemoId === item.id ? (
+                                   <div className="bg-white dark:bg-gray-800 rounded-lg p-2 border border-blue-200 dark:border-blue-900">
+                                       <textarea 
+                                           className="w-full h-32 p-2 text-sm text-gray-700 dark:text-gray-200 bg-transparent resize-none focus:outline-none"
+                                           value={editBuffer}
+                                           onChange={(e) => setEditBuffer(e.target.value)}
+                                       />
+                                       <div className="flex justify-end gap-2 mt-2">
+                                           <button onClick={cancelEdit} className="px-3 py-1 text-xs text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Cancel</button>
+                                           <button onClick={() => saveEdit(item.id)} className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600">Save</button>
+                                       </div>
+                                   </div>
+                               ) : (
+                                   <div className="relative group/memo">
+                                        <div className="text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-lg border border-yellow-100 dark:border-gray-700 p-3 prose prose-sm dark:prose-invert max-w-none">
+                                            <ReactMarkdown>
+                                                {item.memo}
+                                            </ReactMarkdown>
+                                        </div>
+                                        <button 
+                                            onClick={() => startEditing(item.id, item.memo || '')}
+                                            className="absolute top-2 right-2 p-1.5 bg-white dark:bg-gray-700 rounded shadow-sm text-gray-400 hover:text-blue-500 opacity-0 group-hover/memo:opacity-100 transition-opacity"
+                                        >
+                                            <Pencil size={14} />
+                                        </button>
+                                   </div>
+                               )}
+
                                <button 
                                  onClick={() => {
                                      // Delete memo
@@ -382,16 +464,24 @@ export function LearnView() {
 
       {/* AI Explanation Modal */}
       {showAiModal && (
-        <div className="absolute inset-x-0 top-16 z-20 mx-4 p-4 bg-white/95 dark:bg-gray-800/95 backdrop-blur shadow-2xl rounded-2xl border border-blue-100 dark:border-gray-700 animate-in fade-in slide-in-from-bottom-4">
+        <div className="absolute inset-x-0 top-16 z-20 mx-4 p-4 bg-white/95 dark:bg-gray-800/95 backdrop-blur shadow-2xl rounded-2xl border border-blue-100 dark:border-gray-700 animate-in fade-in slide-in-from-bottom-4 max-h-[80vh] overflow-y-auto">
           <div className="flex justify-between items-start mb-2">
             <h4 className="font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
               <Sparkles size={16} /> AI Tutor
             </h4>
             <div className="flex gap-2">
                 {!isLoadingAi && aiExplanation && (
+                    <>
+                    <button 
+                        onClick={() => setIsAiEditing(!isAiEditing)}
+                        className={`text-gray-400 hover:text-blue-500 p-1 rounded ${isAiEditing ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-500' : ''}`}
+                    >
+                        <Pencil size={16}/>
+                    </button>
                     <button onClick={handleSaveMemo} className="text-blue-500 hover:text-blue-600 text-sm font-bold flex items-center gap-1 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded">
                         <Save size={14}/> Save
                     </button>
+                    </>
                 )}
                 <button onClick={() => setShowAiModal(false)} className="text-gray-400 hover:text-gray-600">
                 <X size={16} />
@@ -403,8 +493,19 @@ export function LearnView() {
               <div className="flex items-center gap-2 text-gray-500">
                 <Loader2 size={16} className="animate-spin" /> Thinking...
               </div>
+            ) : isAiEditing ? (
+              <textarea 
+                  className="w-full h-64 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-xs"
+                  value={aiExplanation}
+                  onChange={(e) => setAiExplanation(e.target.value)}
+                  placeholder="Edit explanation..."
+              />
             ) : (
-              aiExplanation
+              <div className="prose prose-sm dark:prose-invert max-w-none">
+                <ReactMarkdown>
+                  {aiExplanation}
+                </ReactMarkdown>
+              </div>
             )}
           </div>
         </div>
@@ -519,12 +620,6 @@ export function LearnView() {
                          <span className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs rounded-full font-medium flex-shrink-0">Review</span>
                        )}
                     </div>
-                    {displayList[currentIndex].memo && (
-                        <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/10 text-left w-full rounded-lg text-sm text-gray-600 dark:text-gray-300 border border-yellow-100 dark:border-yellow-900/30">
-                            <span className="font-bold flex items-center gap-1 mb-1 text-yellow-600"><BookOpen size={12}/> Memo</span>
-                            {displayList[currentIndex].memo}
-                        </div>
-                    )}
                   </div>
                   <div className="flex-none mt-20"></div> 
                 </div>

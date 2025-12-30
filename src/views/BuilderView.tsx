@@ -6,7 +6,9 @@ import {
   Trash2,
   Sparkles,
   Loader2,
-  Tag
+  Tag,
+  X,
+  Save
 } from 'lucide-react';
 import type { VocabItem } from '../types';
 import { callGemini } from '../lib/gemini';
@@ -24,9 +26,49 @@ export function BuilderView() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showDeleteInput, setShowDeleteInput] = useState(false);
   const [deleteTagsInput, setDeleteTagsInput] = useState('');
+
+  // Edit Modal State
+  const [editingItem, setEditingItem] = useState<VocabItem | null>(null);
+  const [editForm, setEditForm] = useState({ meaning: '', sentence: '', pronunciation: '', tags: '' });
   
   // Confirmation Modal State
   const [generatedItems, setGeneratedItems] = useState<VocabItem[] | null>(null);
+
+  const startEditing = (item: VocabItem) => {
+      setEditingItem(item);
+      setEditForm({
+          meaning: item.meaning,
+          sentence: item.sentence,
+          pronunciation: item.pronunciation || '',
+          tags: item.tags.join(', ')
+      });
+  };
+
+  const saveEditing = () => {
+      if (!editingItem) return;
+      if (!editForm.meaning || !editForm.sentence) {
+          alert("Meaning and Sentence are required.");
+          return;
+      }
+
+      setVocabList((prev: VocabItem[]) => prev.map(item => {
+          if (item.id === editingItem.id) {
+              return {
+                  ...item,
+                  meaning: editForm.meaning,
+                  sentence: editForm.sentence,
+                  pronunciation: editForm.pronunciation,
+                  tags: editForm.tags.split(',').map(t => t.trim()).filter(Boolean)
+              };
+          }
+          return item;
+      }));
+      setEditingItem(null);
+  };
+
+  const cancelEditing = () => {
+      setEditingItem(null);
+  };
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
@@ -307,13 +349,79 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {vocabList.slice().reverse().map((item) => (
-            <div key={item.id} className="flex justify-between items-start p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-              <div><p className="font-bold text-sm">{item.meaning}</p><p className="text-blue-600 dark:text-blue-300 text-sm">{item.sentence}</p><div className="flex gap-1 mt-1">{item.tags.map(t => <span key={t} className="text-[10px] bg-gray-200 dark:bg-gray-600 px-1.5 py-0.5 rounded text-gray-600 dark:text-gray-300">{t}</span>)}</div></div>
-              <button onClick={() => setVocabList((prev: VocabItem[]) => prev.filter(v => v.id !== item.id))} className="text-gray-400 hover:text-red-500 p-1" type="button"><Trash2 size={16} /></button>
+            <div 
+                key={item.id} 
+                onClick={() => startEditing(item)}
+                className="flex justify-between items-start p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
+            >
+              <div>
+                  <p className="font-bold text-sm">{item.meaning}</p>
+                  <p className="text-blue-600 dark:text-blue-300 text-sm">{item.sentence}</p>
+                  <div className="flex gap-1 mt-1">{item.tags.map(t => <span key={t} className="text-[10px] bg-gray-200 dark:bg-gray-600 px-1.5 py-0.5 rounded text-gray-600 dark:text-gray-300">{t}</span>)}</div>
+              </div>
+              <button 
+                  onClick={(e) => { e.stopPropagation(); setVocabList((prev: VocabItem[]) => prev.filter(v => v.id !== item.id)); }} 
+                  className="text-gray-400 hover:text-red-500 p-1 opacity-0 group-hover:opacity-100 transition-opacity" 
+                  type="button"
+              >
+                  <Trash2 size={16} />
+              </button>
             </div>
           ))}
         </div>
       </div>
+
+      {/* Edit Modal */}
+      {editingItem && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-100 dark:border-gray-700">
+                  <div className="flex justify-between items-center p-4 border-b border-gray-100 dark:border-gray-700">
+                      <h3 className="font-bold text-lg">Edit Item</h3>
+                      <button onClick={cancelEditing} className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"><X size={20}/></button>
+                  </div>
+                  <div className="p-4 flex flex-col gap-4">
+                      <div>
+                          <label className="text-xs font-bold text-gray-500 mb-1 block">Meaning</label>
+                          <input 
+                              className="w-full p-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700" 
+                              value={editForm.meaning} 
+                              onChange={e => setEditForm({...editForm, meaning: e.target.value})} 
+                          />
+                      </div>
+                      <div>
+                          <label className="text-xs font-bold text-gray-500 mb-1 block">Sentence</label>
+                          <input 
+                              className="w-full p-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700" 
+                              value={editForm.sentence} 
+                              onChange={e => setEditForm({...editForm, sentence: e.target.value})} 
+                          />
+                      </div>
+                      <div>
+                          <label className="text-xs font-bold text-gray-500 mb-1 block">Pronunciation</label>
+                          <input 
+                              className="w-full p-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700" 
+                              value={editForm.pronunciation} 
+                              onChange={e => setEditForm({...editForm, pronunciation: e.target.value})} 
+                          />
+                      </div>
+                      <div>
+                          <label className="text-xs font-bold text-gray-500 mb-1 block">Tags (comma separated)</label>
+                          <input 
+                              className="w-full p-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700" 
+                              value={editForm.tags} 
+                              onChange={e => setEditForm({...editForm, tags: e.target.value})} 
+                          />
+                      </div>
+                  </div>
+                  <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-end gap-2">
+                      <button onClick={cancelEditing} className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg">Cancel</button>
+                      <button onClick={saveEditing} className="px-4 py-2 text-sm font-bold bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center gap-2">
+                          <Save size={16} /> Save Changes
+                      </button>
+                  </div>
+              </div>
+          </div>
+      )}
     </div>
   );
 }
