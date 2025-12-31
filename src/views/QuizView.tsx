@@ -2,7 +2,8 @@ import React from 'react';
 import { 
   Brain, 
   Filter, 
-  Type 
+  Type,
+  X
 } from 'lucide-react';
 import type { LearningStatus, VocabItem, QuizItem, QuizType } from '../types';
 import { checkAnswer } from '../lib/utils';
@@ -272,9 +273,18 @@ export function QuizView() {
 
   return (
     <div className="flex flex-col h-full max-w-sm mx-auto pt-8">
-      <div className="flex justify-between text-sm text-gray-400 mb-2">
-        <span>Question {currentIndex + 1}</span>
-        <span>{quizQueue.length} total</span>
+      <div className="flex justify-between items-center mb-2">
+        <button 
+          onClick={() => setIsPlaying(false)}
+          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors flex items-center gap-1 text-xs font-bold uppercase tracking-wider"
+        >
+          <X size={16} /> Exit Quiz
+        </button>
+        <div className="flex gap-1 text-sm text-gray-400">
+          <span>Question {currentIndex + 1}</span>
+          <span>/</span>
+          <span>{quizQueue.length}</span>
+        </div>
       </div>
       <div className="w-full bg-gray-200 dark:bg-gray-700 h-2 rounded-full mb-8">
         <div 
