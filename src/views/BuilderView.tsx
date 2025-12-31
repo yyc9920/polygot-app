@@ -15,6 +15,7 @@ import { callGemini } from '../lib/gemini';
 import { generateId, parseCSV } from '../lib/utils';
 import { useVocabAppContext } from '../context/VocabContext';
 import { ConfirmationModal } from '../components/ConfirmationModal';
+import { FunButton } from '../components/FunButton';
 
 export function BuilderView() {
   const { vocabList, setVocabList, apiKey } = useVocabAppContext();
@@ -239,7 +240,7 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
     const tagsToDelete = deleteTagsInput.split(',').map(t => t.trim()).filter(Boolean);
     
     if (tagsToDelete.length === 0) {
-      alert("Please enter at least one tag to delete.");
+      alert("Please enter your least one tag to delete.");
       return;
     }
 
@@ -292,9 +293,9 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
                <input className="flex-1 p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. Travel in Japan" value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)} required />
                <input type="number" min="1" max="20" value={aiCount} onChange={(e) => setAiCount(parseInt(e.target.value))} className="w-16 p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-center" />
              </div>
-             <button type="submit" disabled={isGenerating} className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-bold transition-colors flex items-center justify-center gap-2 shadow-md">
+             <FunButton type="submit" disabled={isGenerating} fullWidth variant="primary" className="flex items-center justify-center gap-2">
                 {isGenerating ? <Loader2 className="animate-spin" /> : <Sparkles size={18} />} Generate Phrases
-             </button>
+             </FunButton>
           </form>
         </div>
       ) : (
@@ -305,7 +306,7 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
             <input className="p-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" placeholder="Sentence (문장) *" value={form.sentence} onChange={e => setForm({...form, sentence: e.target.value})} required />
             <input className="p-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" placeholder="Pronunciation (발음)" value={form.pronunciation} onChange={e => setForm({...form, pronunciation: e.target.value})} />
             <input className="p-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" placeholder="Tags (쉼표로 구분)" value={form.tags} onChange={e => setForm({...form, tags: e.target.value})} />
-            <button type="submit" className="bg-gray-800 dark:bg-gray-700 text-white py-2 rounded-lg font-medium hover:bg-gray-900 dark:hover:bg-gray-600 transition-colors">Add Item</button>
+            <FunButton type="submit" variant="primary">Add Item</FunButton>
           </form>
         </div>
       )}
@@ -317,7 +318,10 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
           <input type="file" accept=".csv" className="hidden" onChange={handleFileUpload} />
         </label>
       </div>
-      <button onClick={exportCSV} className="w-full py-3 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center gap-2" type="button"><Download size={20} className="text-gray-500" /><span className="text-sm font-medium text-gray-600 dark:text-gray-400">Download CSV (Export)</span></button>
+      
+      <FunButton onClick={exportCSV} fullWidth variant="neutral" className="flex items-center justify-center gap-2">
+        <Download size={20} /> Download CSV (Export)
+      </FunButton>
       
       {/* Stored Items List */}
       <div className="flex flex-col flex-1 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 min-h-[500px] overflow-hidden">
@@ -360,7 +364,7 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
                   <div className="flex gap-1 mt-1">{item.tags.map(t => <span key={t} className="text-[10px] bg-gray-200 dark:bg-gray-600 px-1.5 py-0.5 rounded text-gray-600 dark:text-gray-300">{t}</span>)}</div>
               </div>
               <button 
-                  onClick={(e) => { e.stopPropagation(); setVocabList((prev: VocabItem[]) => prev.filter(v => v.id !== item.id)); }} 
+                  onClick={(e) => { e.stopPropagation(); setVocabList((prev: VocabItem[]) => prev.filter(v => v.id !== item.id)); }}
                   className="text-gray-400 hover:text-red-500 p-1 opacity-0 group-hover:opacity-100 transition-opacity" 
                   type="button"
               >
@@ -415,9 +419,9 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
                   </div>
                   <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-end gap-2">
                       <button onClick={cancelEditing} className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg">Cancel</button>
-                      <button onClick={saveEditing} className="px-4 py-2 text-sm font-bold bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center gap-2">
+                      <FunButton onClick={saveEditing} variant="primary" className="flex items-center gap-2">
                           <Save size={16} /> Save Changes
-                      </button>
+                      </FunButton>
                   </div>
               </div>
           </div>

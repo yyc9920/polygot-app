@@ -25,6 +25,7 @@ import type { LearningStatus, VocabItem } from '../types';
 import { callGemini } from '../lib/gemini';
 import { useVocabAppContext } from '../context/VocabContext';
 import useLocalStorage from '../hooks/useLocalStorage';
+import { FunButton } from '../components/FunButton';
 
 // --- Learn View ---
 export function LearnView() {
@@ -260,9 +261,9 @@ export function LearnView() {
           return (
               <div className="flex flex-col items-center justify-center h-64 text-gray-500 gap-4">
                   <p>복습할 항목이 없습니다.</p>
-                  <button onClick={() => setReviewMode(false)} className="px-4 py-2 bg-blue-500 text-white rounded-lg">
+                  <FunButton onClick={() => setReviewMode(false)} variant="primary">
                       학습 모드로 돌아가기
-                  </button>
+                  </FunButton>
               </div>
           );
       }
@@ -680,20 +681,22 @@ export function LearnView() {
           </div>
 
           <div className="flex-none flex gap-4 mt-4 h-14">
-            <button 
+            <FunButton 
               type="button"
               onClick={handlePrev}
-              className="flex-1 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 font-medium active:bg-gray-50 dark:active:bg-gray-700 transition-colors flex items-center justify-center gap-2"
+              className="flex-1 flex items-center justify-center gap-2"
+              variant="neutral"
             >
               <ChevronLeft size={20} /> Prev
-            </button>
-            <button 
+            </FunButton>
+            <FunButton 
               type="button"
               onClick={handleNext}
-              className="flex-1 bg-blue-500 text-white rounded-2xl shadow-md font-medium active:bg-blue-600 transition-colors flex items-center justify-center gap-2"
+              className="flex-1 flex items-center justify-center gap-2"
+              variant="primary"
             >
               Next <ChevronRight size={20} />
-            </button>
+            </FunButton>
           </div>
         </div>
       )}

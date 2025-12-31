@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Check,
   X,
@@ -21,6 +20,8 @@ import {
   Link as LinkIcon
 } from 'lucide-react';
 import { useVocabAppContext } from '../context/VocabContext';
+import { FunButton } from '../components/FunButton';
+
 export function SettingsView() {
   const { 
     voiceURI, 
@@ -50,6 +51,8 @@ export function SettingsView() {
   // URL Management
   const [newUrl, setNewUrl] = useState('');
   const [isSyncing, setIsSyncing] = useState<string | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const loadVoices = () => {
@@ -253,14 +256,16 @@ export function SettingsView() {
           </div>
         </div>
 
-        <button 
+        <FunButton 
             onClick={handleStartReview}
             disabled={filteredIncorrect === 0}
-            className="w-full mt-4 py-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            fullWidth
+            variant="danger"
+            className="flex items-center justify-center gap-2"
         >
             <PlayCircle size={20} />
             Start Review Session ({filteredIncorrect} items)
-        </button>
+        </FunButton>
 
         <p className="text-center text-sm text-gray-400 mt-2">
             {progressFilterTag === 'All' ? `Total Vocabulary: ${filteredTotalCount}` : `Vocabulary in '${progressFilterTag}': ${filteredTotalCount}`}
@@ -390,32 +395,42 @@ export function SettingsView() {
         </h3>
         <div className="flex flex-col gap-3">
            <div className="flex gap-2">
-               <button 
+               <FunButton 
                 onClick={handleSaveData} 
-                className="flex-1 p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2"
+                variant="primary"
                >
                    <Save size={18} /> Backup Data (Save)
-               </button>
-               <label className="flex-1 p-3 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer">
+               </FunButton>
+               
+               <input type="file" ref={fileInputRef} accept=".json" className="hidden" onChange={handleLoadData} />
+               <FunButton 
+                onClick={() => fileInputRef.current?.click()}
+                className="flex-1 flex items-center justify-center gap-2"
+                variant="neutral"
+               >
                    <Upload size={18} /> Load Backup
-                   <input type="file" accept=".json" className="hidden" onChange={handleLoadData} />
-               </label>
+               </FunButton>
            </div>
            
            <div className="h-[1px] bg-gray-100 dark:bg-gray-700 my-2"></div>
 
-          <button 
+          <FunButton 
             onClick={handleReset} 
-            className="w-full p-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            fullWidth
+            variant="neutral"
+            className="flex items-center justify-center gap-2"
           >
             <RefreshCw size={18} /> Reset Learning Progress
-          </button>
-          <button 
+          </FunButton>
+          <FunButton 
             onClick={handleDeleteAllData} 
-            className="w-full p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors border border-transparent hover:border-red-200"
+            fullWidth
+            variant="danger"
+            className="flex items-center justify-center gap-2 border-red-200"
           >
             <Trash2 size={18} /> Delete All Data (Hard Reset)
-          </button>
+          </FunButton>
         </div>
       </section>
 

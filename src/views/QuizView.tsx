@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   Brain, 
@@ -9,6 +8,8 @@ import type { LearningStatus, VocabItem, QuizItem, QuizType } from '../types';
 import { checkAnswer } from '../lib/utils';
 import { useVocabAppContext } from '../context/VocabContext';
 import useLocalStorage from '../hooks/useLocalStorage';
+import { FunButton } from '../components/FunButton';
+import { triggerConfetti } from '../lib/fun-utils';
 
 // --- Enhanced Quiz View ---
 export function QuizView() {
@@ -146,11 +147,11 @@ export function QuizView() {
     if (feedback !== 'none') return; 
 
     const currentItem = quizQueue[currentIndex];
-    
-    // Check answer logic depends on type? 
-    // Actually our `checkAnswer` fuzzy matcher handles most cases nicely.
-    // For Cloze, `answerText` is just the missing word.
     const isCorrect = checkAnswer(input, currentItem.answerText);
+
+    if (isCorrect) {
+      triggerConfetti();
+    }
 
     setFeedback(isCorrect ? 'correct' : 'incorrect');
 
@@ -177,10 +178,6 @@ export function QuizView() {
     } else {
       alert('퀴즈가 종료되었습니다!');
       setIsPlaying(false);
-      // Reset relevant states so user can start fresh next time if they want
-      // Or keep them there? "Status of QuizView" implies keeping it.
-      // But if it's finished, we should probably reset "isPlaying" at least.
-      // We did setIsPlaying(false) above.
     }
   };
 
@@ -259,12 +256,14 @@ export function QuizView() {
           </div>
         </div>
 
-        <button 
+        <FunButton 
           onClick={startQuiz}
-          className="w-full py-4 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-2xl font-bold text-lg shadow-lg shadow-blue-500/30 transition-all active:scale-95"
+          fullWidth
+          variant="primary"
+          className="text-lg"
         >
           Start Quiz
-        </button>
+        </FunButton>
       </div>
     );
   }
@@ -309,19 +308,20 @@ export function QuizView() {
           className={`w-full p-4 rounded-xl border-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-lg outline-none transition-colors
             ${feedback === 'none' ? 'border-gray-200 dark:border-gray-700 focus:border-blue-500' : ''}
             ${feedback === 'correct' ? 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' : ''}
-            ${feedback === 'incorrect' ? 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400' : ''}
+            ${feedback === 'incorrect' ? 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 animate-shake' : ''}
           `}
           readOnly={feedback !== 'none'}
           autoFocus
         />
 
         {feedback === 'none' ? (
-          <button 
+          <FunButton 
             type="submit" 
-            className="w-full py-3 bg-blue-500 text-white rounded-xl font-bold shadow-md hover:bg-blue-600 active:scale-95 transition-transform"
+            fullWidth
+            variant="primary"
           >
             Check Answer
-          </button>
+          </FunButton>
         ) : (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
             {feedback === 'incorrect' && (
@@ -341,15 +341,14 @@ export function QuizView() {
                  Correct! 🎉
                </div>
             )}
-            <button 
+            <FunButton 
               type="button" 
               onClick={nextQuestion}
-              className={`w-full py-3 rounded-xl font-bold shadow-md transition-transform active:scale-95 text-white
-                ${feedback === 'correct' ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-800 hover:bg-gray-900'}
-              `}
+              fullWidth
+              variant={feedback === 'correct' ? 'success' : 'danger'}
             >
               Next Question &rarr;
-            </button>
+            </FunButton>
           </div>
         )}
       </form>
