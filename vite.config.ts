@@ -1,8 +1,14 @@
-import { defineConfig } from 'vite'
+/// <reference types="vitest" />
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 
-// [https://vitejs.dev/config/](https://vitejs.dev/config/)
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: '/polygot-app/', // 저장소 이름과 똑같이 적어주세요!
+  base: '/polygot-app/',
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./src/setupTests.ts'],
+  },
 })
