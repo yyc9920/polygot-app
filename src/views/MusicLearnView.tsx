@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import YouTube from 'react-youtube';
-import { Search, Music, Plus, Check, Volume2 } from 'lucide-react';
+import { Search, Music, Plus, Check, Volume2, Loader2, Sparkles } from 'lucide-react';
 import { useVocabAppContext } from '../context/VocabContext';
 import { searchYouTube, type YouTubeVideo } from '../lib/youtube';
-import { generateSongMaterials } from '../lib/gemini';
+import { generateSongLyrics, generatePhraseFromLyric } from '../lib/gemini';
 import { FunButton } from '../components/FunButton';
-import { generateId } from '../lib/utils';
+import { generateId, parseCSV } from '../lib/utils';
 import type { SongData, VocabItem } from '../types';
 
 export function MusicLearnView() {
@@ -28,6 +28,8 @@ export function MusicLearnView() {
       isSearching, 
       activeTab 
   } = musicState;
+
+  const [generatingIdx, setGeneratingIdx] = useState<number | null>(null);
 
   const speak = (text: string) => {
     window.speechSynthesis.cancel();
@@ -61,8 +63,9 @@ export function MusicLearnView() {
     try {
       const videos = await searchYouTube(query, youtubeApiKey);
       updateState({ results: videos, selectedVideo: null, materials: null });
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err) {
+      const error = err as Error;
+      alert(error.message);
     } finally {
       updateState({ isSearching: false });
     }
@@ -71,7 +74,7 @@ export function MusicLearnView() {
   const handleSelectVideo = async (video: YouTubeVideo) => {
     updateState({ selectedVideo: video, materials: null });
     
-    const cacheKey = `song_materials_${video.videoId}`;
+    const cacheKey = `song_lyrics_${video.videoId}`;
     const cached = localStorage.getItem(cacheKey);
     
     if (cached) {
@@ -93,14 +96,54 @@ export function MusicLearnView() {
 
     updateState({ isLoading: true });
     try {
-        const data = await generateSongMaterials(video.artist, video.title, apiKey);
+        const data = await generateSongLyrics(video.artist, video.title, apiKey);
         localStorage.setItem(cacheKey, JSON.stringify(data));
         updateState({ materials: data });
-    } catch (err: any) {
-        alert("Failed to generate materials: " + err.message);
+    } catch (err) {
+        const error = err as Error;
+        alert("Failed to generate materials: " + error.message);
     } finally {
         updateState({ isLoading: false });
     }
+  };
+
+  const handleGenerateCard = async (line: string, index: number) => {
+      if (!apiKey || !selectedVideo || !materials) return;
+      setGeneratingIdx(index);
+      try {
+         const csv = await generatePhraseFromLyric(line, selectedVideo.artist, selectedVideo.title, apiKey);
+         const rows = parseCSV(csv);
+         if (rows.length > 0 && rows[0].length >= 2) {
+             const row = rows[0];
+             const newPhrase = {
+                 meaning: row[0],
+                 sentence: row[1],
+                 pronunciation: row[2] || ''
+             };
+             
+             // Update lyrics to mark as generated
+             const updatedLyrics = [...materials.lyrics];
+             updatedLyrics[index] = { ...updatedLyrics[index], isGenerated: true };
+
+             const updatedMaterials = {
+                 ...materials,
+                 lyrics: updatedLyrics,
+                 phrases: [...(materials.phrases || []), newPhrase]
+             };
+             
+             // Update state and cache
+             updateState({ materials: updatedMaterials });
+             const cacheKey = `song_lyrics_${selectedVideo.videoId}`;
+             localStorage.setItem(cacheKey, JSON.stringify(updatedMaterials));
+
+             // Optional: visual feedback or notification
+         }
+      } catch (err) {
+         const error = err as Error;
+         alert("Failed to generate phrase: " + error.message);
+      } finally {
+         setGeneratingIdx(null);
+      }
   };
 
   const handleSaveVocab = (item: { meaning: string; sentence: string; pronunciation: string }) => {
@@ -218,7 +261,7 @@ export function MusicLearnView() {
                             className={`flex-1 py-3 text-sm font-bold border-b-2 ${activeTab === 'vocab' ? 'border-blue-500 text-blue-500' : 'border-transparent text-gray-500'}`}
                             onClick={() => updateState({ activeTab: 'vocab' })}
                         >
-                            Phrases
+                            Phrases ({materials.phrases?.length || 0})
                         </button>
                     </div>
 
@@ -226,9 +269,29 @@ export function MusicLearnView() {
                         {activeTab === 'lyrics' && (
                             <div className="space-y-6">
                                 {materials.lyrics.map((line, idx) => (
-                                    <div key={idx} className="space-y-1">
-                                        <p className="text-lg text-gray-800 dark:text-gray-200 font-medium">{line.original}</p>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">{line.translated}</p>
+                                    <div key={idx} className="flex items-start gap-4 p-2 hover:bg-gray-50 dark:hover:bg-gray-700/30 rounded-lg group">
+                                        <div className="flex-1 space-y-1">
+                                            <p className="text-lg text-gray-800 dark:text-gray-200 font-medium">{line.original}</p>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">{line.translated}</p>
+                                        </div>
+                                        <button 
+                                          onClick={() => handleGenerateCard(line.original, idx)}
+                                          disabled={generatingIdx === idx || line.isGenerated}
+                                          className={`p-2 rounded-full transition-all ${
+                                              line.isGenerated 
+                                                ? 'opacity-100 text-green-500 bg-green-50 dark:bg-green-900/20 cursor-default' 
+                                                : 'opacity-0 group-hover:opacity-100 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                                          }`}
+                                          title={line.isGenerated ? "Card Generated" : "Generate Card"}
+                                        >
+                                          {generatingIdx === idx ? (
+                                              <Loader2 size={20} className="animate-spin" />
+                                          ) : line.isGenerated ? (
+                                              <Check size={20} />
+                                          ) : (
+                                              <Sparkles size={20} />
+                                          )}
+                                        </button>
                                     </div>
                                 ))}
                             </div>
@@ -236,7 +299,7 @@ export function MusicLearnView() {
 
                         {activeTab === 'vocab' && (
                             <div className="space-y-3">
-                                {materials.phrases.map((phrase, idx) => {
+                                {materials.phrases?.length > 0 ? materials.phrases.map((phrase, idx) => {
                                     const saved = isSaved(phrase.meaning, phrase.sentence);
                                     
                                     const tempItem: VocabItem = {
@@ -257,7 +320,12 @@ export function MusicLearnView() {
                                             speak={speak}
                                         />
                                     );
-                                })}
+                                }) : (
+                                  <div className="text-center text-gray-400 mt-10">
+                                    <Sparkles size={32} className="mx-auto mb-2 opacity-50" />
+                                    <p>Go to Lyrics tab and click the sparkle icon to generate phrases!</p>
+                                  </div>
+                                )}
                             </div>
                         )}
                     </div>

@@ -8,7 +8,7 @@ export interface SongData {
 }
 
 export interface SongMaterials {
-  lyrics: { original: string; translated: string }[];
+  lyrics: { original: string; translated: string; isGenerated?: boolean }[];
   phrases: { meaning: string; sentence: string; pronunciation: string }[];
   artist: string;
   title: string;
