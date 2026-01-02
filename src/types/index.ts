@@ -10,7 +10,7 @@ export interface VocabItem {
 }
 
 // Extended Quiz Item to support multiple types
-export type QuizType = 'writing' | 'interpretation' | 'cloze';
+export type QuizType = 'writing' | 'interpretation' | 'cloze' | 'speaking' | 'listening';
 
 export interface QuizItem extends VocabItem {
   type: QuizType;

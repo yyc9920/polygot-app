@@ -3,7 +3,9 @@ import {
   Brain, 
   Filter, 
   Type,
-  X
+  X,
+  Mic,
+  Volume2
 } from 'lucide-react';
 import type { LearningStatus, VocabItem, QuizItem, QuizType } from '../types';
 import { checkAnswer } from '../lib/utils';
@@ -12,6 +14,8 @@ import useLocalStorage from '../hooks/useLocalStorage';
 import { FunButton } from '../components/FunButton';
 import { triggerConfetti } from '../lib/fun-utils';
 import { VocabCard } from '../components/VocabCard';
+
+const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
 // --- Enhanced Quiz View ---
 export function QuizView() {
@@ -24,10 +28,12 @@ export function QuizView() {
   const [input, setInput] = useLocalStorage<string>('quizInput', '');
   const [feedback, setFeedback] = useLocalStorage<'none' | 'correct' | 'incorrect'>('quizFeedback', 'none');
   
+  const [isListening, setIsListening] = useState(false);
+
   // Setup States
   const [mode, setMode] = useLocalStorage<'all' | 'incorrect' | 'tag'>('quizMode', 'all');
   const [selectedTag, setSelectedTag] = useLocalStorage<string>('quizSelectedTag', '');
-  const [quizType, setQuizType] = useLocalStorage<'random' | 'writing' | 'interpretation' | 'cloze'>('quizType', 'writing');
+  const [quizType, setQuizType] = useLocalStorage<'random' | 'writing' | 'interpretation' | 'cloze' | 'speaking' | 'listening'>('quizType', 'writing');
 
   const tags = [...Array.from(new Set(vocabList.flatMap(v => v.tags)))];
 
@@ -100,6 +106,43 @@ export function QuizView() {
     window.speechSynthesis.speak(utterance);
   };
 
+  // Auto-play audio for listening questions
+  React.useEffect(() => {
+    if (isPlaying && quizQueue[currentIndex]?.type === 'listening' && feedback === 'none') {
+      const timer = setTimeout(() => {
+        speak(quizQueue[currentIndex].sentence);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [currentIndex, isPlaying, quizQueue, feedback, voiceURI]);
+
+  const startListening = () => {
+    if (!SpeechRecognition) {
+      alert('Speech recognition is not supported in this browser.');
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US'; 
+    recognition.start();
+    setIsListening(true);
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setInput(transcript);
+      setIsListening(false);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error(event.error);
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+  };
+
   const startQuiz = () => {
     let list = [...vocabList];
 
@@ -124,7 +167,7 @@ export function QuizView() {
       
       // Handle Random Type
       if (type === 'random') {
-        const types: QuizType[] = ['writing', 'interpretation', 'cloze'];
+        const types: QuizType[] = ['writing', 'interpretation', 'cloze', 'speaking', 'listening'];
         type = types[Math.floor(Math.random() * types.length)];
       }
 
@@ -137,6 +180,20 @@ export function QuizView() {
         };
       } else if (type === 'cloze') {
         return createCloze(item);
+      } else if (type === 'speaking') {
+        return {
+          ...item,
+          type: 'speaking',
+          questionText: item.sentence,
+          answerText: item.sentence
+        };
+      } else if (type === 'listening') {
+        return {
+          ...item,
+          type: 'listening',
+          questionText: "🎧 Listen carefully",
+          answerText: item.sentence
+        };
       } else {
         // Default: Writing
         return {
@@ -253,6 +310,8 @@ export function QuizView() {
               { id: 'writing', label: '✍️ Writing' },
               { id: 'interpretation', label: '🗣️ Meaning' },
               { id: 'cloze', label: '🧩 Cloze' },
+              { id: 'speaking', label: '🎤 Speaking' },
+              { id: 'listening', label: '🎧 Listening' },
               { id: 'random', label: '🔀 Random' }
             ].map((t) => (
               <button
@@ -309,7 +368,9 @@ export function QuizView() {
       <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 mb-6 text-center">
         <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
           {currentItem.type === 'interpretation' ? 'Translate to Native' : 
-           currentItem.type === 'cloze' ? 'Fill in the blank' : 'Translate to Target'}
+           currentItem.type === 'cloze' ? 'Fill in the blank' : 
+           currentItem.type === 'speaking' ? 'Read aloud' :
+           currentItem.type === 'listening' ? 'Listen and type' : 'Translate to Target'}
         </span>
         <h3 className="text-xl font-bold mt-4 leading-snug break-keep">
           {currentItem.questionText}
@@ -320,22 +381,57 @@ export function QuizView() {
             {currentItem.hint}
           </p>
         )}
+        {currentItem.type === 'speaking' && (
+            <button 
+                type="button"
+                onClick={() => speak(currentItem.sentence)}
+                className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 rounded-full text-sm font-bold hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+            >
+                <Volume2 size={16} /> Listen
+            </button>
+        )}
       </div>
 
       <form onSubmit={submitAnswer} className="flex flex-col gap-4">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder={currentItem.type === 'cloze' ? "Type the missing word..." : "Type answer..."}
-          className={`w-full p-4 rounded-xl border-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-lg outline-none transition-colors
-            ${feedback === 'none' ? 'border-gray-200 dark:border-gray-700 focus:border-blue-500' : ''}
-            ${feedback === 'correct' ? 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' : ''}
-            ${feedback === 'incorrect' ? 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 animate-shake' : ''}
-          `}
-          readOnly={feedback !== 'none'}
-          autoFocus
-        />
+        <div className="relative">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder={currentItem.type === 'cloze' ? "Type the missing word..." : currentItem.type === 'speaking' ? "Press mic and speak..." : "Type answer..."}
+            className={`w-full p-4 rounded-xl border-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-lg outline-none transition-colors pr-14
+              ${feedback === 'none' ? 'border-gray-200 dark:border-gray-700 focus:border-blue-500' : ''}
+              ${feedback === 'correct' ? 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' : ''}
+              ${feedback === 'incorrect' ? 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 animate-shake' : ''}
+            `}
+            readOnly={feedback !== 'none'}
+            autoFocus
+          />
+          {currentItem.type === 'speaking' && feedback === 'none' && (
+            <button
+              type="button"
+              onClick={startListening}
+              className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full transition-all ${
+                isListening 
+                  ? 'bg-red-500 text-white animate-pulse shadow-md' 
+                  : 'bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-500'
+              }`}
+              title="Speak answer"
+            >
+              <Mic size={20} />
+            </button>
+          )}
+          {currentItem.type === 'listening' && feedback === 'none' && (
+            <button
+              type="button"
+              onClick={() => speak(currentItem.sentence)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-500 transition-all"
+              title="Play audio"
+            >
+              <Volume2 size={20} />
+            </button>
+          )}
+        </div>
 
         {feedback === 'none' ? (
           <FunButton 
