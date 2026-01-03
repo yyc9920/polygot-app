@@ -39,7 +39,7 @@ function AppContent() {
 
       {/* Main Content */}
       <main className="flex-1 overflow-hidden w-full max-w-md mx-auto relative">
-        <div className="absolute inset-0 overflow-y-auto p-4 pb-20">
+        <div className="absolute inset-0 overflow-y-auto p-4 pb-0">
           {currentView === 'learn' && <LearnView />}
           {currentView === 'quiz' && <QuizView />}
           {currentView === 'builder' && <BuilderView />}
