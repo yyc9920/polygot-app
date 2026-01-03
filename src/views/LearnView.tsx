@@ -49,6 +49,87 @@ export function LearnView() {
   const [editingMemoId, setEditingMemoId] = useState<string | null>(null);
   const [editBuffer, setEditBuffer] = useState('');
 
+  // Swipe / Drag Logic
+  const [swipeDiff, setSwipeDiff] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const startX = React.useRef(0);
+  const startTime = React.useRef(0);
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    // Ignore if clicking a button or interactive element inside
+    if ((e.target as HTMLElement).closest('button')) return;
+    
+    setIsDragging(true);
+    startX.current = e.clientX;
+    startTime.current = Date.now();
+    
+    // Capture pointer to handle moves outside the element
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDragging) return;
+    const currentX = e.clientX;
+    const diff = currentX - startX.current;
+    setSwipeDiff(diff);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+
+    const diff = e.clientX - startX.current;
+    const timeElapsed = Date.now() - startTime.current;
+    const threshold = 100; // px to consider a swipe
+    const tapThreshold = 5; // px to consider a tap
+
+    if (Math.abs(diff) > threshold) {
+       // Swipe detected
+       const direction = diff > 0 ? 'right' : 'left';
+       finishSwipe(direction);
+    } else if (Math.abs(diff) < tapThreshold && timeElapsed < 300) {
+       // Tap detected (Flip)
+       if (!isFlipped) speak(displayList[currentIndex].sentence);
+       setIsFlipped(!isFlipped);
+       setSwipeDiff(0);
+    } else {
+       // Reset
+       setSwipeDiff(0);
+    }
+  };
+
+  const finishSwipe = (direction: 'left' | 'right') => {
+      // Animate off screen
+      const endX = direction === 'right' ? 1000 : -1000;
+      setSwipeDiff(endX);
+
+      setTimeout(() => {
+          if (direction === 'right') {
+              handlePrev();
+          } else {
+              handleNext();
+          }
+          // Reset immediately after data change (hidden by the fact it's a new card or same card re-rendered)
+          // We disable animation briefly to reset position
+          setSwipeDiff(0);
+      }, 300); // Wait for transition
+  };
+
+  const getCardStyle = () => {
+      const rotate = swipeDiff / 20;
+      // Opacity should fade as it moves, but stay visible during animation
+      const opacity = Math.max(0, 1 - Math.abs(swipeDiff) / 800);
+      return {
+          transform: `translateX(${swipeDiff}px) rotate(${rotate}deg)`,
+          opacity: opacity,
+          transition: isDragging ? 'none' : 'transform 0.3s ease-out, opacity 0.3s',
+          touchAction: 'none',
+          cursor: isDragging ? 'grabbing' : 'grab',
+          userSelect: 'none' as const
+      };
+  };
+
   // Ref to track current displayList without adding to useEffect deps (avoids infinite loop)
   const displayListRef = React.useRef(displayList);
   useEffect(() => { displayListRef.current = displayList; }, [displayList]);
@@ -566,11 +647,12 @@ export function LearnView() {
           <div className="flex-1 flex flex-col perspective-1000 min-h-0 overflow-y-auto">
             <div className="flex-1 flex flex-col items-center w-full min-h-full">
               <div 
-                className="relative w-full max-w-md cursor-pointer group my-auto"
-                onClick={() => {
-                  if (!isFlipped) speak(displayList[currentIndex].sentence);
-                  setIsFlipped(!isFlipped);
-                }}
+                key={currentIndex}
+                className="relative w-full max-w-md group my-auto select-none"
+                style={getCardStyle()}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
               >
                 <div 
                   className={`w-full transition-transform duration-500 transform-style-3d ${isFlipped ? 'rotate-y-180' : ''} grid grid-cols-1 grid-rows-1`}
