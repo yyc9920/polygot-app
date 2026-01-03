@@ -58,7 +58,7 @@ export const VocabAppProvider: React.FC<{ children: ReactNode }> = ({ children }
     SAMPLE_DATA, 
     (items: VocabItem[]) => items.filter((item, index, self) => index === self.findIndex(t => t.id === item.id))
   );
-  const [status, setStatus] = useLocalStorage<LearningStatus>('learningStatus', { completedIds: [], incorrectIds: [] });
+  const [status, setStatus] = useLocalStorage<LearningStatus>('learningStatus', { completedIds: [], incorrectIds: [], points: 0, quizStats: {} });
   const [voiceURI, setVoiceURI] = useLocalStorage<string | null>('ttsVoiceURI', null);
   const [apiKey, setApiKey] = useLocalStorage<string>('geminiApiKey', '');
   const [youtubeApiKey, setYoutubeApiKey] = useLocalStorage<string>('youtubeApiKey', '');
@@ -170,14 +170,14 @@ export const VocabAppProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const handleReset = () => {
     if (confirm('모든 학습 기록을 초기화하시겠습니까?')) {
-      setStatus({ completedIds: [], incorrectIds: [] });
+      setStatus({ completedIds: [], incorrectIds: [], points: 0, quizStats: {} });
     }
   };
 
   const handleDeleteAllData = () => {
     if (confirm('모든 데이터를 삭제하시겠습니까? (복구 불가)')) {
       setVocabList([]);
-      setStatus({ completedIds: [], incorrectIds: [] });
+      setStatus({ completedIds: [], incorrectIds: [], points: 0, quizStats: {} });
       setSavedUrls([]);
     }
   };

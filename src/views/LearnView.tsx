@@ -670,8 +670,22 @@ function FlipListItem({ item, idx, status, speak, onOpenMemo }: {
           )}
         </p>
         <div className="flex gap-1 mt-1 pl-8 items-center">
-           {status.completedIds.includes(item.id) && <CheckCircle size={14} className="text-green-500" />}
-           {status.incorrectIds.includes(item.id) && <AlertCircle size={14} className="text-red-500" />}
+           {status.completedIds.includes(item.id) && (
+             <div className="relative group/icon">
+               <CheckCircle size={14} className="text-green-500" />
+               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-black/80 text-white text-[10px] rounded whitespace-nowrap opacity-0 group-hover/icon:opacity-100 transition-opacity pointer-events-none z-10">
+                 Passed: {status.quizStats?.[item.id]?.correct.join(', ') || 'N/A'}
+               </div>
+             </div>
+           )}
+           {status.incorrectIds.includes(item.id) && (
+             <div className="relative group/icon">
+               <AlertCircle size={14} className="text-red-500" />
+               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-black/80 text-white text-[10px] rounded whitespace-nowrap opacity-0 group-hover/icon:opacity-100 transition-opacity pointer-events-none z-10">
+                 Failed: {status.quizStats?.[item.id]?.incorrect.join(', ') || 'Review Needed'}
+               </div>
+             </div>
+           )}
            {item.memo && (
                <button 
                 onClick={(e) => { e.stopPropagation(); onOpenMemo?.(); }}

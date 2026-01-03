@@ -13,7 +13,7 @@ export const generateId = (meaning: string, sentence: string): string => {
 export const checkAnswer = (input: string, answer: string): boolean => {
   const normalize = (str: string) => 
     str.toLowerCase()
-       .replace(/[.,?!:;"'(){}\[\]<>~`\-\u3000-\u303F]/g, '') // punctuation
+       .replace(/[.,?!:;"'(){}[\]<>~`\-\u3000-\u303F]/g, '') // punctuation
        .replace(/\s+/g, ''); // spaces
   return normalize(input) === normalize(answer);
 };

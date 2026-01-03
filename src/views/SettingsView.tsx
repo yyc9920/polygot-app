@@ -19,7 +19,8 @@ import {
   Plus,
   Link as LinkIcon,
   ExternalLink,
-  HelpCircle
+  HelpCircle,
+  Trophy
 } from 'lucide-react';
 import { useVocabAppContext } from '../context/VocabContext';
 import { FunButton } from '../components/FunButton';
@@ -279,6 +280,18 @@ export function SettingsView() {
         <p className="text-center text-sm text-gray-400 mt-2">
             {progressFilterTag === 'All' ? `Total Vocabulary: ${filteredTotalCount}` : `Vocabulary in '${progressFilterTag}': ${filteredTotalCount}`}
         </p>
+
+        <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700/50 flex flex-col items-center">
+            <div className="flex items-center gap-3 text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 px-6 py-3 rounded-2xl border border-yellow-200 dark:border-yellow-800 shadow-sm transition-transform hover:scale-105">
+                <div className="bg-yellow-100 dark:bg-yellow-900/40 p-2 rounded-xl">
+                    <Trophy size={24} className="fill-current" />
+                </div>
+                <div className="flex flex-col">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-70 leading-none mb-1">Total Polygot Score</span>
+                    <span className="font-black text-2xl leading-none">{status.points || 0} <span className="text-sm font-bold opacity-60">pts</span></span>
+                </div>
+            </div>
+        </div>
       </section>
 
       {/* 2. Content Sources */}

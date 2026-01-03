@@ -7,8 +7,8 @@ interface VocabCardProps {
   status: LearningStatus;
   side: 'front' | 'back';
   onSpeak?: () => void;
-  onAiExplain?: (e: any) => void;
-  onOpenMemo?: (e: any) => void;
+  onAiExplain?: (e: React.MouseEvent) => void;
+  onOpenMemo?: (e: React.MouseEvent) => void;
   className?: string;
 }
 
@@ -28,11 +28,24 @@ export function VocabCard({
   if (side === 'front') {
     return (
       <div className={`bg-blue-50 dark:bg-gray-800 rounded-3xl shadow-xl border border-blue-100 dark:border-gray-700 flex flex-col p-6 text-center min-h-[200px] relative ${className}`}>
-        <div className="absolute top-4 right-4 flex gap-1">
-          {isCompleted && <CheckCircle className="text-green-500" size={24} />}
-          {isIncorrect && <AlertCircle className="text-red-500" size={24} />}
-        </div>
-        
+              <div className="absolute top-4 right-4 flex gap-1 z-10">
+                {isCompleted && (
+                   <div className="relative group/icon">
+                     <CheckCircle className="text-green-500" size={24} />
+                     <div className="absolute bottom-full right-0 mb-2 px-3 py-1.5 bg-black/80 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover/icon:opacity-100 transition-opacity pointer-events-none shadow-lg">
+                       Passed: {status.quizStats?.[item.id]?.correct.join(', ') || 'N/A'}
+                     </div>
+                   </div>
+                )}
+                {isIncorrect && (
+                   <div className="relative group/icon">
+                     <AlertCircle className="text-red-500" size={24} />
+                     <div className="absolute bottom-full right-0 mb-2 px-3 py-1.5 bg-black/80 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover/icon:opacity-100 transition-opacity pointer-events-none shadow-lg">
+                       Failed: {status.quizStats?.[item.id]?.incorrect.join(', ') || 'Review Needed'}
+                     </div>
+                   </div>
+                )}
+              </div>        
         {showSongInfo && item.song && (
           <div 
              className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center p-6 rounded-3xl z-20 text-white transition-opacity cursor-pointer"
@@ -128,9 +141,23 @@ export function VocabCard({
 
   return (
     <div className={`bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 flex flex-col p-6 text-center min-h-[200px] relative ${className}`}>
-      <div className="absolute top-4 right-4 flex gap-1">
-        {isCompleted && <CheckCircle className="text-green-500" size={24} />}
-        {isIncorrect && <AlertCircle className="text-red-500" size={24} />}
+      <div className="absolute top-4 right-4 flex gap-1 z-10">
+        {isCompleted && (
+           <div className="relative group/icon">
+             <CheckCircle className="text-green-500" size={24} />
+             <div className="absolute bottom-full right-0 mb-2 px-3 py-1.5 bg-black/80 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover/icon:opacity-100 transition-opacity pointer-events-none shadow-lg">
+               Passed: {status.quizStats?.[item.id]?.correct.join(', ') || 'N/A'}
+             </div>
+           </div>
+        )}
+        {isIncorrect && (
+           <div className="relative group/icon">
+             <AlertCircle className="text-red-500" size={24} />
+             <div className="absolute bottom-full right-0 mb-2 px-3 py-1.5 bg-black/80 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover/icon:opacity-100 transition-opacity pointer-events-none shadow-lg">
+               Failed: {status.quizStats?.[item.id]?.incorrect.join(', ') || 'Review Needed'}
+             </div>
+           </div>
+        )}
       </div>
       
       <div className="flex-none mb-4">

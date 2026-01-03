@@ -37,6 +37,8 @@ export interface QuizItem extends VocabItem {
 export interface LearningStatus {
   completedIds: string[];
   incorrectIds: string[];
+  points: number;
+  quizStats?: Record<string, { correct: QuizType[], incorrect: QuizType[] }>;
 }
 
 export type ViewMode = 'learn' | 'quiz' | 'builder' | 'settings' | 'music';
