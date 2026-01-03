@@ -562,56 +562,58 @@ export function LearnView() {
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col items-center perspective-1000 min-h-0 overflow-y-auto">
-            <div 
-              className="relative w-full max-w-md cursor-pointer group my-auto"
-              onClick={() => {
-                if (!isFlipped) speak(displayList[currentIndex].sentence);
-                setIsFlipped(!isFlipped);
-              }}
-            >
+          <div className="flex-1 flex flex-col perspective-1000 min-h-0 overflow-y-auto">
+            <div className="flex-1 flex flex-col items-center w-full min-h-full">
               <div 
-                className={`w-full transition-transform duration-500 transform-style-3d ${isFlipped ? 'rotate-y-180' : ''} grid grid-cols-1 grid-rows-1`}
+                className="relative w-full max-w-md cursor-pointer group my-auto"
+                onClick={() => {
+                  if (!isFlipped) speak(displayList[currentIndex].sentence);
+                  setIsFlipped(!isFlipped);
+                }}
               >
-                {/* Front (Sentence) */}
-                <VocabCard
-                  item={displayList[currentIndex]}
-                  status={status}
-                  side="front"
-                  onSpeak={() => speak(displayList[currentIndex].sentence)}
-                  onAiExplain={handleAiExplain}
-                  onOpenMemo={handleOpenMemo}
-                  className="col-start-1 row-start-1 backface-hidden"
-                />
+                <div 
+                  className={`w-full transition-transform duration-500 transform-style-3d ${isFlipped ? 'rotate-y-180' : ''} grid grid-cols-1 grid-rows-1`}
+                >
+                  {/* Front (Sentence) */}
+                  <VocabCard
+                    item={displayList[currentIndex]}
+                    status={status}
+                    side="front"
+                    onSpeak={() => speak(displayList[currentIndex].sentence)}
+                    onAiExplain={handleAiExplain}
+                    onOpenMemo={handleOpenMemo}
+                    className="col-start-1 row-start-1 backface-hidden"
+                  />
 
-                {/* Back (Meaning) */}
-                <VocabCard
-                  item={displayList[currentIndex]}
-                  status={status}
-                  side="back"
-                  className="col-start-1 row-start-1 backface-hidden rotate-y-180"
-                />
+                  {/* Back (Meaning) */}
+                  <VocabCard
+                    item={displayList[currentIndex]}
+                    status={status}
+                    side="back"
+                    className="col-start-1 row-start-1 backface-hidden rotate-y-180"
+                  />
+                </div>
+              </div>
+
+              <div className="flex-none flex gap-4 mt-4 mb-4 h-14 w-full max-w-md">
+                <FunButton 
+                  type="button"
+                  onClick={handlePrev}
+                  className="flex-1 flex items-center justify-center gap-2"
+                  variant="neutral"
+                >
+                  <ChevronLeft size={20} /> Prev
+                </FunButton>
+                <FunButton 
+                  type="button"
+                  onClick={handleNext}
+                  className="flex-1 flex items-center justify-center gap-2"
+                  variant="primary"
+                >
+                  Next <ChevronRight size={20} />
+                </FunButton>
               </div>
             </div>
-          </div>
-
-          <div className="flex-none flex gap-4 mt-4 h-14">
-            <FunButton 
-              type="button"
-              onClick={handlePrev}
-              className="flex-1 flex items-center justify-center gap-2"
-              variant="neutral"
-            >
-              <ChevronLeft size={20} /> Prev
-            </FunButton>
-            <FunButton 
-              type="button"
-              onClick={handleNext}
-              className="flex-1 flex items-center justify-center gap-2"
-              variant="primary"
-            >
-              Next <ChevronRight size={20} />
-            </FunButton>
           </div>
         </div>
       )}
