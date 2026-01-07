@@ -108,15 +108,13 @@ export function BuilderView() {
     try {
       const prompt = `Act like a function that generates a phrase list with a given situation or context.
 Input: Situation or context: '${aiPrompt}', Number of output data: ${aiCount}.
-Output: Corresponding phrases or sentences with given format.
-Format: CSV in markdown, newline in end of each rows.
-Columns: Meaning,Sentence,Pronunciation,Tags
+Output: List of phrases.
 Contents:
 Meaning: Native language translation (e.g. Korean)
 Sentence: Target language sentence (e.g. Japanese)
 Pronunciation: Pronunciation guide (e.g. Romaji)
-Tags: Tags in Native language (e.g. "일상,비즈니스"). Can be multiple tags separated by comma. If context implies a specific language, add that as a tag (e.g. "일본어").
-    - Tag List(in Native Language):
+Tags: Tags in Native language (e.g. "일상,비즈니스"). If context implies a specific language, add that as a tag (e.g. "일본어").
+    - Suggested Tag List(in Native Language):
       1. 일상
       2. 여행
       3. 식사
@@ -126,24 +124,36 @@ Tags: Tags in Native language (e.g. "일상,비즈니스"). Can be multiple tags
       7. 스포츠
       8. 학습
       9. 감정
-Enclose each data point in double quotation marks("").
-Example:
-"따뜻한 아메리카노 한 잔 주세요","ホットコーヒーを一つください","Hotto kōhī o hitotsu kudasai","카페,주문,일본어"
-Make sure that there isn't format error. Return ONLY the CSV content, no introduction or markdown code blocks.`;
+`;
 
-      const resultText = await callGemini(prompt, apiKey);
-      const csvStr = resultText.replace(/```csv/g, '').replace(/```/g, '').trim();
-      const rows = parseCSV(csvStr);
+      const schema = {
+        type: "ARRAY",
+        items: {
+            type: "OBJECT",
+            properties: {
+                meaning: { type: "STRING" },
+                sentence: { type: "STRING" },
+                pronunciation: { type: "STRING" },
+                tags: { type: "ARRAY", items: { type: "STRING" } }
+            },
+            required: ["meaning", "sentence"]
+        }
+      };
+
+      const resultText = await callGemini(prompt, apiKey, {
+          responseMimeType: "application/json",
+          responseSchema: schema
+      });
+      const rows = JSON.parse(resultText);
       
       const newItems: PhraseItem[] = [];
       for (const row of rows) {
-          if (row.length < 2) continue;
           newItems.push({
-              id: generateId(row[0], row[1]),
-              meaning: row[0],
-              sentence: row[1],
-              pronunciation: row[2] || '',
-              tags: row[3] ? row[3].split(',').map(t => t.trim()) : []
+              id: generateId(row.meaning, row.sentence),
+              meaning: row.meaning,
+              sentence: row.sentence,
+              pronunciation: row.pronunciation || '',
+              tags: row.tags || []
           });
       }
 

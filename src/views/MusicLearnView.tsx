@@ -5,7 +5,7 @@ import { usePhraseAppContext } from '../context/PhraseContext';
 import { searchYouTube, type YouTubeVideo } from '../lib/youtube';
 import { generateSongLyrics, generatePhraseFromLyric } from '../lib/gemini';
 import { FunButton } from '../components/FunButton';
-import { generateId, parseCSV } from '../lib/utils';
+import { generateId } from '../lib/utils';
 import type { SongData, PhraseItem } from '../types';
 
 export function MusicLearnView() {
@@ -111,14 +111,13 @@ export function MusicLearnView() {
       if (!apiKey || !selectedVideo || !materials) return;
       setGeneratingIdx(index);
       try {
-         const csv = await generatePhraseFromLyric(line, selectedVideo.artist, selectedVideo.title, apiKey);
-         const rows = parseCSV(csv);
-         if (rows.length > 0 && rows[0].length >= 2) {
-             const row = rows[0];
+         const phraseData = await generatePhraseFromLyric(line, selectedVideo.artist, selectedVideo.title, apiKey);
+         
+         if (phraseData && phraseData.meaning && phraseData.sentence) {
              const newPhrase = {
-                 meaning: row[0],
-                 sentence: row[1],
-                 pronunciation: row[2] || ''
+                 meaning: phraseData.meaning,
+                 sentence: phraseData.sentence,
+                 pronunciation: phraseData.pronunciation || ''
              };
              
              // Update lyrics to mark as generated

@@ -1,25 +1,28 @@
+export interface GeminiOptions {
+  maxTokens?: number;
+  tools?: unknown[];
+  responseMimeType?: string;
+  responseSchema?: any;
+}
 
-export const callGemini = async (prompt: string, apiKey: string, maxTokens?: number, tools?: unknown[]) => {
+export const callGemini = async (prompt: string, apiKey: string, options: GeminiOptions = {}) => {
   if (!apiKey) throw new Error("API Key is missing. Please set it in Settings.");
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
   
-  const body: {
-    contents: { parts: { text: string }[] }[];
-    generationConfig?: { maxOutputTokens: number };
-    tools?: unknown[];
-  } = {
+  const body: any = {
     contents: [{ parts: [{ text: prompt }] }]
   };
 
-  if (maxTokens) {
-    body.generationConfig = {
-      maxOutputTokens: maxTokens
-    };
+  if (options.maxTokens || options.responseMimeType || options.responseSchema) {
+    body.generationConfig = {};
+    if (options.maxTokens) body.generationConfig.maxOutputTokens = options.maxTokens;
+    if (options.responseMimeType) body.generationConfig.responseMimeType = options.responseMimeType;
+    if (options.responseSchema) body.generationConfig.responseSchema = options.responseSchema;
   }
 
-  if (tools) {
-    body.tools = tools;
+  if (options.tools) {
+    body.tools = options.tools;
   }
 
   const response = await fetch(url, {
@@ -44,39 +47,45 @@ export const generateSongLyrics = async (artist: string, title: string, apiKey: 
   
   IMPORTANT: Please Search for the official lyrics of this song to ensure accuracy.
   
-  Output MUST be valid JSON with this exact schema:
-  {
-    "lyrics": [
-       { "original": "line 1", "translated": "Korean translation 1" },
-       { "original": "line 2", "translated": "Korean translation 2" }
-    ],
-    "artist": "${artist}",
-    "title": "${title}"
-  }
-  
+  Output MUST be valid JSON conforming to the schema.
   Provide the full lyrics. The 'translated' field MUST be in Korean.
-  Do not include markdown formatting (like \`\`\`json). Return raw JSON.
   `;
   
-  const parseResponse = (text: string) => {
-      const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-      try {
-          const parsed = JSON.parse(cleanText);
-          return { ...parsed, phrases: [] }; // Return empty phrases initially
-      } catch (err) {
-          console.error("Failed to parse Gemini JSON:", cleanText, err);
-          throw new Error("AI response was not valid JSON. Please try again.");
-      }
+  const schema = {
+    type: "OBJECT",
+    properties: {
+      lyrics: {
+        type: "ARRAY",
+        items: {
+          type: "OBJECT",
+          properties: {
+            original: { type: "STRING" },
+            translated: { type: "STRING" }
+          },
+          required: ["original", "translated"]
+        }
+      },
+      artist: { type: "STRING" },
+      title: { type: "STRING" }
+    },
+    required: ["lyrics", "artist", "title"]
   };
 
   try {
       // Try with Google Search grounding for accuracy
-      const text = await callGemini(prompt, apiKey, undefined, [{ google_search: {} }]);
-      return parseResponse(text);
+      const text = await callGemini(prompt, apiKey, { 
+          tools: [{ google_search: {} }],
+          responseMimeType: "application/json",
+          responseSchema: schema
+      });
+      return JSON.parse(text);
   } catch (err) {
       console.warn("Gemini with search failed or not supported, falling back to basic generation.", err);
-      const text = await callGemini(prompt, apiKey);
-      return parseResponse(text);
+      const text = await callGemini(prompt, apiKey, {
+          responseMimeType: "application/json",
+          responseSchema: schema
+      });
+      return JSON.parse(text);
   }
 };
 
@@ -84,21 +93,29 @@ export const generatePhraseFromLyric = async (lyric: string, artist: string, tit
   const prompt = `Act like a function that generates a vocabulary list.
 Context: The lyric line "${lyric}" from the song "${title}" by "${artist}".
 Task: Generate 1 vocabulary item or phrase card based on this lyric.
-Output: Corresponding vocabulary or phrases with given format.
-Format: CSV in markdown.
-Columns: Meaning,Sentence,Pronunciation,Tags
-Contents:
+Output: Corresponding vocabulary or phrases.
+Format: JSON object with meaning, sentence, pronunciation, tags.
 Meaning: Korean translation of the phrase/sentence
 Sentence: The original lyric line or key phrase from it
 Pronunciation: Pronunciation guide (e.g. Romaji for Japanese, Pinyin for Chinese, or Phonetic for English)
 Tags: "music" and any other relevant tags (e.g. "expression", "love", etc.)
-Enclose each data point in double quotation marks("").
-Example:
-"따뜻한 아메리카노 한 잔 주세요","ホットコーヒーを一つください","Hotto kōhī o hitotsu kudasai","music,cafe"
-Return ONLY the CSV content, no introduction or markdown code blocks.`;
+`;
 
-  const resultText = await callGemini(prompt, apiKey);
-  const csvStr = resultText.replace(/```csv/g, '').replace(/```/g, '').trim();
+  const schema = {
+    type: "OBJECT",
+    properties: {
+      meaning: { type: "STRING" },
+      sentence: { type: "STRING" },
+      pronunciation: { type: "STRING" },
+      tags: { type: "ARRAY", items: { type: "STRING" } }
+    },
+    required: ["meaning", "sentence"]
+  };
+
+  const text = await callGemini(prompt, apiKey, {
+      responseMimeType: "application/json",
+      responseSchema: schema
+  });
   
-  return csvStr;
+  return JSON.parse(text);
 };
