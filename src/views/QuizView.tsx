@@ -10,20 +10,20 @@ import {
   Trophy,
   Star
 } from 'lucide-react';
-import type { LearningStatus, VocabItem, QuizItem, QuizType } from '../types';
+import type { LearningStatus, PhraseItem, QuizItem, QuizType } from '../types';
 import { checkAnswer } from '../lib/utils';
-import { useVocabAppContext } from '../context/VocabContext';
+import { usePhraseAppContext } from '../context/PhraseContext';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { FunButton } from '../components/FunButton';
 import { triggerConfetti } from '../lib/fun-utils';
-import { VocabCard } from '../components/VocabCard';
+import { PhraseCard } from '../components/PhraseCard';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
 // --- Enhanced Quiz View ---
 export function QuizView() {
-  const { vocabList, status, setStatus, voiceURI } = useVocabAppContext();
+  const { phraseList, status, setStatus, voiceURI } = usePhraseAppContext();
 
   const [isFlipped, setIsFlipped] = useState(false);
   const [isPlaying, setIsPlaying] = useLocalStorage<boolean>('quizIsPlaying', false);
@@ -43,7 +43,7 @@ export function QuizView() {
   const [quizLevel, setQuizLevel] = useLocalStorage<'custom' | 'basic' | 'advanced' | 'legend'>('quizLevel', 'custom');
   const [quizType, setQuizType] = useLocalStorage<'random' | 'writing' | 'interpretation' | 'cloze' | 'speaking' | 'listening'>('quizType', 'writing');
 
-  const tags = [...Array.from(new Set(vocabList.flatMap(v => v.tags)))];
+  const tags = [...Array.from(new Set(phraseList.flatMap(v => v.tags)))];
 
   const POINT_SYSTEM: Record<Exclude<QuizType, 'random'>, number> = {
     cloze: 1,
@@ -61,7 +61,7 @@ export function QuizView() {
 
 
   // Helper to create Cloze item
-  const createCloze = (item: VocabItem): QuizItem => {
+  const createCloze = (item: PhraseItem): QuizItem => {
     const sentence = item.sentence.trim();
     // Check if space-separated
     const hasSpaces = sentence.includes(' ');
@@ -168,7 +168,7 @@ export function QuizView() {
     };
   };
 
-  const createQuizItem = (item: VocabItem, type: QuizType | 'random'): QuizItem => {
+  const createQuizItem = (item: PhraseItem, type: QuizType | 'random'): QuizItem => {
     // Handle Random Type
     if (type === 'random') {
       const types: QuizType[] = ['writing', 'interpretation', 'cloze', 'speaking', 'listening'];
@@ -210,7 +210,7 @@ export function QuizView() {
   };
 
   const startQuiz = () => {
-    let list = [...vocabList];
+    let list = [...phraseList];
 
     // 1. Filter by Scope
     if (mode === 'incorrect') {
@@ -653,14 +653,14 @@ export function QuizView() {
                 <div 
                   className={`w-full transition-transform duration-500 transform-style-3d ${isFlipped ? 'rotate-y-180' : ''} grid grid-cols-1 grid-rows-1`}
                 >
-                  <VocabCard 
+                  <PhraseCard 
                     item={currentItem}
                     status={status}
                     side="front"
                     onSpeak={() => speak(currentItem.sentence)}
                     className="col-start-1 row-start-1 backface-hidden shadow-none border-none bg-white/50 dark:bg-gray-800/50 min-h-0 py-4"
                   />
-                  <VocabCard 
+                  <PhraseCard 
                     item={currentItem}
                     status={status}
                     side="back"

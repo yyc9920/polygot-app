@@ -22,7 +22,7 @@ import {
   HelpCircle,
   Trophy
 } from 'lucide-react';
-import { useVocabAppContext } from '../context/VocabContext';
+import { usePhraseAppContext } from '../context/PhraseContext';
 import { FunButton } from '../components/FunButton';
 
 export function SettingsView() {
@@ -37,14 +37,14 @@ export function SettingsView() {
     setApiKey,
     youtubeApiKey,
     setYoutubeApiKey,
-    vocabList,
-    setVocabList,
+    phraseList,
+    setPhraseList,
     savedUrls,
     setSavedUrls,
     setReviewMode,
     setCurrentView,
     syncUrl
-  } = useVocabAppContext();
+  } = usePhraseAppContext();
 
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [showApiKey, setShowApiKey] = useState(false);
@@ -105,7 +105,7 @@ export function SettingsView() {
 
   const handleAutoDetectVoice = () => {
     // Collect all tags
-    const allTags = new Set(vocabList.flatMap(v => v.tags.map(t => t.toLowerCase())));
+    const allTags = new Set(phraseList.flatMap(v => v.tags.map(t => t.toLowerCase())));
     
     // Heuristics mapping
     const langMap: Record<string, string> = {
@@ -146,7 +146,7 @@ export function SettingsView() {
       const data = {
           version: 1,
           timestamp: new Date().toISOString(),
-          vocabList,
+          phraseList,
           status,
           voiceURI,
           apiKey,
@@ -178,10 +178,11 @@ export function SettingsView() {
               const text = evt.target?.result as string;
               const data = JSON.parse(text);
               
-              // Basic validation
-              if (!data.vocabList || !Array.isArray(data.vocabList)) throw new Error("Invalid format: missing vocabList");
+              // Basic validation - check for phraseList OR vocabList (migration)
+              const list = data.phraseList || data.vocabList;
+              if (!list || !Array.isArray(list)) throw new Error("Invalid format: missing phraseList/vocabList");
 
-              setVocabList(data.vocabList);
+              setPhraseList(list);
               if (data.status) setStatus(data.status);
               if (data.voiceURI) setVoiceURI(data.voiceURI);
               if (data.apiKey) setApiKey(data.apiKey);
@@ -205,11 +206,11 @@ export function SettingsView() {
   );
 
   // Filtered Stats
-  const allTags = ['All', ...Array.from(new Set(vocabList.flatMap(v => v.tags)))];
+  const allTags = ['All', ...Array.from(new Set(phraseList.flatMap(v => v.tags)))];
   
   const filteredList = progressFilterTag === 'All' 
-    ? vocabList 
-    : vocabList.filter(v => v.tags.includes(progressFilterTag));
+    ? phraseList 
+    : phraseList.filter(v => v.tags.includes(progressFilterTag));
     
   const filteredTotalCount = filteredList.length;
   const filteredCompleted = filteredList.filter(v => status.completedIds.includes(v.id)).length;
@@ -278,7 +279,7 @@ export function SettingsView() {
         </FunButton>
 
         <p className="text-center text-sm text-gray-400 mt-2">
-            {progressFilterTag === 'All' ? `Total Vocabulary: ${filteredTotalCount}` : `Vocabulary in '${progressFilterTag}': ${filteredTotalCount}`}
+            {progressFilterTag === 'All' ? `Total Phrases: ${filteredTotalCount}` : `Phrases in '${progressFilterTag}': ${filteredTotalCount}`}
         </p>
 
         <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700/50 flex flex-col items-center">

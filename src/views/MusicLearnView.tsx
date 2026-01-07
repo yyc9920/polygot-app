@@ -1,23 +1,23 @@
 import React, { useState } from 'react';
 import YouTube from 'react-youtube';
 import { Search, Music, Plus, Check, Volume2, Loader2, Sparkles } from 'lucide-react';
-import { useVocabAppContext } from '../context/VocabContext';
+import { usePhraseAppContext } from '../context/PhraseContext';
 import { searchYouTube, type YouTubeVideo } from '../lib/youtube';
 import { generateSongLyrics, generatePhraseFromLyric } from '../lib/gemini';
 import { FunButton } from '../components/FunButton';
 import { generateId, parseCSV } from '../lib/utils';
-import type { SongData, VocabItem } from '../types';
+import type { SongData, PhraseItem } from '../types';
 
 export function MusicLearnView() {
   const { 
     apiKey, 
     youtubeApiKey, 
-    setVocabList, 
-    vocabList, 
+    setPhraseList, 
+    phraseList, 
     voiceURI,
     musicState,
     setMusicState
-  } = useVocabAppContext();
+  } = usePhraseAppContext();
   
   const { 
       query, 
@@ -44,7 +44,7 @@ export function MusicLearnView() {
   // Helper to check if a word is already saved
   const isSaved = (meaning: string, sentence: string) => {
     const id = generateId(meaning, sentence);
-    return vocabList.some(v => v.id === id);
+    return phraseList.some(v => v.id === id);
   };
 
   const updateState = (updates: Partial<typeof musicState>) => {
@@ -146,7 +146,7 @@ export function MusicLearnView() {
       }
   };
 
-  const handleSaveVocab = (item: { meaning: string; sentence: string; pronunciation: string }) => {
+  const handleSavePhrase = (item: { meaning: string; sentence: string; pronunciation: string }) => {
       if (!selectedVideo) return;
 
       const songData: SongData = {
@@ -156,7 +156,7 @@ export function MusicLearnView() {
           thumbnailUrl: selectedVideo.thumbnailUrl
       };
 
-      const newItem: VocabItem = {
+      const newItem: PhraseItem = {
           id: generateId(item.meaning, item.sentence),
           meaning: item.meaning,
           sentence: item.sentence,
@@ -166,7 +166,7 @@ export function MusicLearnView() {
           song: songData
       };
 
-      setVocabList(prev => {
+      setPhraseList(prev => {
           if (prev.some(v => v.id === newItem.id)) return prev;
           return [...prev, newItem];
       });
@@ -258,8 +258,8 @@ export function MusicLearnView() {
                             Lyrics
                         </button>
                         <button 
-                            className={`flex-1 py-3 text-sm font-bold border-b-2 ${activeTab === 'vocab' ? 'border-blue-500 text-blue-500' : 'border-transparent text-gray-500'}`}
-                            onClick={() => updateState({ activeTab: 'vocab' })}
+                            className={`flex-1 py-3 text-sm font-bold border-b-2 ${activeTab === 'phrase' ? 'border-blue-500 text-blue-500' : 'border-transparent text-gray-500'}`}
+                            onClick={() => updateState({ activeTab: 'phrase' })}
                         >
                             Phrases ({materials.phrases?.length || 0})
                         </button>
@@ -297,12 +297,12 @@ export function MusicLearnView() {
                             </div>
                         )}
 
-                        {activeTab === 'vocab' && (
+                        {activeTab === 'phrase' && (
                             <div className="space-y-3">
                                 {materials.phrases?.length > 0 ? materials.phrases.map((phrase, idx) => {
                                     const saved = isSaved(phrase.meaning, phrase.sentence);
                                     
-                                    const tempItem: VocabItem = {
+                                    const tempItem: PhraseItem = {
                                         id: `temp-${idx}`,
                                         meaning: phrase.meaning,
                                         sentence: phrase.sentence,
@@ -316,7 +316,7 @@ export function MusicLearnView() {
                                             item={tempItem}
                                             idx={idx}
                                             saved={saved}
-                                            onSave={() => handleSaveVocab(phrase)}
+                                            onSave={() => handleSavePhrase(phrase)}
                                             speak={speak}
                                         />
                                     );
@@ -342,7 +342,7 @@ export function MusicLearnView() {
 }
 
 function FlipListItem({ item, idx, saved, onSave, speak }: { 
-    item: VocabItem, 
+    item: PhraseItem, 
     idx: number, 
     saved: boolean,
     onSave: () => void,

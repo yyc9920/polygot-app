@@ -14,7 +14,7 @@ export interface SongMaterials {
   title: string;
 }
 
-export interface VocabItem {
+export interface PhraseItem {
   id: string;
   meaning: string;
   sentence: string;
@@ -27,7 +27,7 @@ export interface VocabItem {
 // Extended Quiz Item to support multiple types
 export type QuizType = 'writing' | 'interpretation' | 'cloze' | 'speaking' | 'listening';
 
-export interface QuizItem extends VocabItem {
+export interface QuizItem extends PhraseItem {
   type: QuizType;
   questionText: string; // The text shown to user
   answerText: string;   // The expected answer

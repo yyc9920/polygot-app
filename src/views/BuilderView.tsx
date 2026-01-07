@@ -12,15 +12,15 @@ import {
   Pencil,
   FileText
 } from 'lucide-react';
-import type { VocabItem } from '../types';
+import type { PhraseItem } from '../types';
 import { callGemini } from '../lib/gemini';
 import { generateId, parseCSV } from '../lib/utils';
-import { useVocabAppContext } from '../context/VocabContext';
+import { usePhraseAppContext } from '../context/PhraseContext';
 import { ConfirmationModal } from '../components/ConfirmationModal';
 import { FunButton } from '../components/FunButton';
 
 export function BuilderView() {
-  const { vocabList, setVocabList, apiKey } = useVocabAppContext();
+  const { phraseList, setPhraseList, apiKey } = usePhraseAppContext();
 
   const [activeTab, setActiveTab] = useState<'manual' | 'ai'>('ai'); 
   const [form, setForm] = useState({ meaning: '', sentence: '', pronunciation: '', tags: '' });
@@ -35,13 +35,13 @@ export function BuilderView() {
   const [csvEditorContent, setCsvEditorContent] = useState('');
 
   // Edit Modal State
-  const [editingItem, setEditingItem] = useState<VocabItem | null>(null);
+  const [editingItem, setEditingItem] = useState<PhraseItem | null>(null);
   const [editForm, setEditForm] = useState({ meaning: '', sentence: '', pronunciation: '', tags: '' });
   
   // Confirmation Modal State
-  const [generatedItems, setGeneratedItems] = useState<VocabItem[] | null>(null);
+  const [generatedItems, setGeneratedItems] = useState<PhraseItem[] | null>(null);
 
-  const startEditing = (item: VocabItem) => {
+  const startEditing = (item: PhraseItem) => {
       setEditingItem(item);
       setEditForm({
           meaning: item.meaning,
@@ -58,7 +58,7 @@ export function BuilderView() {
           return;
       }
 
-      setVocabList((prev: VocabItem[]) => prev.map(item => {
+      setPhraseList((prev: PhraseItem[]) => prev.map(item => {
           if (item.id === editingItem.id) {
               return {
                   ...item,
@@ -80,14 +80,14 @@ export function BuilderView() {
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.meaning || !form.sentence) return;
-    const newItem: VocabItem = {
+    const newItem: PhraseItem = {
       id: generateId(form.meaning, form.sentence),
       meaning: form.meaning,
       sentence: form.sentence,
       pronunciation: form.pronunciation,
       tags: form.tags.split(',').map(t => t.trim()).filter(Boolean)
     };
-    setVocabList((prev: VocabItem[]) => {
+    setPhraseList((prev: PhraseItem[]) => {
         if (prev.some(v => v.id === newItem.id)) {
             alert(`"${form.meaning}" is already in your list!`);
             return prev;
@@ -106,9 +106,9 @@ export function BuilderView() {
     if (!aiPrompt) return;
     setIsGenerating(true);
     try {
-      const prompt = `Act like a function that generates a vocabulary list with a given situation or context.
+      const prompt = `Act like a function that generates a phrase list with a given situation or context.
 Input: Situation or context: '${aiPrompt}', Number of output data: ${aiCount}.
-Output: Corresponding vocabulary or phrases with given format.
+Output: Corresponding phrases or sentences with given format.
 Format: CSV in markdown, newline in end of each rows.
 Columns: Meaning,Sentence,Pronunciation,Tags
 Contents:
@@ -135,7 +135,7 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
       const csvStr = resultText.replace(/```csv/g, '').replace(/```/g, '').trim();
       const rows = parseCSV(csvStr);
       
-      const newItems: VocabItem[] = [];
+      const newItems: PhraseItem[] = [];
       for (const row of rows) {
           if (row.length < 2) continue;
           newItems.push({
@@ -162,7 +162,7 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
 
   const confirmGeneratedItems = () => {
       if (!generatedItems) return;
-      setVocabList((prev: VocabItem[]) => {
+      setPhraseList((prev: PhraseItem[]) => {
           const existingIds = new Set(prev.map(p => p.id));
           const uniqueNew = generatedItems.filter(item => !existingIds.has(item.id));
           if (uniqueNew.length === 0) {
@@ -179,7 +179,7 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
     if (!cleanText) { alert("파일 내용이 비어있습니다."); return; }
     const rows = parseCSV(cleanText);
     const startIdx = rows.length > 0 && rows[0].some(cell => cell.toLowerCase().includes('meaning')) ? 1 : 0;
-    const newItems: VocabItem[] = [];
+    const newItems: PhraseItem[] = [];
     for (let i = startIdx; i < rows.length; i++) {
       const row = rows[i];
       if (row.length < 2) continue;
@@ -193,10 +193,10 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
       });
     }
     if (newItems.length > 0) {
-      setVocabList((prev: VocabItem[]) => {
+      setPhraseList((prev: PhraseItem[]) => {
          const existingIds = new Set(prev.map(p => p.id));
          const uniqueNew = newItems.filter(item => !existingIds.has(item.id));
-         const reallyUnique: VocabItem[] = [];
+         const reallyUnique: PhraseItem[] = [];
          const seenInBatch = new Set();
          for(const item of uniqueNew) {
            if(!seenInBatch.has(item.id)) {
@@ -208,7 +208,7 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
            alert("All imported items were duplicates!");
            return prev;
          }
-         alert(`성공! ${reallyUnique.length}개의 새로운 단어가 추가되었습니다.`);
+         alert(`성공! ${reallyUnique.length}개의 새로운 표현이 추가되었습니다.`);
          return [...prev, ...reallyUnique];
       });
     } else {
@@ -218,7 +218,7 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
 
   const handleEditCsv = () => {
     const header = ['Meaning', 'Sentence', 'Pronunciation', 'Tags'];
-    const rows = vocabList.map(v => [
+    const rows = phraseList.map(v => [
       `"${v.meaning}"`, 
       `"${v.sentence}"`, 
       `"${v.pronunciation || ''}"`, 
@@ -233,7 +233,7 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
     const cleanText = csvEditorContent.replace(/^\uFEFF/, '').trim();
     if (!cleanText) {
         if(confirm("Content is empty. This will clear your list. Continue?")) {
-            setVocabList([]);
+            setPhraseList([]);
             setShowCsvEditor(false);
         }
         return;
@@ -242,7 +242,7 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
     try {
         const rows = parseCSV(cleanText);
         const startIdx = rows.length > 0 && rows[0].some(cell => cell.toLowerCase().includes('meaning')) ? 1 : 0;
-        const newItems: VocabItem[] = [];
+        const newItems: PhraseItem[] = [];
         
         for (let i = startIdx; i < rows.length; i++) {
           const row = rows[i];
@@ -264,7 +264,7 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
             return;
         }
 
-        setVocabList(newItems);
+        setPhraseList(newItems);
         setShowCsvEditor(false);
         alert(`Saved ${newItems.length} items.`);
     } catch (e) {
@@ -282,7 +282,7 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
 
   const exportCSV = () => {
     const header = ['Meaning', 'Sentence', 'Pronunciation', 'Tags'];
-    const rows = vocabList.map(v => [
+    const rows = phraseList.map(v => [
       `"${v.meaning}"`, 
       `"${v.sentence}"`, 
       `"${v.pronunciation || ''}"`, 
@@ -293,7 +293,7 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `vocab_export_${new Date().toISOString().slice(0,10)}.csv`;
+    link.download = `phrase_export_${new Date().toISOString().slice(0,10)}.csv`;
     link.click();
   };
 
@@ -307,7 +307,7 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
     }
 
     if (confirm(`Are you sure you want to delete items containing tags: "${tagsToDelete.join(', ')}"?`)) {
-      setVocabList((prev: VocabItem[]) => {
+      setPhraseList((prev: PhraseItem[]) => {
         const initialLength = prev.length;
         const filtered = prev.filter(item => !item.tags.some(tag => tagsToDelete.includes(tag)));
         
@@ -395,7 +395,7 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
         {/* Fixed Header */}
         <div className="flex-none p-4 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 z-10">
           <h3 className="text-sm font-bold text-gray-400 uppercase flex justify-between items-center">
-            <span>Stored Items ({vocabList.length})</span>
+            <span>Stored Items ({phraseList.length})</span>
             <button onClick={() => setShowDeleteInput(!showDeleteInput)} className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded">
               <Tag size={12} /> {showDeleteInput ? 'Cancel' : 'Delete by Tag'}
             </button>
@@ -419,7 +419,7 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          {vocabList.slice().reverse().map((item) => (
+          {phraseList.slice().reverse().map((item) => (
             <div 
                 key={item.id} 
                 onClick={() => startEditing(item)}
@@ -439,7 +439,7 @@ Make sure that there isn't format error. Return ONLY the CSV content, no introdu
                     <Pencil size={16} />
                 </button>
                 <button 
-                    onClick={(e) => { e.stopPropagation(); setVocabList((prev: VocabItem[]) => prev.filter(v => v.id !== item.id)); }}
+                    onClick={(e) => { e.stopPropagation(); setPhraseList((prev: PhraseItem[]) => prev.filter(v => v.id !== item.id)); }}
                     className="text-gray-400 hover:text-red-500 p-1" 
                     type="button"
                 >

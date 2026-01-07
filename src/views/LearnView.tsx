@@ -20,22 +20,22 @@ import {
   AlertCircle,
   Pencil
 } from 'lucide-react';
-import type { LearningStatus, VocabItem } from '../types';
+import type { LearningStatus, PhraseItem } from '../types';
 import { callGemini } from '../lib/gemini';
-import { useVocabAppContext } from '../context/VocabContext';
+import { usePhraseAppContext } from '../context/PhraseContext';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { FunButton } from '../components/FunButton';
-import { VocabCard } from '../components/VocabCard';
+import { PhraseCard } from '../components/PhraseCard';
 
 // --- Learn View ---
 export function LearnView() {
-  const { vocabList, setVocabList, voiceURI, status, apiKey, reviewMode, setReviewMode } = useVocabAppContext();
+  const { phraseList, setPhraseList, voiceURI, status, apiKey, reviewMode, setReviewMode } = usePhraseAppContext();
 
   const [viewMode, setViewMode] = useLocalStorage<'card' | 'list'>('learnViewMode', 'card');
   const [currentIndex, setCurrentIndex] = useLocalStorage<number>('learnCurrentIndex', 0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isShuffled, setIsShuffled] = useLocalStorage<boolean>('learnIsShuffled', false);
-  const [displayList, setDisplayList] = useState<VocabItem[]>(vocabList);
+  const [displayList, setDisplayList] = useState<PhraseItem[]>(phraseList);
   const [selectedTags, setSelectedTags] = useLocalStorage<string[]>('learnSelectedTags', []);
   const [searchTerm, setSearchTerm] = useLocalStorage<string>('learnSearchTerm', '');
   const [aiExplanation, setAiExplanation] = useState<string>('');
@@ -50,7 +50,7 @@ export function LearnView() {
   const [editBuffer, setEditBuffer] = useState('');
 
   // Item Edit State
-  const [editingItem, setEditingItem] = useState<VocabItem | null>(null);
+  const [editingItem, setEditingItem] = useState<PhraseItem | null>(null);
   const [editForm, setEditForm] = useState({ meaning: '', sentence: '', pronunciation: '', tags: '' });
 
   // Swipe / Drag Logic
@@ -139,10 +139,10 @@ export function LearnView() {
   useEffect(() => { displayListRef.current = displayList; }, [displayList]);
 
   // Extract all unique tags
-  const allTags = Array.from(new Set(vocabList.flatMap(v => v.tags)));
+  const allTags = Array.from(new Set(phraseList.flatMap(v => v.tags)));
 
   useEffect(() => {
-    let list = vocabList;
+    let list = phraseList;
 
     // 0. Review Mode Filter
     if (reviewMode) {
@@ -211,7 +211,7 @@ export function LearnView() {
       // Otherwise (same item ID), keep the UI state (modal open, card flipped, etc.)
     }
     
-  }, [vocabList, selectedTags, isShuffled, searchTerm, reviewMode, status.incorrectIds]);
+  }, [phraseList, selectedTags, isShuffled, searchTerm, reviewMode, status.incorrectIds]);
 
 
   const speak = (text: string) => {
@@ -250,7 +250,7 @@ export function LearnView() {
   };
 
   const saveEdit = (id: string) => {
-      setVocabList(prev => prev.map(item => 
+      setPhraseList(prev => prev.map(item => 
           item.id === id ? { ...item, memo: editBuffer } : item
       ));
       setEditingMemoId(null);
@@ -262,7 +262,7 @@ export function LearnView() {
       setEditBuffer('');
   };
 
-  const startItemEditing = (item: VocabItem) => {
+  const startItemEditing = (item: PhraseItem) => {
       setEditingItem(item);
       setEditForm({
           meaning: item.meaning,
@@ -279,7 +279,7 @@ export function LearnView() {
           return;
       }
 
-      setVocabList((prev: VocabItem[]) => prev.map(item => {
+      setPhraseList((prev: PhraseItem[]) => prev.map(item => {
           if (item.id === editingItem.id) {
               return {
                   ...item,
@@ -333,7 +333,7 @@ export function LearnView() {
         Brief breakdown...
         ### 💡 뉘앙스 (Nuance)
         Contextual usage...
-        ### 📖 단어 (Vocabulary)
+        ### 📖 표현 (Phrase)
         Key words...
 
       Keep the total response concise.
@@ -361,7 +361,7 @@ export function LearnView() {
   const handleSaveMemo = () => {
       if (!aiExplanation) return;
       const currentItem = displayList[currentIndex];
-      setVocabList(prev => prev.map(item => 
+      setPhraseList(prev => prev.map(item => 
           item.id === currentItem.id ? { ...item, memo: aiExplanation } : item
       ));
       alert("Memo saved!");
@@ -376,7 +376,7 @@ export function LearnView() {
   };
 
   // Memo List Filter
-  const memoList = vocabList.filter(v => v.memo);
+  const memoList = phraseList.filter(v => v.memo);
 
   if (displayList.length === 0) {
       if (reviewMode) {
@@ -607,7 +607,7 @@ export function LearnView() {
                                <button 
                                  onClick={() => {
                                      // Delete memo
-                                     setVocabList(prev => prev.map(v => v.id === item.id ? { ...v, memo: undefined } : v));
+                                     setPhraseList(prev => prev.map(v => v.id === item.id ? { ...v, memo: undefined } : v));
                                  }}
                                  className="absolute top-2 right-2 text-gray-300 hover:text-red-400"
                                >
@@ -698,7 +698,7 @@ export function LearnView() {
                   className={`w-full transition-transform duration-500 transform-style-3d ${isFlipped ? 'rotate-y-180' : ''} grid grid-cols-1 grid-rows-1`}
                 >
                   {/* Front (Sentence) */}
-                  <VocabCard
+                  <PhraseCard
                     item={displayList[currentIndex]}
                     status={status}
                     side="front"
@@ -710,7 +710,7 @@ export function LearnView() {
                   />
 
                   {/* Back (Meaning) */}
-                  <VocabCard
+                  <PhraseCard
                     item={displayList[currentIndex]}
                     status={status}
                     side="back"
@@ -820,7 +820,7 @@ export function LearnView() {
 }
 
 function FlipListItem({ item, idx, status, speak, onOpenMemo }: { 
-    item: VocabItem, 
+    item: PhraseItem, 
     idx: number, 
     status: LearningStatus, 
     speak: (t:string)=>void,

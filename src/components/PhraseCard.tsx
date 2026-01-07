@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { CheckCircle, AlertCircle, Volume2, BookOpen, MessageCircleQuestion, Music, Pencil } from 'lucide-react';
-import type { VocabItem, LearningStatus } from '../types';
+import type { PhraseItem, LearningStatus } from '../types';
 
-interface VocabCardProps {
-  item: VocabItem;
+interface PhraseCardProps {
+  item: PhraseItem;
   status: LearningStatus;
   side: 'front' | 'back';
   onSpeak?: () => void;
@@ -13,7 +13,7 @@ interface VocabCardProps {
   className?: string;
 }
 
-export function VocabCard({ 
+export function PhraseCard({ 
   item, 
   status, 
   side, 
@@ -22,7 +22,7 @@ export function VocabCard({
   onOpenMemo,
   onEdit,
   className = ""
-}: VocabCardProps) {
+}: PhraseCardProps) {
   const [showSongInfo, setShowSongInfo] = useState(false);
   const isCompleted = status.completedIds.includes(item.id);
   const isIncorrect = status.incorrectIds.includes(item.id);

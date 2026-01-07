@@ -1,8 +1,8 @@
 
-import type { VocabItem } from "../types";
+import type { PhraseItem } from "../types";
 import { generateId } from "../lib/utils";
 
-export const SAMPLE_DATA: VocabItem[] = [
+export const SAMPLE_DATA: PhraseItem[] = [
   { id: generateId("안녕하세요", "こんにちは"), meaning: "안녕하세요", sentence: "こんにちは", pronunciation: "Konnichiwa", tags: ["Greeting", "Japanese"] },
   { id: generateId("감사합니다", "Obrigado"), meaning: "감사합니다", sentence: "Obrigado", pronunciation: "Obrigado", tags: ["Greeting", "Portuguese"] },
   { id: generateId("이 노래는 시티팝입니다", "この歌はシティポップです"), meaning: "이 노래는 시티팝입니다", sentence: "この歌はシティポップです", pronunciation: "Kono uta wa City Pop desu", tags: ["Music", "Japanese"] },

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, type ReactNode, type Dispatch, type SetStateAction } from 'react';
-import type { LearningStatus, VocabItem, ViewMode, SongMaterials } from '../types';
+import type { LearningStatus, PhraseItem, ViewMode, SongMaterials } from '../types';
 import { SAMPLE_DATA } from '../constants';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { parseCSV, generateId } from '../lib/utils';
@@ -12,7 +12,7 @@ export interface MusicViewState {
   materials: SongMaterials | null;
   isLoading: boolean;
   isSearching: boolean;
-  activeTab: 'lyrics' | 'vocab';
+  activeTab: 'lyrics' | 'phrase';
 }
 
 const initialMusicState: MusicViewState = {
@@ -25,9 +25,9 @@ const initialMusicState: MusicViewState = {
   activeTab: 'lyrics',
 };
 
-interface VocabAppContextType {
-  vocabList: VocabItem[];
-  setVocabList: Dispatch<SetStateAction<VocabItem[]>>;
+interface PhraseAppContextType {
+  phraseList: PhraseItem[];
+  setPhraseList: Dispatch<SetStateAction<PhraseItem[]>>;
   status: LearningStatus;
   setStatus: Dispatch<SetStateAction<LearningStatus>>;
   voiceURI: string | null;
@@ -50,13 +50,14 @@ interface VocabAppContextType {
   totalCount: number;
 }
 
-const VocabAppContext = createContext<VocabAppContextType | undefined>(undefined);
+const PhraseContext = createContext<PhraseAppContextType | undefined>(undefined);
 
-export const VocabAppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [vocabList, setVocabList] = useLocalStorage<VocabItem[]>(
-    'vocabList', 
+export const PhraseAppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  // Migration logic could be added here if we wanted to preserve 'vocabList' data into 'phraseList'
+  const [phraseList, setPhraseList] = useLocalStorage<PhraseItem[]>(
+    'phraseList', 
     SAMPLE_DATA, 
-    (items: VocabItem[]) => items.filter((item, index, self) => index === self.findIndex(t => t.id === item.id))
+    (items: PhraseItem[]) => items.filter((item, index, self) => index === self.findIndex(t => t.id === item.id))
   );
   const [status, setStatus] = useLocalStorage<LearningStatus>('learningStatus', { completedIds: [], incorrectIds: [], points: 0, quizStats: {} });
   const [voiceURI, setVoiceURI] = useLocalStorage<string | null>('ttsVoiceURI', null);
@@ -77,7 +78,7 @@ export const VocabAppProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   }, []);
 
-  const fetchFromUrl = async (url: string): Promise<VocabItem[]> => {
+  const fetchFromUrl = async (url: string): Promise<PhraseItem[]> => {
       try {
           const fetchUrl = new URL(url);
           fetchUrl.searchParams.append('_t', String(Date.now())); // Cache busting
@@ -91,7 +92,7 @@ export const VocabAppProvider: React.FC<{ children: ReactNode }> = ({ children }
           const rows = parseCSV(cleanText);
           const startIdx = rows.length > 0 && rows[0].some(cell => cell.toLowerCase().includes('meaning')) ? 1 : 0;
           
-          const items: VocabItem[] = [];
+          const items: PhraseItem[] = [];
           for (let i = startIdx; i < rows.length; i++) {
               const row = rows[i];
               if (row.length < 2) continue;
@@ -111,10 +112,10 @@ export const VocabAppProvider: React.FC<{ children: ReactNode }> = ({ children }
       }
   };
 
-  const mergeVocabList = (newItems: VocabItem[]) => {
+  const mergePhraseList = (newItems: PhraseItem[]) => {
       if (newItems.length === 0) return;
       
-      setVocabList((prev: VocabItem[]) => {
+      setPhraseList((prev: PhraseItem[]) => {
           const itemMap = new Map(prev.map(item => [item.id, item]));
           let updatedCount = 0;
           let addedCount = 0;
@@ -146,7 +147,7 @@ export const VocabAppProvider: React.FC<{ children: ReactNode }> = ({ children }
   const syncUrl = async (url: string) => {
       const items = await fetchFromUrl(url);
       if (items.length > 0) {
-          mergeVocabList(items);
+          mergePhraseList(items);
           alert(`Successfully synced ${items.length} items from URL.`);
       } else {
           alert('No items found or failed to fetch from URL.');
@@ -162,11 +163,11 @@ export const VocabAppProvider: React.FC<{ children: ReactNode }> = ({ children }
       const results = await Promise.all(promises);
       const allNewItems = results.flat();
       
-      mergeVocabList(allNewItems);
+      mergePhraseList(allNewItems);
     };
 
     fetchAll();
-  }, [savedUrls, setVocabList]);
+  }, [savedUrls, setPhraseList]);
 
   const handleReset = () => {
     if (confirm('모든 학습 기록을 초기화하시겠습니까?')) {
@@ -176,17 +177,17 @@ export const VocabAppProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const handleDeleteAllData = () => {
     if (confirm('모든 데이터를 삭제하시겠습니까? (복구 불가)')) {
-      setVocabList([]);
+      setPhraseList([]);
       setStatus({ completedIds: [], incorrectIds: [], points: 0, quizStats: {} });
       setSavedUrls([]);
     }
   };
 
-  const totalCount = vocabList.length;
+  const totalCount = phraseList.length;
 
   const value = {
-    vocabList,
-    setVocabList,
+    phraseList,
+    setPhraseList,
     status,
     setStatus,
     voiceURI,
@@ -209,13 +210,13 @@ export const VocabAppProvider: React.FC<{ children: ReactNode }> = ({ children }
     totalCount,
   };
 
-  return <VocabAppContext.Provider value={value}>{children}</VocabAppContext.Provider>;
+  return <PhraseContext.Provider value={value}>{children}</PhraseContext.Provider>;
 };
 
-export const useVocabAppContext = () => {
-  const context = useContext(VocabAppContext);
+export const usePhraseAppContext = () => {
+  const context = useContext(PhraseContext);
   if (context === undefined) {
-    throw new Error('useVocabAppContext must be used within a VocabAppProvider');
+    throw new Error('usePhraseAppContext must be used within a PhraseAppProvider');
   }
   return context;
 };

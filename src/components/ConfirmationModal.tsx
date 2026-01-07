@@ -1,16 +1,16 @@
 import { Sparkles, X, Check, Trash2, Tag } from 'lucide-react';
-import type { VocabItem } from '../types';
+import type { PhraseItem } from '../types';
 import { generateId } from '../lib/utils';
 
 interface ConfirmationModalProps {
-  items: VocabItem[];
+  items: PhraseItem[];
   onConfirm: () => void;
   onCancel: () => void;
-  onUpdate: (items: VocabItem[]) => void;
+  onUpdate: (items: PhraseItem[]) => void;
 }
 
 export function ConfirmationModal({ items, onConfirm, onCancel, onUpdate }: ConfirmationModalProps) {
-  const handleChange = (index: number, field: keyof VocabItem, value: string) => {
+  const handleChange = (index: number, field: keyof PhraseItem, value: string) => {
       const newItems = [...items];
       let updatedValue: any = value;
 

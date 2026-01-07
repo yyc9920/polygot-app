@@ -77,14 +77,14 @@ The project follows a clean, feature-based architecture:
 ```
 src/
 ├── components/   # Reusable UI components (Modals, Buttons)
-├── context/      # Global state (VocabContext)
+├── context/      # Global state (PhraseContext)
 ├── hooks/        # Custom hooks (useLocalStorage, useTheme)
 ├── lib/          # AI logic and utilities
 ├── views/        # Main page layouts (Builder, Learn, Quiz)
 └── types/        # TypeScript interfaces
 ```
 
-### State Management (`src/context/VocabContext.tsx`)
+### State Management (`src/context/PhraseContext.tsx`)
 
 The app uses a central Context to manage the list of words and user interactions. Data persistence is handled via a custom `useLocalStorage` hook, ensuring data survives page reloads without a backend database.
 

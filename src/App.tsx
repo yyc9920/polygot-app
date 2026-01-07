@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { GlobalStyles, NavButton } from './components/ui';
 import useTheme from './hooks/useTheme';
-import { VocabAppProvider, useVocabAppContext } from './context/VocabContext';
+import { PhraseAppProvider, usePhraseAppContext } from './context/PhraseContext';
 import { LearnView } from './views/LearnView';
 import { QuizView } from './views/QuizView';
 import { BuilderView } from './views/BuilderView';
@@ -18,7 +18,7 @@ import { SettingsView } from './views/SettingsView';
 import { MusicLearnView } from './views/MusicLearnView';
 
 function AppContent() {
-  const { currentView, setCurrentView } = useVocabAppContext();
+  const { currentView, setCurrentView } = usePhraseAppContext();
   const { darkMode, toggleTheme } = useTheme();
 
   return (
@@ -91,8 +91,8 @@ function AppContent() {
 
 export default function App() {
   return (
-    <VocabAppProvider>
+    <PhraseAppProvider>
       <AppContent />
-    </VocabAppProvider>
+    </PhraseAppProvider>
   );
 }
