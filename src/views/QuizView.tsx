@@ -548,12 +548,12 @@ export function QuizView() {
            currentItem.type === 'speaking' ? 'Read aloud' :
            currentItem.type === 'listening' ? 'Listen and type' : 'Translate to Target'}
         </span>
-        <h3 className="text-xl font-bold mt-4 leading-snug break-keep">
+        <h3 className="text-xl font-bold mt-4 leading-snug break-words">
           {currentItem.questionText}
         </h3>
         {/* For Cloze, show the hinted sentence */}
         {currentItem.type === 'cloze' && (
-          <p className="mt-4 text-blue-600 dark:text-blue-300 font-mono text-lg p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+          <p className="mt-4 text-blue-600 dark:text-blue-300 font-mono text-lg p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg break-words">
             {currentItem.hint}
           </p>
         )}
@@ -624,8 +624,8 @@ export function QuizView() {
                 ? 'bg-green-50 dark:bg-green-900/10 border-green-500 shadow-lg shadow-green-100 dark:shadow-none' 
                 : 'bg-red-50 dark:bg-red-900/10 border-red-500 shadow-lg shadow-red-100 dark:shadow-none'
             }`}>
-              <div className="flex justify-between items-center px-2">
-                <span className={`text-xs font-black uppercase px-2.5 py-1 rounded-full ${
+              <div className="flex justify-between items-center px-2 gap-4">
+                <span className={`shrink-0 text-xs font-black uppercase px-2.5 py-1 rounded-full ${
                   feedback === 'correct' 
                     ? 'bg-green-500 text-white' 
                     : 'bg-red-500 text-white'
@@ -637,7 +637,7 @@ export function QuizView() {
                   ) : '📚 Learning'}
                 </span>
                 {feedback === 'incorrect' && (
-                  <span className="text-xs font-bold text-red-500/80 uppercase tracking-wider">
+                  <span className="text-xs font-bold text-red-500/80 uppercase tracking-wider break-words text-right">
                     Correct: {currentItem.answerText}
                   </span>
                 )}
