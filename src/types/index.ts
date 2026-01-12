@@ -1,5 +1,3 @@
-
-// Main vocabulary item structure
 export interface SongData {
   videoId: string;
   title: string;
@@ -22,16 +20,16 @@ export interface PhraseItem {
   tags: string[];
   memo?: string;
   song?: SongData;
+  packageId?: string;
 }
 
-// Extended Quiz Item to support multiple types
 export type QuizType = 'writing' | 'interpretation' | 'cloze' | 'speaking' | 'listening';
 
 export interface QuizItem extends PhraseItem {
   type: QuizType;
-  questionText: string; // The text shown to user
-  answerText: string;   // The expected answer
-  hint?: string;        // Additional hint (e.g. masked sentence for cloze)
+  questionText: string;
+  answerText: string;
+  hint?: string;
 }
 
 export interface LearningStatus {

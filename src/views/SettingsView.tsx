@@ -29,16 +29,17 @@ import { useAuth } from '../context/AuthContext';
 import { FunButton } from '../components/FunButton';
 import { LoginModal } from '../components/LoginModal';
 import useLanguage from '../hooks/useLanguage';
+import { StarterPackageSelection } from '../components/StarterPackageSelection';
 
 export function SettingsView() {
-  const {
-    voiceURI,
-    setVoiceURI,
-    handleReset,
-    handleDeleteAllData,
-    status,
+  const { 
+    voiceURI, 
+    setVoiceURI, 
+    handleReset, 
+    handleDeleteAllData, 
+    status, 
     setStatus,
-    apiKey,
+    apiKey, 
     setApiKey,
     youtubeApiKey,
     setYoutubeApiKey,
@@ -59,7 +60,7 @@ export function SettingsView() {
   const [showApiKey, setShowApiKey] = useState(false);
   const [showYoutubeApiKey, setShowYoutubeApiKey] = useState(false);
   const [voiceFilter, setVoiceFilter] = useState('');
-
+  
   // Progress Filter
   const [progressFilterTag, setProgressFilterTag] = useState('All');
   
@@ -292,6 +293,11 @@ export function SettingsView() {
                 </FunButton>
             </div>
         )}
+      </section>
+
+      {/* 1.5 Starter Packages */}
+      <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <StarterPackageSelection />
       </section>
 
       {/* 1. Learning Progress Dashboard */}

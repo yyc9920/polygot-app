@@ -5,6 +5,7 @@ import useCloudStorage from '../hooks/useCloudStorage';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { parseCSV, generateId } from '../lib/utils';
 import type { YouTubeVideo } from '../lib/youtube';
+import { PHRASE_DICTIONARY, type LanguageCode } from '../data/phraseDictionary';
 
 export interface MusicViewState {
   query: string;
@@ -45,6 +46,8 @@ interface PhraseAppContextType {
   setReviewMode: Dispatch<SetStateAction<boolean>>;
   musicState: MusicViewState;
   setMusicState: Dispatch<SetStateAction<MusicViewState>>;
+  purchasedPackages: string[];
+  addStarterPackage: (targetLang: LanguageCode, sourceLang?: LanguageCode) => void;
   handleReset: () => void;
   handleDeleteAllData: () => void;
   syncUrl: (url: string) => Promise<void>;
@@ -64,6 +67,7 @@ export const PhraseAppProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [status, setStatus] = useCloudStorage<LearningStatus>('learningStatus', { completedIds: [], incorrectIds: [], points: 0, quizStats: {} });
   
   const [savedUrls, setSavedUrls] = useCloudStorage<string[]>('csvSourceUrls', []);
+  const [purchasedPackages, setPurchasedPackages] = useCloudStorage<string[]>('purchasedPackages', []);
 
   // Use Local Storage for Device-Specific Settings (API Keys, Voices, etc)
   const [voiceURI, setVoiceURI] = useLocalStorage<string | null>('ttsVoiceURI', null);
@@ -159,6 +163,32 @@ export const PhraseAppProvider: React.FC<{ children: ReactNode }> = ({ children 
       }
   };
 
+  const addStarterPackage = (targetLang: LanguageCode, sourceLang: LanguageCode = 'en') => {
+    const packageId = `starter_${targetLang}`;
+    if (purchasedPackages.includes(packageId)) {
+      alert('Package already purchased!');
+      return;
+    }
+
+    const newItems: PhraseItem[] = PHRASE_DICTIONARY.map(entry => {
+      const source = entry.translations[sourceLang] || entry.translations['en'];
+      const target = entry.translations[targetLang];
+      
+      return {
+        id: generateId(source.text, target.text),
+        meaning: source.text,
+        sentence: target.text,
+        pronunciation: target.pron || '',
+        tags: [...entry.tags, 'Starter'],
+        packageId: packageId
+      };
+    });
+
+    mergePhraseList(newItems);
+    setPurchasedPackages(prev => [...prev, packageId]);
+    alert(`Successfully added Starter Package for ${targetLang}!`);
+  };
+
   // Auto-fetch data from savedUrls on mount/change
   useEffect(() => {
     const fetchAll = async () => {
@@ -185,6 +215,7 @@ export const PhraseAppProvider: React.FC<{ children: ReactNode }> = ({ children 
       setPhraseList([]);
       setStatus({ completedIds: [], incorrectIds: [], points: 0, quizStats: {} });
       setSavedUrls([]);
+      setPurchasedPackages([]);
     }
   };
 
@@ -209,6 +240,8 @@ export const PhraseAppProvider: React.FC<{ children: ReactNode }> = ({ children 
     setReviewMode,
     musicState,
     setMusicState,
+    purchasedPackages,
+    addStarterPackage,
     handleReset,
     handleDeleteAllData,
     syncUrl,
