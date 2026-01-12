@@ -26,8 +26,8 @@ import { usePhraseAppContext } from '../context/PhraseContext';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { FunButton } from '../components/FunButton';
 import { PhraseCard } from '../components/PhraseCard';
+import { EditPhraseModal } from '../components/EditPhraseModal';
 
-// --- Learn View ---
 export function LearnView() {
   const { phraseList, setPhraseList, voiceURI, status, apiKey, reviewMode, setReviewMode } = usePhraseAppContext();
 
@@ -44,30 +44,24 @@ export function LearnView() {
   const [showMemoList, setShowMemoList] = useState(false);
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
   
-  // Editing states
   const [isAiEditing, setIsAiEditing] = useState(false);
   const [editingMemoId, setEditingMemoId] = useState<string | null>(null);
   const [editBuffer, setEditBuffer] = useState('');
 
-  // Item Edit State
   const [editingItem, setEditingItem] = useState<PhraseItem | null>(null);
-  const [editForm, setEditForm] = useState({ meaning: '', sentence: '', pronunciation: '', tags: '' });
 
-  // Swipe / Drag Logic
   const [swipeDiff, setSwipeDiff] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const startX = React.useRef(0);
   const startTime = React.useRef(0);
 
   const handlePointerDown = (e: React.PointerEvent) => {
-    // Ignore if clicking a button or interactive element inside
     if ((e.target as HTMLElement).closest('button')) return;
     
     setIsDragging(true);
     startX.current = e.clientX;
     startTime.current = Date.now();
     
-    // Capture pointer to handle moves outside the element
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
   };
 
@@ -85,26 +79,22 @@ export function LearnView() {
 
     const diff = e.clientX - startX.current;
     const timeElapsed = Date.now() - startTime.current;
-    const threshold = 100; // px to consider a swipe
-    const tapThreshold = 5; // px to consider a tap
+    const threshold = 100;
+    const tapThreshold = 5;
 
     if (Math.abs(diff) > threshold) {
-       // Swipe detected
        const direction = diff > 0 ? 'right' : 'left';
        finishSwipe(direction);
     } else if (Math.abs(diff) < tapThreshold && timeElapsed < 300) {
-       // Tap detected (Flip)
        if (!isFlipped) speak(displayList[currentIndex].sentence);
        setIsFlipped(!isFlipped);
        setSwipeDiff(0);
     } else {
-       // Reset
        setSwipeDiff(0);
     }
   };
 
   const finishSwipe = (direction: 'left' | 'right') => {
-      // Animate off screen
       const endX = direction === 'right' ? 1000 : -1000;
       setSwipeDiff(endX);
 
@@ -114,15 +104,12 @@ export function LearnView() {
           } else {
               handleNext();
           }
-          // Reset immediately after data change (hidden by the fact it's a new card or same card re-rendered)
-          // We disable animation briefly to reset position
           setSwipeDiff(0);
-      }, 300); // Wait for transition
+      }, 300);
   };
 
   const getCardStyle = () => {
       const rotate = swipeDiff / 20;
-      // Opacity should fade as it moves, but stay visible during animation
       const opacity = Math.max(0, 1 - Math.abs(swipeDiff) / 800);
       return {
           transform: `translateX(${swipeDiff}px) rotate(${rotate}deg)`,
@@ -134,28 +121,22 @@ export function LearnView() {
       };
   };
 
-  // Ref to track current displayList without adding to useEffect deps (avoids infinite loop)
   const displayListRef = React.useRef(displayList);
   useEffect(() => { displayListRef.current = displayList; }, [displayList]);
 
-  // Extract all unique tags
   const allTags = Array.from(new Set(phraseList.flatMap(v => v.tags)));
 
   useEffect(() => {
     let list = phraseList;
 
-    // 0. Review Mode Filter
     if (reviewMode) {
         list = list.filter(v => status.incorrectIds.includes(v.id));
     }
     
-    // 1. Filter by Tags (Multiple)
     if (selectedTags.length > 0) {
-      // Show items that have AT LEAST ONE of the selected tags
       list = list.filter(v => v.tags.some(tag => selectedTags.includes(tag)));
     }
 
-    // 2. Filter by Search Term
     if (searchTerm) {
         const lowerTerm = searchTerm.toLowerCase();
         list = list.filter(v => 
@@ -165,33 +146,25 @@ export function LearnView() {
         );
     }
 
-    // 3. Shuffle logic (Stable update)
     if (isShuffled) {
       const currentList = displayListRef.current;
       const currentIds = new Set(currentList.map(v => v.id));
       const newIds = new Set(list.map(v => v.id));
 
-      // Check if the set of items is effectively the same (ignoring updates to content like memo)
       const isSameSet = currentIds.size === newIds.size && list.every(v => currentIds.has(v.id));
 
       if (isSameSet && currentList.length > 0) {
-        // Preserve the current shuffled order, but update the item data
         const itemMap = new Map(list.map(v => [v.id, v]));
         list = currentList.map(v => itemMap.get(v.id)!);
       } else {
-        // New set of items -> Re-shuffle
         list = [...list].sort(() => Math.random() - 0.5);
       }
     }
 
     setDisplayList(list);
 
-    // 4. Handle UI State Reset
-    // Only reset UI if the *current item* has changed ID or index is invalid
-    // This allows updating data (like adding a memo) without closing the modal or flipping the card
     const prevItem = displayListRef.current[currentIndex];
     
-    // Check if index needs reset
     if (currentIndex >= list.length) {
       setCurrentIndex(0);
       setIsFlipped(false);
@@ -200,7 +173,6 @@ export function LearnView() {
       setIsAiEditing(false);
     } else {
       const newItem = list[currentIndex];
-      // If the item ID at the current index changed, reset the view
       if (!prevItem || newItem.id !== prevItem.id) {
          setIsFlipped(false);
          setAiExplanation('');
@@ -208,7 +180,6 @@ export function LearnView() {
          setIsAiEditing(false);
          setEditingMemoId(null);
       }
-      // Otherwise (same item ID), keep the UI state (modal open, card flipped, etc.)
     }
     
   }, [phraseList, selectedTags, isShuffled, searchTerm, reviewMode, status.incorrectIds]);
@@ -262,39 +233,13 @@ export function LearnView() {
       setEditBuffer('');
   };
 
-  const startItemEditing = (item: PhraseItem) => {
-      setEditingItem(item);
-      setEditForm({
-          meaning: item.meaning,
-          sentence: item.sentence,
-          pronunciation: item.pronunciation || '',
-          tags: item.tags.join(', ')
-      });
-  };
-
-  const saveItemEditing = () => {
-      if (!editingItem) return;
-      if (!editForm.meaning || !editForm.sentence) {
-          alert("Meaning and Sentence are required.");
-          return;
-      }
-
+  const handleSaveEdit = (updatedItem: PhraseItem) => {
       setPhraseList((prev: PhraseItem[]) => prev.map(item => {
-          if (item.id === editingItem.id) {
-              return {
-                  ...item,
-                  meaning: editForm.meaning,
-                  sentence: editForm.sentence,
-                  pronunciation: editForm.pronunciation,
-                  tags: editForm.tags.split(',').map(t => t.trim()).filter(Boolean)
-              };
+          if (item.id === updatedItem.id) {
+              return updatedItem;
           }
           return item;
       }));
-      setEditingItem(null);
-  };
-
-  const cancelItemEditing = () => {
       setEditingItem(null);
   };
 
@@ -375,7 +320,6 @@ export function LearnView() {
       }
   };
 
-  // Memo List Filter
   const memoList = phraseList.filter(v => v.memo);
 
   if (displayList.length === 0) {
@@ -401,7 +345,6 @@ export function LearnView() {
 
   return (
     <div className="flex flex-col h-full gap-4 relative">
-      {/* Review Mode Banner */}
       {reviewMode && (
           <div className="flex-none bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-2 rounded-xl text-sm font-bold flex items-center justify-between">
               <span className="flex items-center gap-2"><AlertCircle size={16}/> Review Session Active</span>
@@ -409,12 +352,9 @@ export function LearnView() {
           </div>
       )}
 
-      {/* Unified Controls Container */}
       <div className="flex-none flex flex-col gap-3 bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 z-10">
         
-        {/* Row 1: Search and Tools */}
         <div className="flex items-center gap-2 w-full">
-            {/* Search Bar (Flexible width) */}
             <div className="flex-1 relative min-w-0">
                 <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input 
@@ -434,7 +374,6 @@ export function LearnView() {
                 )}
             </div>
             
-            {/* Right: Toggles */}
             <div className="flex gap-1 flex-none">
             <button 
                 onClick={() => setIsShuffled(!isShuffled)}
@@ -474,7 +413,6 @@ export function LearnView() {
             </div>
         </div>
 
-        {/* Row 2: Tag Filters */}
         <div className="flex items-center gap-2 w-full">
             <div className="relative flex-none z-20">
                 <button 
@@ -491,7 +429,6 @@ export function LearnView() {
                     <ChevronDown size={14} className={`transition-transform ${isTagDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
                 
-                {/* Tag Dropdown Overlay */}
                 {isTagDropdownOpen && (
                     <>
                         <div 
@@ -515,7 +452,6 @@ export function LearnView() {
                 )}
             </div>
 
-            {/* Selected Tags Chips */}
             <div className="flex-1 overflow-x-auto flex items-center gap-2 scrollbar-hide">
                 {selectedTags.length > 0 ? (
                     selectedTags.map(tag => (
@@ -536,7 +472,6 @@ export function LearnView() {
         </div>
       </div>
 
-      {/* Empty Search Result State */}
       {displayList.length === 0 && searchTerm && (
           <div className="flex flex-col items-center justify-center flex-1 text-gray-400">
               <Search size={48} className="mb-2 opacity-20" />
@@ -544,7 +479,6 @@ export function LearnView() {
           </div>
       )}
 
-      {/* Memo List Overlay */}
       {showMemoList && (
           <div className="absolute inset-0 z-50 bg-white dark:bg-gray-900 overflow-hidden flex flex-col animate-in fade-in slide-in-from-bottom-4">
               <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
@@ -606,7 +540,6 @@ export function LearnView() {
 
                                <button 
                                  onClick={() => {
-                                     // Delete memo
                                      setPhraseList(prev => prev.map(v => v.id === item.id ? { ...v, memo: undefined } : v));
                                  }}
                                  className="absolute top-2 right-2 text-gray-300 hover:text-red-400"
@@ -620,7 +553,6 @@ export function LearnView() {
           </div>
       )}
 
-      {/* AI Explanation Modal */}
       {showAiModal && (
         <div className="absolute inset-x-0 top-16 z-20 mx-4 p-4 bg-white/95 dark:bg-gray-800/95 backdrop-blur shadow-2xl rounded-2xl border border-blue-100 dark:border-gray-700 animate-in fade-in slide-in-from-bottom-4 max-h-[80vh] overflow-y-auto">
           <div className="flex justify-between items-start mb-2">
@@ -669,7 +601,6 @@ export function LearnView() {
         </div>
       )}
 
-      {/* Card View - Dynamic Height */}
       {viewMode === 'card' && displayList.length > 0 && (
         <div className="flex-1 flex flex-col min-h-0">
           <div className="flex-none mb-2">
@@ -697,7 +628,6 @@ export function LearnView() {
                 <div 
                   className={`w-full transition-transform duration-500 transform-style-3d ${isFlipped ? 'rotate-y-180' : ''} grid grid-cols-1 grid-rows-1`}
                 >
-                  {/* Front (Sentence) */}
                   <PhraseCard
                     item={displayList[currentIndex]}
                     status={status}
@@ -705,11 +635,10 @@ export function LearnView() {
                     onSpeak={() => speak(displayList[currentIndex].sentence)}
                     onAiExplain={handleAiExplain}
                     onOpenMemo={handleOpenMemo}
-                    onEdit={() => startItemEditing(displayList[currentIndex])}
+                    onEdit={() => setEditingItem(displayList[currentIndex])}
                     className="col-start-1 row-start-1 backface-hidden"
                   />
 
-                  {/* Back (Meaning) */}
                   <PhraseCard
                     item={displayList[currentIndex]}
                     status={status}
@@ -764,57 +693,11 @@ export function LearnView() {
         </div>
       )}
 
-      {/* Edit Modal */}
-      {editingItem && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-100 dark:border-gray-700">
-                  <div className="flex justify-between items-center p-4 border-b border-gray-100 dark:border-gray-700">
-                      <h3 className="font-bold text-lg">Edit Item</h3>
-                      <button onClick={cancelItemEditing} className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"><X size={20}/></button>
-                  </div>
-                  <div className="p-4 flex flex-col gap-4">
-                      <div>
-                          <label className="text-xs font-bold text-gray-500 mb-1 block">Meaning</label>
-                          <input 
-                              className="w-full p-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700" 
-                              value={editForm.meaning} 
-                              onChange={e => setEditForm({...editForm, meaning: e.target.value})} 
-                          />
-                      </div>
-                      <div>
-                          <label className="text-xs font-bold text-gray-500 mb-1 block">Sentence</label>
-                          <input 
-                              className="w-full p-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700" 
-                              value={editForm.sentence} 
-                              onChange={e => setEditForm({...editForm, sentence: e.target.value})} 
-                          />
-                      </div>
-                      <div>
-                          <label className="text-xs font-bold text-gray-500 mb-1 block">Pronunciation</label>
-                          <input 
-                              className="w-full p-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700" 
-                              value={editForm.pronunciation} 
-                              onChange={e => setEditForm({...editForm, pronunciation: e.target.value})} 
-                          />
-                      </div>
-                      <div>
-                          <label className="text-xs font-bold text-gray-500 mb-1 block">Tags (comma separated)</label>
-                          <input 
-                              className="w-full p-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700" 
-                              value={editForm.tags} 
-                              onChange={e => setEditForm({...editForm, tags: e.target.value})} 
-                          />
-                      </div>
-                  </div>
-                  <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-end gap-2">
-                      <button onClick={cancelItemEditing} className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg">Cancel</button>
-                      <FunButton onClick={saveItemEditing} variant="primary" className="flex items-center gap-2">
-                          <Save size={16} /> Save Changes
-                      </FunButton>
-                  </div>
-              </div>
-          </div>
-      )}
+      <EditPhraseModal 
+        item={editingItem} 
+        onSave={handleSaveEdit} 
+        onCancel={() => setEditingItem(null)} 
+      />
     </div>
   );
 }
