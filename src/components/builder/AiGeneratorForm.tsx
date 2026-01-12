@@ -5,6 +5,7 @@ import { callGemini } from '../../lib/gemini';
 import { generateId } from '../../lib/utils';
 import { usePhraseAppContext } from '../../context/PhraseContext';
 import type { PhraseItem } from '../../types';
+import useLanguage from '../../hooks/useLanguage';
 
 interface AiGeneratorFormProps {
   onGenerate: (items: PhraseItem[]) => void;
@@ -12,6 +13,7 @@ interface AiGeneratorFormProps {
 
 export function AiGeneratorForm({ onGenerate }: AiGeneratorFormProps) {
   const { apiKey } = usePhraseAppContext();
+  const { t } = useLanguage();
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiCount, setAiCount] = useState(5);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -19,7 +21,7 @@ export function AiGeneratorForm({ onGenerate }: AiGeneratorFormProps) {
   const handleAiGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!apiKey) {
-      alert("Please enter your Gemini API Key in Settings first.");
+      alert(t('learn.pleaseEnterApiKey'));
       return;
     }
     if (!aiPrompt) return;
@@ -80,10 +82,10 @@ Tags: Tags in Native language (e.g. "일상,비즈니스"). If context implies a
          onGenerate(newItems);
          setAiPrompt('');
       } else {
-        alert("Failed to parse generated content. Please try again.");
+        alert(t('builder.failedToParse'));
       }
     } catch (err: any) {
-      alert(`AI Generation Failed: ${err.message}`);
+      alert(t('builder.aiGenerationFailed').replace('{{message}}', err.message));
     } finally {
       setIsGenerating(false);
     }
@@ -93,13 +95,13 @@ Tags: Tags in Native language (e.g. "일상,비즈니스"). If context implies a
     <div className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-gray-800 dark:to-gray-800 p-6 rounded-2xl shadow-sm border border-blue-100 dark:border-gray-700">
       <div className="flex items-center gap-2 mb-4">
         <Sparkles className="text-blue-500" />
-        <h3 className="font-bold text-lg">AI Phrase/Sentence Generator</h3>
+        <h3 className="font-bold text-lg">{t('builder.aiPhraseGenerator')}</h3>
       </div>
       <form onSubmit={handleAiGenerate} className="flex flex-col gap-3">
          <div className="flex gap-2">
            <input 
              className="flex-1 p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none" 
-             placeholder="e.g. Travel in Japan" 
+             placeholder={t('builder.aiPromptPlaceholder')}
              value={aiPrompt} 
              onChange={(e) => setAiPrompt(e.target.value)} 
              required 
@@ -114,7 +116,7 @@ Tags: Tags in Native language (e.g. "일상,비즈니스"). If context implies a
            />
          </div>
          <FunButton type="submit" disabled={isGenerating} fullWidth variant="primary" className="flex items-center justify-center gap-2">
-            {isGenerating ? <Loader2 className="animate-spin" /> : <Sparkles size={18} />} Generate Phrases
+            {isGenerating ? <Loader2 className="animate-spin" /> : <Sparkles size={18} />} {t('builder.generatePhrases')}
          </FunButton>
       </form>
     </div>

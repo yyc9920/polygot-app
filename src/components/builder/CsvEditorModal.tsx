@@ -3,6 +3,7 @@ import { FileText, X, Save } from 'lucide-react';
 import { FunButton } from '../FunButton';
 import { parseCSV, generateId } from '../../lib/utils';
 import type { PhraseItem } from '../../types';
+import useLanguage from '../../hooks/useLanguage';
 
 interface CsvEditorModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface CsvEditorModalProps {
 }
 
 export function CsvEditorModal({ isOpen, onClose, initialContent, onSave }: CsvEditorModalProps) {
+  const { t } = useLanguage();
   const [content, setContent] = useState(initialContent);
 
   useEffect(() => {
@@ -67,7 +69,7 @@ export function CsvEditorModal({ isOpen, onClose, initialContent, onSave }: CsvE
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl h-[80vh] flex flex-col border border-gray-100 dark:border-gray-700">
         <div className="flex justify-between items-center p-4 border-b border-gray-100 dark:border-gray-700">
-          <h3 className="font-bold text-lg flex items-center gap-2"><FileText size={20} /> Edit CSV Content</h3>
+          <h3 className="font-bold text-lg flex items-center gap-2"><FileText size={20} /> {t('builder.editCsvContent')}</h3>
           <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"><X size={20}/></button>
         </div>
         <div className="p-4 flex-1 flex flex-col gap-2 min-h-0">
@@ -82,9 +84,9 @@ export function CsvEditorModal({ isOpen, onClose, initialContent, onSave }: CsvE
            />
         </div>
         <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-end gap-2">
-           <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg">Cancel</button>
+           <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg">{t('common.cancel')}</button>
            <FunButton onClick={handleSave} variant="primary" className="flex items-center gap-2">
-             <Save size={16} /> Update List
+             <Save size={16} /> {t('common.updateList')}
            </FunButton>
         </div>
       </div>

@@ -17,6 +17,7 @@ import useLocalStorage from '../hooks/useLocalStorage';
 import { FunButton } from '../components/FunButton';
 import { triggerConfetti } from '../lib/fun-utils';
 import { PhraseCard } from '../components/PhraseCard';
+import useLanguage from '../hooks/useLanguage';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -24,6 +25,7 @@ const SpeechRecognition = (window as any).SpeechRecognition || (window as any).w
 // --- Enhanced Quiz View ---
 export function QuizView() {
   const { phraseList, status, setStatus, voiceURI } = usePhraseAppContext();
+  const { t } = useLanguage();
 
   const [isFlipped, setIsFlipped] = useState(false);
   const [isPlaying, setIsPlaying] = useLocalStorage<boolean>('quizIsPlaying', false);
@@ -141,7 +143,7 @@ export function QuizView() {
 
   const startListening = () => {
     if (!SpeechRecognition) {
-      alert('Speech recognition is not supported in this browser.');
+      alert(t('quiz.speechNotSupported'));
       return;
     }
 
@@ -195,7 +197,7 @@ export function QuizView() {
       return {
         ...item,
         type: 'listening',
-        questionText: "🎧 Listen carefully",
+        questionText: "🎧 " + t('quiz.questionType.listening'),
         answerText: item.sentence
       };
     } else {
@@ -220,7 +222,7 @@ export function QuizView() {
     }
 
     if (list.length === 0) {
-      alert('선택한 범위에 데이터가 없습니다.');
+      alert(t('learn.noDataToDisplay'));
       return;
     }
 
@@ -232,7 +234,11 @@ export function QuizView() {
     if (quizLevel !== 'custom') {
       const levelConfig = LEVELS[quizLevel];
       if (list.length < levelConfig.total) {
-        if (!confirm(`Not enough items for ${quizLevel} level (Need ${levelConfig.total}, have ${list.length}). Continue with what we have?`)) {
+        const msg = t('quiz.confirmNotEnough')
+            .replace('{{level}}', quizLevel)
+            .replace('{{need}}', levelConfig.total.toString())
+            .replace('{{have}}', list.length.toString());
+        if (!confirm(msg)) {
           return;
         }
       }
@@ -280,6 +286,9 @@ export function QuizView() {
   const submitAnswer = (e: React.FormEvent) => {
     e.preventDefault();
     if (feedback !== 'none') return; 
+    
+    // Safety check
+    if (!quizQueue[currentIndex]) return;
 
     const currentItem = quizQueue[currentIndex];
     const isCorrect = checkAnswer(input, currentItem.answerText);
@@ -353,33 +362,33 @@ export function QuizView() {
             <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-500 mx-auto mb-4">
               <Brain size={40} />
             </div>
-            <h2 className="text-2xl font-bold">Quiz Setup</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Customize your practice session</p>
+            <h2 className="text-2xl font-bold">{t('quiz.setupTitle')}</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t('quiz.customizePractice')}</p>
         </div>
         
         {/* Scope Selection */}
         <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
           <h3 className="font-bold text-sm mb-3 flex items-center gap-2 text-gray-600 dark:text-gray-300">
-            <Filter size={16} /> Scope (범위)
+            <Filter size={16} /> {t('quiz.scope')}
           </h3>
           <div className="flex gap-2 mb-3">
             <button 
               className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${mode === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}
               onClick={() => setMode('all')}
             >
-              All
+              {t('common.all')}
             </button>
             <button 
               className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${mode === 'incorrect' ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}
               onClick={() => setMode('incorrect')}
             >
-              Review ({status.incorrectIds.length})
+              {t('settings.toReview')} ({status.incorrectIds.length})
             </button>
             <button 
               className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${mode === 'tag' ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}
               onClick={() => setMode('tag')}
             >
-              Tags
+              {t('learn.tags')}
             </button>
           </div>
           {mode === 'tag' && (
@@ -388,7 +397,7 @@ export function QuizView() {
               onChange={(e) => setSelectedTag(e.target.value)}
               className="w-full p-2 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm"
             >
-              <option value="">Select a tag...</option>
+              <option value="">{t('quiz.selectTagPlaceholder')}</option>
               {tags.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           )}
@@ -397,7 +406,7 @@ export function QuizView() {
         {/* Level Selection */}
         <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
           <h3 className="font-bold text-sm mb-3 flex items-center gap-2 text-gray-600 dark:text-gray-300">
-            <Signal size={16} /> Level (난이도)
+            <Signal size={16} /> {t('quiz.level')}
           </h3>
           <div className="grid grid-cols-2 gap-2">
             {[
@@ -421,9 +430,9 @@ export function QuizView() {
           </div>
           {quizLevel !== 'custom' && (
             <div className="mt-3 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 p-2 rounded-lg">
-              {quizLevel === 'basic' && "10 Quizzes: 4 Cloze, 2 Listening, 2 Speaking, 1 Meaning, 1 Writing"}
-              {quizLevel === 'advanced' && "15 Quizzes: 5 Cloze, 3 Listening, 3 Speaking, 2 Meaning, 2 Writing"}
-              {quizLevel === 'legend' && "20 Quizzes: 4 Cloze, 4 Listening, 4 Speaking, 4 Meaning, 4 Writing"}
+              {quizLevel === 'basic' && t('quiz.levelDesc.basic')}
+              {quizLevel === 'advanced' && t('quiz.levelDesc.advanced')}
+              {quizLevel === 'legend' && t('quiz.levelDesc.legend')}
             </div>
           )}
         </div>
@@ -432,15 +441,15 @@ export function QuizView() {
         {quizLevel === 'custom' && (
           <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 animate-in fade-in zoom-in-95 duration-200">
             <h3 className="font-bold text-sm mb-3 flex items-center gap-2 text-gray-600 dark:text-gray-300">
-              <Type size={16} /> Type (유형)
+              <Type size={16} /> {t('quiz.type')}
             </h3>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { id: 'writing', label: '✍️ Writing' },
-                { id: 'interpretation', label: '🗣️ Meaning' },
-                { id: 'cloze', label: '🧩 Cloze' },
-                { id: 'speaking', label: '🎤 Speaking' },
-                { id: 'listening', label: '🎧 Listening' },
+                { id: 'writing', label: '✍️ ' + t('quiz.questionType.writing') },
+                { id: 'interpretation', label: '🗣️ ' + t('quiz.questionType.interpretation') },
+                { id: 'cloze', label: '🧩 ' + t('quiz.questionType.cloze') },
+                { id: 'speaking', label: '🎤 ' + t('quiz.questionType.speaking') },
+                { id: 'listening', label: '🎧 ' + t('quiz.questionType.listening') },
                 { id: 'random', label: '🔀 Random' }
               ].map((t) => (
                 <button
@@ -465,7 +474,7 @@ export function QuizView() {
           variant="primary"
           className="text-lg"
         >
-          Start Quiz
+          {t('quiz.start')}
         </FunButton>
         </div>
       </div>
@@ -480,17 +489,17 @@ export function QuizView() {
                      <Trophy size={48} />
                  </div>
                  <h2 className="text-3xl font-black bg-gradient-to-r from-yellow-500 to-orange-500 bg-clip-text text-transparent">
-                     Quiz Complete!
+                     {t('quiz.complete')}
                  </h2>
-                 <p className="text-gray-500 dark:text-gray-400">Great job on finishing the session.</p>
+                 <p className="text-gray-500 dark:text-gray-400">{t('quiz.greatJob')}</p>
              </div>
 
              <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-xl border-2 border-yellow-100 dark:border-yellow-900 w-full max-w-xs text-center relative overflow-hidden">
                  <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-400 to-orange-500"></div>
-                 <p className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Total Score</p>
+                 <p className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">{t('settings.totalScore')}</p>
                  <div className="text-6xl font-black text-gray-800 dark:text-white mb-2 flex justify-center items-end gap-2">
                      {sessionPoints}
-                     <span className="text-xl font-bold text-gray-400 mb-2">pts</span>
+                     <span className="text-xl font-bold text-gray-400 mb-2">{t('settings.points')}</span>
                  </div>
                  <div className="flex justify-center gap-1 text-yellow-400">
                      {[...Array(5)].map((_, i) => <Star key={i} size={20} fill="currentColor" className={i < 3 ? "opacity-100" : "opacity-30"} />)}
@@ -503,14 +512,14 @@ export function QuizView() {
                      fullWidth
                      variant="primary"
                  >
-                     Try Again
+                     {t('quiz.tryAgain')}
                  </FunButton>
                  <FunButton 
                      onClick={() => setIsPlaying(false)}
                      fullWidth
                      variant="neutral"
                  >
-                     Back to Setup
+                     {t('quiz.backToSetup')}
                  </FunButton>
              </div>
         </div>
@@ -526,7 +535,7 @@ export function QuizView() {
           onClick={() => setIsPlaying(false)}
           className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors flex items-center gap-1 text-xs font-bold uppercase tracking-wider"
         >
-          <X size={16} /> Exit Quiz
+          <X size={16} /> {t('quiz.exit')}
         </button>
         <div className="flex gap-1 text-sm text-gray-400">
           <span>Question {currentIndex + 1}</span>
@@ -543,10 +552,10 @@ export function QuizView() {
 
       <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 mb-6 text-center">
         <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-          {currentItem.type === 'interpretation' ? 'Translate to Native' : 
-           currentItem.type === 'cloze' ? 'Fill in the blank' : 
-           currentItem.type === 'speaking' ? 'Read aloud' :
-           currentItem.type === 'listening' ? 'Listen and type' : 'Translate to Target'}
+          {currentItem.type === 'interpretation' ? t('quiz.questionType.interpretation') : 
+           currentItem.type === 'cloze' ? t('quiz.questionType.cloze') : 
+           currentItem.type === 'speaking' ? t('quiz.questionType.speaking') :
+           currentItem.type === 'listening' ? t('quiz.questionType.listening') : t('quiz.questionType.writing')}
         </span>
         <h3 className="text-xl font-bold mt-4 leading-snug break-words">
           {currentItem.questionText}
@@ -563,7 +572,7 @@ export function QuizView() {
                 onClick={() => speak(currentItem.sentence)}
                 className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 rounded-full text-sm font-bold hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
             >
-                <Volume2 size={16} /> Listen
+                <Volume2 size={16} /> {t('quiz.action.listen')}
             </button>
         )}
       </div>
@@ -574,7 +583,7 @@ export function QuizView() {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={currentItem.type === 'cloze' ? "Type the missing word..." : currentItem.type === 'speaking' ? "Press mic and speak..." : "Type answer..."}
+            placeholder={currentItem.type === 'cloze' ? t('quiz.placeholder.cloze') : currentItem.type === 'speaking' ? t('quiz.placeholder.speaking') : t('quiz.placeholder.writing')}
             className={`w-full p-4 rounded-xl border-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-lg outline-none transition-colors pr-14
               ${feedback === 'none' ? 'border-gray-200 dark:border-gray-700 focus:border-blue-500' : ''}
               ${feedback === 'correct' ? 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' : ''}
@@ -592,7 +601,7 @@ export function QuizView() {
                   ? 'bg-red-500 text-white animate-pulse shadow-md' 
                   : 'bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-500'
               }`}
-              title="Speak answer"
+              title={t('quiz.title.speak')}
             >
               <Mic size={20} />
             </button>
@@ -602,7 +611,7 @@ export function QuizView() {
               type="button"
               onClick={() => speak(currentItem.sentence)}
               className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-500 transition-all"
-              title="Play audio"
+              title={t('quiz.title.play')}
             >
               <Volume2 size={20} />
             </button>
@@ -615,7 +624,7 @@ export function QuizView() {
             fullWidth
             variant="primary"
           >
-            Check Answer
+            {t('quiz.checkAnswer')}
           </FunButton>
         ) : (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 space-y-4">
@@ -677,7 +686,7 @@ export function QuizView() {
               variant={feedback === 'correct' ? 'success' : 'danger'}
               className="py-4 shadow-md"
             >
-              Next Question &rarr;
+              {t('quiz.nextQuestion')} &rarr;
             </FunButton>
           </div>
         )}

@@ -3,12 +3,14 @@ import { PlusCircle } from 'lucide-react';
 import { FunButton } from '../FunButton';
 import { generateId } from '../../lib/utils';
 import type { PhraseItem } from '../../types';
+import useLanguage from '../../hooks/useLanguage';
 
 interface ManualEntryFormProps {
   onAdd: (item: PhraseItem) => void;
 }
 
 export function ManualEntryForm({ onAdd }: ManualEntryFormProps) {
+  const { t } = useLanguage();
   const [form, setForm] = useState({ meaning: '', sentence: '', pronunciation: '', tags: '' });
 
   const handleAdd = (e: React.FormEvent) => {
@@ -29,35 +31,35 @@ export function ManualEntryForm({ onAdd }: ManualEntryFormProps) {
 
   return (
     <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
-      <h3 className="font-bold mb-4 flex items-center gap-2"><PlusCircle size={20} className="text-blue-500"/> Manual Entry</h3>
+      <h3 className="font-bold mb-4 flex items-center gap-2"><PlusCircle size={20} className="text-blue-500"/> {t('builder.manualEntry')}</h3>
       <form onSubmit={handleAdd} className="flex flex-col gap-3">
         <input 
             className="p-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" 
-            placeholder="Meaning (뜻) *" 
+            placeholder={t('builder.meaningLabel')} 
             value={form.meaning} 
             onChange={e => setForm({...form, meaning: e.target.value})} 
             required 
         />
         <input 
             className="p-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" 
-            placeholder="Sentence (문장) *" 
+            placeholder={t('builder.sentenceLabel')} 
             value={form.sentence} 
             onChange={e => setForm({...form, sentence: e.target.value})} 
             required 
         />
         <input 
             className="p-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" 
-            placeholder="Pronunciation (발음)" 
+            placeholder={t('builder.pronunciationLabel')} 
             value={form.pronunciation} 
             onChange={e => setForm({...form, pronunciation: e.target.value})} 
         />
         <input 
             className="p-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" 
-            placeholder="Tags (쉼표로 구분)" 
+            placeholder={t('builder.tagsLabel') + ' (' + t('builder.tagsPlaceholder') + ')'} 
             value={form.tags} 
             onChange={e => setForm({...form, tags: e.target.value})} 
         />
-        <FunButton type="submit" variant="primary">Add Item</FunButton>
+        <FunButton type="submit" variant="primary">{t('builder.addItem')}</FunButton>
       </form>
     </div>
   );

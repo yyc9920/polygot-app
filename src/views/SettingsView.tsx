@@ -28,16 +28,17 @@ import { usePhraseAppContext } from '../context/PhraseContext';
 import { useAuth } from '../context/AuthContext';
 import { FunButton } from '../components/FunButton';
 import { LoginModal } from '../components/LoginModal';
+import useLanguage from '../hooks/useLanguage';
 
 export function SettingsView() {
-  const { 
-    voiceURI, 
-    setVoiceURI, 
-    handleReset, 
-    handleDeleteAllData, 
-    status, 
+  const {
+    voiceURI,
+    setVoiceURI,
+    handleReset,
+    handleDeleteAllData,
+    status,
     setStatus,
-    apiKey, 
+    apiKey,
     setApiKey,
     youtubeApiKey,
     setYoutubeApiKey,
@@ -51,13 +52,14 @@ export function SettingsView() {
   } = usePhraseAppContext();
 
   const { user, signOut } = useAuth();
+  const { t, language, changeLanguage, LANGUAGE_NAMES } = useLanguage();
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [showApiKey, setShowApiKey] = useState(false);
   const [showYoutubeApiKey, setShowYoutubeApiKey] = useState(false);
   const [voiceFilter, setVoiceFilter] = useState('');
-  
+
   // Progress Filter
   const [progressFilterTag, setProgressFilterTag] = useState('All');
   
@@ -226,12 +228,33 @@ export function SettingsView() {
 
   return (
     <div className="h-full flex flex-col gap-6 overflow-y-auto p-1">
+
+      <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <h3 className="font-bold text-lg flex items-center gap-2 text-gray-800 dark:text-gray-100 mb-4">
+          {t('settings.account')}
+        </h3>
+
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('settings.language')}</label>
+          <select
+            value={language}
+            onChange={(e) => changeLanguage(e.target.value as any)}
+            className="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+          >
+            {Object.entries(LANGUAGE_NAMES).map(([code, name]) => (
+              <option key={code} value={code}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </section>
       
       {/* 0. User Profile */}
       <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
         <div className="flex justify-between items-center mb-4">
             <h3 className="font-bold text-lg flex items-center gap-2 text-gray-800 dark:text-gray-100">
-            <User className="text-green-500" /> Account
+            <User className="text-green-500" /> {t('settings.account')}
             </h3>
         </div>
         
@@ -251,21 +274,21 @@ export function SettingsView() {
                 <button 
                     onClick={() => signOut()}
                     className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                    title="Sign Out"
+                    title={t('settings.signOut')}
                 >
                     <LogOut size={20} />
                 </button>
             </div>
         ) : (
             <div className="text-center space-y-3">
-                <p className="text-sm text-gray-500">Sign in to sync your progress.</p>
+                <p className="text-sm text-gray-500">{t('settings.syncProgress')}</p>
                 <FunButton 
                     onClick={() => setShowLoginModal(true)} 
                     variant="primary" 
                     fullWidth
                     className="flex items-center justify-center gap-2"
                 >
-                    <User size={18} /> Sign In
+                    <User size={18} /> {t('settings.signIn')}
                 </FunButton>
             </div>
         )}
@@ -275,7 +298,7 @@ export function SettingsView() {
       <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
         <div className="flex justify-between items-center mb-4">
             <h3 className="font-bold text-lg flex items-center gap-2 text-gray-800 dark:text-gray-100">
-            <Activity className="text-blue-500" /> Learning Progress
+            <Activity className="text-blue-500" /> {t('settings.learningProgress')}
             </h3>
             {/* Tag Filter */}
             <div className="flex items-center gap-2">
@@ -301,7 +324,7 @@ export function SettingsView() {
           
           <div className="flex-1 space-y-3 min-w-0">
             <div className="flex justify-between items-center">
-              <span className="text-sm font-medium text-gray-500 flex items-center gap-1"><Check size={14} className="text-green-500"/> Completed</span>
+              <span className="text-sm font-medium text-gray-500 flex items-center gap-1"><Check size={14} className="text-green-500"/> {t('settings.completed')}</span>
               <span className="font-bold text-gray-800 dark:text-gray-100">{filteredCompleted}</span>
             </div>
             <div className="w-full bg-gray-200 dark:bg-gray-700 h-2 rounded-full overflow-hidden">
@@ -309,7 +332,7 @@ export function SettingsView() {
             </div>
 
             <div className="flex justify-between items-center">
-              <span className="text-sm font-medium text-gray-500 flex items-center gap-1"><X size={14} className="text-red-500"/> To Review</span>
+              <span className="text-sm font-medium text-gray-500 flex items-center gap-1"><X size={14} className="text-red-500"/> {t('settings.toReview')}</span>
               <span className="font-bold text-gray-800 dark:text-gray-100">{filteredIncorrect}</span>
             </div>
              <div className="w-full bg-gray-200 dark:bg-gray-700 h-2 rounded-full overflow-hidden">
@@ -326,11 +349,11 @@ export function SettingsView() {
             className="flex items-center justify-center gap-2"
         >
             <PlayCircle size={20} />
-            Start Review Session ({filteredIncorrect} items)
+            {t('settings.startReviewSession')} ({filteredIncorrect} {t('settings.items')})
         </FunButton>
 
         <p className="text-center text-sm text-gray-400 mt-2">
-            {progressFilterTag === 'All' ? `Total Phrases: ${filteredTotalCount}` : `Phrases in '${progressFilterTag}': ${filteredTotalCount}`}
+            {progressFilterTag === 'All' ? `${t('settings.totalPhrases')}: ${filteredTotalCount}` : `${t('settings.phrasesInTag').replace('{{tag}}', progressFilterTag)}: ${filteredTotalCount}`}
         </p>
 
         <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700/50 flex flex-col items-center">
@@ -339,8 +362,8 @@ export function SettingsView() {
                     <Trophy size={24} className="fill-current" />
                 </div>
                 <div className="flex flex-col">
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-70 leading-none mb-1">Total Polyglot Score</span>
-                    <span className="font-black text-2xl leading-none">{status.points || 0} <span className="text-sm font-bold opacity-60">pts</span></span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-70 leading-none mb-1">{t('settings.totalScore')}</span>
+                    <span className="font-black text-2xl leading-none">{status.points || 0} <span className="text-sm font-bold opacity-60">{t('settings.points')}</span></span>
                 </div>
             </div>
         </div>
@@ -350,19 +373,19 @@ export function SettingsView() {
       <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 relative">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-bold text-lg flex items-center gap-2 text-gray-800 dark:text-gray-100">
-              <LinkIcon className="text-indigo-500" /> Content Sources (CSV)
+              <LinkIcon className="text-indigo-500" /> {t('settings.contentSources')}
             </h3>
             <button 
               onClick={() => setShowCSVGuide(true)}
               className="p-1 text-gray-400 hover:text-indigo-500 transition-colors"
-              title="CSV Format Guide"
+              title={t('settings.csvFormatGuide')}
             >
               <HelpCircle size={20} />
             </button>
           </div>
           <div className="space-y-4">
               <div className="space-y-2">
-                  {savedUrls.length === 0 && <p className="text-sm text-gray-400 italic">No CSV sources added.</p>}
+                  {savedUrls.length === 0 && <p className="text-sm text-gray-400 italic">{t('settings.noCsvSources')}</p>}
                   {savedUrls.map((url, idx) => (
                       <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg group">
                           <LinkIcon size={14} className="text-gray-400 flex-none" />
@@ -371,7 +394,7 @@ export function SettingsView() {
                             onClick={() => handleSyncUrl(url)} 
                             disabled={isSyncing === url}
                             className={`p-1 text-gray-400 hover:text-blue-500 ${isSyncing === url ? 'animate-spin text-blue-500' : ''}`}
-                            title="Sync now"
+                            title={t('settings.syncNow')}
                           >
                               <RefreshCw size={14} />
                           </button>
@@ -385,7 +408,7 @@ export function SettingsView() {
               <form onSubmit={handleAddUrl} className="flex gap-2">
                   <input 
                       type="url" 
-                      placeholder="https://.../data.csv" 
+                      placeholder={t('settings.addUrlPlaceholder')}
                       value={newUrl}
                       onChange={(e) => setNewUrl(e.target.value)}
                       className="flex-1 p-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -396,7 +419,7 @@ export function SettingsView() {
                   </button>
               </form>
               <p className="text-xs text-gray-400">
-                  Data from these URLs is automatically fetched and merged on startup.
+                  {t('settings.dataAutoFetched')}
               </p>
           </div>
       </section>
@@ -405,33 +428,33 @@ export function SettingsView() {
       <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 relative">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-bold text-lg flex items-center gap-2 text-gray-800 dark:text-gray-100">
-            <Settings className="text-purple-500" /> AI Configuration
+            <Settings className="text-purple-500" /> {t('settings.aiConfiguration')}
           </h3>
           <button 
             onClick={() => setShowAPIKeyGuide(true)}
             className="p-1 text-gray-400 hover:text-purple-500 transition-colors"
-            title="API Key Setup Guide"
+            title={t('settings.apiKeySetupGuide')}
           >
             <HelpCircle size={20} />
           </button>
         </div>
         <div className="flex flex-col gap-2">
           <div className="flex justify-between items-center">
-            <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Google Gemini API Key</label>
+            <label className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('settings.googleGeminiApiKey')}</label>
             <a 
               href="https://aistudio.google.com/api-keys" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-xs text-purple-500 hover:text-purple-600 flex items-center gap-1 font-medium"
             >
-              Get Key <ExternalLink size={12} />
+              {t('settings.getApiKey')} <ExternalLink size={12} />
             </a>
           </div>
           <div className="flex gap-2 relative">
              <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
              <input 
                type={showApiKey ? "text" : "password"}
-               placeholder="Enter your API Key..." 
+               placeholder={t('settings.apiKeyPlaceholder')}
                value={apiKey} 
                onChange={(e) => setApiKey(e.target.value)}
                className="flex-1 pl-10 pr-10 p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
@@ -444,27 +467,27 @@ export function SettingsView() {
              </button>
           </div>
           <p className="text-xs text-gray-400 mt-1">
-            Your key is stored locally in your browser and used only for AI features.
+            {t('settings.apiKeyStoredLocally')}
           </p>
         </div>
 
         <div className="flex flex-col gap-2 mt-4">
           <div className="flex justify-between items-center">
-            <label className="text-sm font-medium text-gray-600 dark:text-gray-400">YouTube Data API Key</label>
+            <label className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('settings.youtubeApiKey')}</label>
             <a 
               href="https://console.developers.google.com/apis" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-xs text-red-500 hover:text-red-600 flex items-center gap-1 font-medium"
             >
-              Get Key <ExternalLink size={12} />
+              {t('settings.getApiKey')} <ExternalLink size={12} />
             </a>
           </div>
           <div className="flex gap-2 relative">
              <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
              <input 
                type={showYoutubeApiKey ? "text" : "password"}
-               placeholder="Enter your YouTube API Key..." 
+               placeholder={t('settings.apiKeyPlaceholder')}
                value={youtubeApiKey} 
                onChange={(e) => setYoutubeApiKey(e.target.value)}
                className="flex-1 pl-10 pr-10 p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-red-500 transition-all"
@@ -477,7 +500,7 @@ export function SettingsView() {
              </button>
           </div>
           <p className="text-xs text-gray-400 mt-1">
-            Required for searching music videos.
+            {t('settings.youtubeRequiredForMusic')}
           </p>
         </div>
       </section>
@@ -486,10 +509,10 @@ export function SettingsView() {
       <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
         <div className="flex justify-between items-center mb-4">
            <h3 className="font-bold text-lg flex items-center gap-2 text-gray-800 dark:text-gray-100">
-            <Mic className="text-orange-500" /> TTS Voice
+            <Mic className="text-orange-500" /> {t('settings.ttsVoice')}
            </h3>
            <button onClick={handleAutoDetectVoice} className="text-xs px-2 py-1 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 rounded-lg font-bold hover:bg-orange-100 transition-colors">
-             Auto-detect
+             {t('settings.autoDetect')}
            </button>
         </div>
         
@@ -498,7 +521,7 @@ export function SettingsView() {
              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
              <input 
                type="text" 
-               placeholder="Search voices (e.g. 'Google', 'jp')..." 
+               placeholder={t('settings.searchVoices')}
                value={voiceFilter}
                onChange={(e) => setVoiceFilter(e.target.value)}
                className="w-full pl-10 p-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
@@ -510,7 +533,7 @@ export function SettingsView() {
             onChange={(e) => setVoiceURI(e.target.value || null)}
             className="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all"
           >
-            <option value="">Default System Voice</option>
+            <option value="">{t('settings.defaultSystemVoice')}</option>
             {filteredVoices.map(v => (
               <option key={v.voiceURI} value={v.voiceURI}>
                 {v.name} ({v.lang}) {v.default ? ' — Default' : ''}
@@ -518,7 +541,7 @@ export function SettingsView() {
             ))}
           </select>
           {filteredVoices.length === 0 && (
-            <p className="text-xs text-gray-400 text-center">No voices match your search.</p>
+            <p className="text-xs text-gray-400 text-center">{t('settings.noVoicesMatch')}</p>
           )}
         </div>
       </section>
@@ -526,7 +549,7 @@ export function SettingsView() {
       {/* 5. Data Management */}
       <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
         <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-gray-800 dark:text-gray-100">
-          <Database className="text-red-500" /> Data Management
+          <Database className="text-red-500" /> {t('settings.dataManagement')}
         </h3>
         <div className="flex flex-col gap-3">
            <div className="flex gap-2">
@@ -535,7 +558,7 @@ export function SettingsView() {
                 className="flex-1 flex items-center justify-center gap-2"
                 variant="primary"
                >
-                   <Save size={18} /> Backup Data (Save)
+                   <Save size={18} /> {t('settings.backupData')}
                </FunButton>
                
                <input type="file" ref={fileInputRef} accept=".json" className="hidden" onChange={handleLoadData} />
@@ -544,7 +567,7 @@ export function SettingsView() {
                 className="flex-1 flex items-center justify-center gap-2"
                 variant="neutral"
                >
-                   <Upload size={18} /> Load Backup
+                   <Upload size={18} /> {t('settings.loadBackup')}
                </FunButton>
            </div>
            
@@ -556,7 +579,7 @@ export function SettingsView() {
             variant="neutral"
             className="flex items-center justify-center gap-2"
           >
-            <RefreshCw size={18} /> Reset Learning Progress
+            <RefreshCw size={18} /> {t('settings.resetProgress')}
           </FunButton>
           <FunButton 
             onClick={handleDeleteAllData} 
@@ -564,7 +587,7 @@ export function SettingsView() {
             variant="danger"
             className="flex items-center justify-center gap-2 border-red-200"
           >
-            <Trash2 size={18} /> Delete All Data (Hard Reset)
+            <Trash2 size={18} /> {t('settings.deleteAllData')}
           </FunButton>
         </div>
       </section>
@@ -575,7 +598,7 @@ export function SettingsView() {
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
               <h4 className="font-bold text-lg text-gray-800 dark:text-gray-100 flex items-center gap-2">
-                <LinkIcon size={20} className="text-indigo-500" /> CSV Format Guide
+                <LinkIcon size={20} className="text-indigo-500" /> {t('settings.csvFormatGuide')}
               </h4>
               <button onClick={() => setShowCSVGuide(false)} className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
                 <X size={20} />
@@ -583,15 +606,15 @@ export function SettingsView() {
             </div>
             <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                Your CSV file should follow this structure. The first row (header) is optional but recommended.
+                {t('settings.csvGuideDescription')}
               </p>
               <div className="bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg border border-gray-100 dark:border-gray-800">
                 <code className="text-xs text-indigo-600 dark:text-indigo-400 font-mono break-all">
-                  sentence,meaning,pronunciation,tags
+                  {t('settings.csvFormat')}
                 </code>
               </div>
               <div className="space-y-2">
-                <h5 className="font-bold text-sm text-gray-700 dark:text-gray-200">Example Rows:</h5>
+                <h5 className="font-bold text-sm text-gray-700 dark:text-gray-200">{t('settings.exampleRows')}</h5>
                 <pre className="text-[10px] bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg border border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-400 font-mono overflow-x-auto">
 {`こんにちは,Hello,Konnichiwa,"greeting,basic"
 ありがとう,Thank you,Arigatou,"greeting,polite"
@@ -599,13 +622,13 @@ export function SettingsView() {
                 </pre>
               </div>
               <ul className="text-xs text-gray-500 dark:text-gray-400 list-disc pl-4 space-y-1">
-                <li>Fields are separated by commas.</li>
-                <li>If a field contains a comma (like tags), wrap it in double quotes.</li>
-                <li>The <code className="font-mono">pronunciation</code> and <code className="font-mono">tags</code> fields are optional.</li>
+                <li>{t('settings.csvFieldsInfo.intro')}</li>
+                <li>{t('settings.csvFieldsInfo.quotes')}</li>
+                <li>{t('settings.csvFieldsInfo.optional')}</li>
               </ul>
             </div>
             <div className="p-4 bg-gray-50 dark:bg-gray-700/30 flex justify-end">
-              <FunButton onClick={() => setShowCSVGuide(false)} variant="primary" className="px-6">Got it!</FunButton>
+              <FunButton onClick={() => setShowCSVGuide(false)} variant="primary" className="px-6">{t('common.gotIt')}</FunButton>
             </div>
           </div>
         </div>
@@ -617,7 +640,7 @@ export function SettingsView() {
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
               <h4 className="font-bold text-lg text-gray-800 dark:text-gray-100 flex items-center gap-2">
-                <Key size={20} className="text-purple-500" /> API Key Setup Guide
+                <Key size={20} className="text-purple-500" /> {t('settings.apiKeyGuideTitle')}
               </h4>
               <button onClick={() => setShowAPIKeyGuide(false)} className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
                 <X size={20} />
@@ -626,13 +649,13 @@ export function SettingsView() {
             <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
               <div className="space-y-3">
                 <h5 className="font-bold text-purple-600 dark:text-purple-400 flex items-center gap-2">
-                  1. Google Gemini API
+                  1. {t('settings.geminiApiTitle')}
                 </h5>
                 <ol className="text-sm text-gray-600 dark:text-gray-300 list-decimal pl-4 space-y-2">
-                  <li>Go to <a href="https://aistudio.google.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline inline-flex items-center gap-1">Google AI Studio <ExternalLink size={12}/></a></li>
-                  <li>Sign in with your Google account.</li>
-                  <li>Click <strong>"Create API key"</strong> then <strong>"Create API key in new project"</strong>.</li>
-                  <li>Copy the key and paste it into the Gemini API field.</li>
+                  <li><a href="https://aistudio.google.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline inline-flex items-center gap-1">{t('settings.geminiApiStep1')} <ExternalLink size={12}/></a></li>
+                  <li>{t('settings.geminiApiStep2')}</li>
+                  <li>{t('settings.geminiApiStep3')}</li>
+                  <li>{t('settings.geminiApiStep4')}</li>
                 </ol>
               </div>
 
@@ -640,19 +663,19 @@ export function SettingsView() {
 
               <div className="space-y-3">
                 <h5 className="font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
-                  2. YouTube Data API
+                  2. {t('settings.youtubeApiTitle')}
                 </h5>
                 <ol className="text-sm text-gray-600 dark:text-gray-300 list-decimal pl-4 space-y-2">
-                  <li>Go to <a href="https://console.developers.google.com/" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline inline-flex items-center gap-1">Google Cloud Console <ExternalLink size={12}/></a></li>
-                  <li>Create a new project (or select an existing one).</li>
-                  <li>Go to <strong>"Enabled APIs & Services"</strong> and click <strong>"+ ENABLE APIS AND SERVICES"</strong>.</li>
-                  <li>Search for <strong>"YouTube Data API v3"</strong> and enable it.</li>
-                  <li>Go to <strong>"Credentials"</strong> &rarr; <strong>"Create Credentials"</strong> &rarr; <strong>"API key"</strong>.</li>
+                  <li><a href="https://console.developers.google.com/" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline inline-flex items-center gap-1">{t('settings.youtubeApiStep1')} <ExternalLink size={12}/></a></li>
+                  <li>{t('settings.youtubeApiStep2')}</li>
+                  <li>{t('settings.youtubeApiStep3')}</li>
+                  <li>{t('settings.youtubeApiStep4')}</li>
+                  <li>{t('settings.youtubeApiStep5')}</li>
                 </ol>
               </div>
             </div>
             <div className="p-4 bg-gray-50 dark:bg-gray-700/30 flex justify-end">
-              <FunButton onClick={() => setShowAPIKeyGuide(false)} variant="primary" className="px-6">Got it!</FunButton>
+              <FunButton onClick={() => setShowAPIKeyGuide(false)} variant="primary" className="px-6">{t('common.gotIt')}</FunButton>
             </div>
           </div>
         </div>

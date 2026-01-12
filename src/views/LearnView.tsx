@@ -27,9 +27,11 @@ import useLocalStorage from '../hooks/useLocalStorage';
 import { FunButton } from '../components/FunButton';
 import { PhraseCard } from '../components/PhraseCard';
 import { EditPhraseModal } from '../components/EditPhraseModal';
+import useLanguage from '../hooks/useLanguage';
 
 export function LearnView() {
   const { phraseList, setPhraseList, voiceURI, status, apiKey, reviewMode, setReviewMode } = usePhraseAppContext();
+  const { t } = useLanguage();
 
   const [viewMode, setViewMode] = useLocalStorage<'card' | 'list'>('learnViewMode', 'card');
   const [currentIndex, setCurrentIndex] = useLocalStorage<number>('learnCurrentIndex', 0);
@@ -246,7 +248,7 @@ export function LearnView() {
   const handleAiExplain = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!apiKey) {
-      alert("Please enter your Gemini API Key in Settings first.");
+      alert(t('learn.pleaseEnterApiKey'));
       return;
     }
     
@@ -309,7 +311,7 @@ export function LearnView() {
       setPhraseList(prev => prev.map(item => 
           item.id === currentItem.id ? { ...item, memo: aiExplanation } : item
       ));
-      alert("Memo saved!");
+      alert(t('learn.memoSaved'));
   };
 
   const toggleTag = (tag: string) => {
@@ -326,9 +328,9 @@ export function LearnView() {
       if (reviewMode) {
           return (
               <div className="flex flex-col items-center justify-center h-64 text-gray-500 gap-4">
-                  <p>복습할 항목이 없습니다.</p>
+                  <p>{t('learn.noReviewItems')}</p>
                   <FunButton onClick={() => setReviewMode(false)} variant="primary">
-                      학습 모드로 돌아가기
+                      {t('learn.backToLearnMode')}
                   </FunButton>
               </div>
           );
@@ -336,8 +338,8 @@ export function LearnView() {
       if (!searchTerm && selectedTags.length === 0 && !showMemoList) {
         return (
           <div className="flex flex-col items-center justify-center h-64 text-gray-500">
-            <p>표시할 데이터가 없습니다.</p>
-            <p className="text-sm mt-2">빌더 탭에서 데이터를 추가하세요.</p>
+            <p>{t('learn.noDataToDisplay')}</p>
+            <p className="text-sm mt-2">{t('learn.addDataInBuilder')}</p>
           </div>
         );
       }
@@ -347,8 +349,8 @@ export function LearnView() {
     <div className="flex flex-col h-full gap-4 relative">
       {reviewMode && (
           <div className="flex-none bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-2 rounded-xl text-sm font-bold flex items-center justify-between">
-              <span className="flex items-center gap-2"><AlertCircle size={16}/> Review Session Active</span>
-              <button onClick={() => setReviewMode(false)} className="text-xs underline">Exit</button>
+              <span className="flex items-center gap-2"><AlertCircle size={16}/> {t('learn.reviewSessionActive')}</span>
+              <button onClick={() => setReviewMode(false)} className="text-xs underline">{t('learn.exit')}</button>
           </div>
       )}
 
@@ -359,7 +361,7 @@ export function LearnView() {
                 <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input 
                     type="text" 
-                    placeholder="Search..." 
+                    placeholder={t('learn.searchPlaceholder')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-8 pr-7 p-2 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
@@ -378,7 +380,7 @@ export function LearnView() {
             <button 
                 onClick={() => setIsShuffled(!isShuffled)}
                 className={`p-2 rounded-lg transition-colors ${isShuffled ? 'text-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-400'}`}
-                title="Shuffle"
+                title={t('learn.shuffle')}
                 type="button"
             >
                 <Shuffle size={18} />
@@ -388,7 +390,7 @@ export function LearnView() {
             <button 
                 onClick={() => setShowMemoList(true)}
                 className={`p-2 rounded-lg transition-colors text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20`}
-                title="Memo List"
+                title={t('learn.memoList')}
                 type="button"
             >
                 <BookOpen size={18} />
@@ -397,7 +399,7 @@ export function LearnView() {
             <button 
                 onClick={() => setViewMode('card')}
                 className={`p-2 rounded-lg transition-colors ${viewMode === 'card' ? 'text-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-400'}`}
-                title="Card View"
+                title={t('learn.cardView')}
                 type="button"
             >
                 <GridIcon size={18} />
@@ -405,7 +407,7 @@ export function LearnView() {
             <button 
                 onClick={() => setViewMode('list')}
                 className={`p-2 rounded-lg transition-colors ${viewMode === 'list' ? 'text-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-400'}`}
-                title="List View"
+                title={t('learn.listView')}
                 type="button"
             >
                 <ListIcon size={18} />
@@ -424,7 +426,7 @@ export function LearnView() {
                     }`}
                 >
                     <span className="whitespace-nowrap">
-                        Tags
+                        {t('learn.tags')}
                     </span>
                     <ChevronDown size={14} className={`transition-transform ${isTagDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
@@ -446,7 +448,7 @@ export function LearnView() {
                                     <span className="truncate">{tag}</span>
                                 </div>
                             ))}
-                            {allTags.length === 0 && <div className="text-xs text-gray-400 p-2">No tags available</div>}
+                            {allTags.length === 0 && <div className="text-xs text-gray-400 p-2">{t('learn.noTagsAvailable')}</div>}
                         </div>
                     </>
                 )}
@@ -466,7 +468,7 @@ export function LearnView() {
                         </button>
                     ))
                 ) : (
-                    <span className="text-xs text-gray-400 italic pl-1">No tags selected</span>
+                    <span className="text-xs text-gray-400 italic pl-1">{t('learn.noTagsSelected')}</span>
                 )}
             </div>
         </div>
@@ -475,14 +477,14 @@ export function LearnView() {
       {displayList.length === 0 && searchTerm && (
           <div className="flex flex-col items-center justify-center flex-1 text-gray-400">
               <Search size={48} className="mb-2 opacity-20" />
-              <p>No results found for "{searchTerm}"</p>
+              <p>{t('learn.noResultsForSearch').replace('{{searchTerm}}', searchTerm)}</p>
           </div>
       )}
 
       {showMemoList && (
           <div className="absolute inset-0 z-50 bg-white dark:bg-gray-900 overflow-hidden flex flex-col animate-in fade-in slide-in-from-bottom-4">
               <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
-                  <h2 className="text-lg font-bold flex items-center gap-2"><BookOpen className="text-blue-500"/> My Memos</h2>
+                  <h2 className="text-lg font-bold flex items-center gap-2"><BookOpen className="text-blue-500"/> {t('learn.myMemos')}</h2>
                   <button onClick={() => setShowMemoList(false)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
                       <X size={20} />
                   </button>
@@ -491,8 +493,8 @@ export function LearnView() {
                   {memoList.length === 0 ? (
                       <div className="flex flex-col items-center justify-center h-full text-gray-400">
                           <BookOpen size={48} className="mb-4 opacity-20"/>
-                          <p>No saved memos yet.</p>
-                          <p className="text-sm">Use the AI Tutor to save explanations.</p>
+                          <p>{t('learn.noSavedMemos')}</p>
+                          <p className="text-sm">{t('learn.useAiTutor')}</p>
                       </div>
                   ) : (
                       memoList.map(item => (
@@ -508,7 +510,7 @@ export function LearnView() {
                                   ))}
                                </div>
 
-                               <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 italic">Meaning: {item.meaning}</p>
+                               <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 italic">{t('learn.meaning')} {item.meaning}</p>
                                
                                {editingMemoId === item.id ? (
                                    <div className="bg-white dark:bg-gray-800 rounded-lg p-2 border border-blue-200 dark:border-blue-900">
@@ -518,8 +520,8 @@ export function LearnView() {
                                            onChange={(e) => setEditBuffer(e.target.value)}
                                        />
                                        <div className="flex justify-end gap-2 mt-2">
-                                           <button onClick={cancelEdit} className="px-3 py-1 text-xs text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Cancel</button>
-                                           <button onClick={() => saveEdit(item.id)} className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600">Save</button>
+                                           <button onClick={cancelEdit} className="px-3 py-1 text-xs text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">{t('common.cancel')}</button>
+                                           <button onClick={() => saveEdit(item.id)} className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600">{t('common.save')}</button>
                                        </div>
                                    </div>
                                ) : (
@@ -557,7 +559,7 @@ export function LearnView() {
         <div className="absolute inset-x-0 top-16 z-20 mx-4 p-4 bg-white/95 dark:bg-gray-800/95 backdrop-blur shadow-2xl rounded-2xl border border-blue-100 dark:border-gray-700 animate-in fade-in slide-in-from-bottom-4 max-h-[80vh] overflow-y-auto">
           <div className="flex justify-between items-start mb-2">
             <h4 className="font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
-              <Sparkles size={16} /> AI Tutor
+              <Sparkles size={16} /> {t('learn.aiTutor')}
             </h4>
             <div className="flex gap-2">
                 {!isLoadingAi && aiExplanation && (
@@ -569,7 +571,7 @@ export function LearnView() {
                         <Pencil size={16}/>
                     </button>
                     <button onClick={handleSaveMemo} className="text-blue-500 hover:text-blue-600 text-sm font-bold flex items-center gap-1 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded">
-                        <Save size={14}/> Save
+                        <Save size={14}/> {t('common.save')}
                     </button>
                     </>
                 )}
@@ -581,14 +583,14 @@ export function LearnView() {
           <div className="text-sm leading-relaxed text-gray-700 dark:text-gray-200 min-h-[60px]">
             {isLoadingAi ? (
               <div className="flex items-center gap-2 text-gray-500">
-                <Loader2 size={16} className="animate-spin" /> Thinking...
+                <Loader2 size={16} className="animate-spin" /> {t('learn.thinking')}
               </div>
             ) : isAiEditing ? (
               <textarea 
                   className="w-full h-64 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-xs"
                   value={aiExplanation}
                   onChange={(e) => setAiExplanation(e.target.value)}
-                  placeholder="Edit explanation..."
+                  placeholder={t('learn.editExplanation')}
               />
             ) : (
               <div className="prose prose-sm dark:prose-invert max-w-none">
@@ -655,7 +657,7 @@ export function LearnView() {
                   className="flex-1 flex items-center justify-center gap-2"
                   variant="neutral"
                 >
-                  <ChevronLeft size={20} /> Prev
+                  <ChevronLeft size={20} /> {t('learn.prev')}
                 </FunButton>
                 <FunButton 
                   type="button"
@@ -663,7 +665,7 @@ export function LearnView() {
                   className="flex-1 flex items-center justify-center gap-2"
                   variant="primary"
                 >
-                  Next <ChevronRight size={20} />
+                  {t('learn.next')} <ChevronRight size={20} />
                 </FunButton>
               </div>
             </div>
@@ -681,6 +683,7 @@ export function LearnView() {
                  idx={idx} 
                  status={status} 
                  speak={speak} 
+                 t={t}
                  onOpenMemo={() => {
                     setCurrentIndex(idx);
                     setAiExplanation(item.memo || '');
@@ -702,12 +705,13 @@ export function LearnView() {
   );
 }
 
-function FlipListItem({ item, idx, status, speak, onOpenMemo }: { 
+function FlipListItem({ item, idx, status, speak, onOpenMemo, t }: { 
     item: PhraseItem, 
     idx: number, 
     status: LearningStatus, 
     speak: (t:string)=>void,
-    onOpenMemo?: () => void
+    onOpenMemo?: () => void,
+    t: (key: string) => string
 }) {
   const [showMeaning, setShowMeaning] = useState(false);
 
@@ -727,7 +731,7 @@ function FlipListItem({ item, idx, status, speak, onOpenMemo }: {
           {showMeaning ? (
              <span className="text-blue-500 font-medium">{item.sentence}</span>
           ) : (
-             <span className="opacity-50 text-xs">Tap to reveal meaning</span>
+             <span className="opacity-50 text-xs">{t('learn.tapToRevealMeaning')}</span>
           )}
         </p>
         <div className="flex gap-1 mt-1 pl-8 items-center">
@@ -735,7 +739,7 @@ function FlipListItem({ item, idx, status, speak, onOpenMemo }: {
              <div className="relative group/icon">
                <CheckCircle size={14} className="text-green-500" />
                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-black/80 text-white text-[10px] rounded whitespace-nowrap opacity-0 group-hover/icon:opacity-100 transition-opacity pointer-events-none z-10">
-                 Passed: {status.quizStats?.[item.id]?.correct.join(', ') || 'N/A'}
+                 {t('learn.passed')} {status.quizStats?.[item.id]?.correct.join(', ') || 'N/A'}
                </div>
              </div>
            )}
@@ -743,7 +747,7 @@ function FlipListItem({ item, idx, status, speak, onOpenMemo }: {
              <div className="relative group/icon">
                <AlertCircle size={14} className="text-red-500" />
                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-black/80 text-white text-[10px] rounded whitespace-nowrap opacity-0 group-hover/icon:opacity-100 transition-opacity pointer-events-none z-10">
-                 Failed: {status.quizStats?.[item.id]?.incorrect.join(', ') || 'Review Needed'}
+                 {t('learn.failed')} {status.quizStats?.[item.id]?.incorrect.join(', ') || t('learn.reviewNeeded')}
                </div>
              </div>
            )}
@@ -752,7 +756,7 @@ function FlipListItem({ item, idx, status, speak, onOpenMemo }: {
                 onClick={(e) => { e.stopPropagation(); onOpenMemo?.(); }}
                 className="flex items-center gap-1 text-[10px] font-bold text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/30 px-1.5 py-0.5 rounded hover:bg-yellow-200 dark:hover:bg-yellow-900/50 transition-colors"
                >
-                 <BookOpen size={10} /> MEMO
+                 <BookOpen size={10} /> {t('learn.memo')}
                </button>
            )}
         </div>

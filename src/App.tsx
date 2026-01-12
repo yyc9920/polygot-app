@@ -1,10 +1,10 @@
-import { 
-  BookOpen, 
-  Brain, 
-  Settings, 
-  PlusCircle, 
-  Moon, 
-  Sun, 
+import {
+  BookOpen,
+  Brain,
+  Settings,
+  PlusCircle,
+  Moon,
+  Sun,
   Sparkles,
   Music,
 } from 'lucide-react';
@@ -17,19 +17,21 @@ import { QuizView } from './views/QuizView';
 import { BuilderView } from './views/BuilderView';
 import { SettingsView } from './views/SettingsView';
 import { MusicLearnView } from './views/MusicLearnView';
+import useLanguage from './hooks/useLanguage';
 
 function AppContent() {
   const { currentView, setCurrentView } = usePhraseAppContext();
   const { darkMode, toggleTheme } = useTheme();
+  const { t } = useLanguage();
 
   return (
     <div className={`fixed inset-0 flex flex-col transition-colors duration-300 ${darkMode ? 'dark bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'} font-sans`}>
       {/* Header */}
       <header className="flex-none sticky top-0 z-10 backdrop-blur-md bg-white/80 dark:bg-gray-900/80 border-b border-gray-200 dark:border-gray-800 px-4 h-14 flex items-center justify-between">
         <h1 className="text-lg font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent truncate pr-4 flex items-center gap-2">
-          Polyglot <Sparkles size={16} className="text-yellow-500" />
+          {t('app.title')} <Sparkles size={16} className="text-yellow-500" />
         </h1>
-        <button 
+        <button
           onClick={toggleTheme}
           className="flex-none p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
           type="button"
@@ -52,35 +54,35 @@ function AppContent() {
       {/* Bottom Navigation */}
       <nav className="flex-none bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 pb-safe z-20">
         <div className="max-w-md mx-auto flex justify-around items-center h-16">
-          <NavButton 
-            active={currentView === 'learn'} 
-            onClick={() => setCurrentView('learn')} 
-            icon={<BookOpen size={24} />} 
-            label="Learn" 
+          <NavButton
+            active={currentView === 'learn'}
+            onClick={() => setCurrentView('learn')}
+            icon={<BookOpen size={24} />}
+            label={t('nav.learn')}
           />
-          <NavButton 
-            active={currentView === 'music'} 
-            onClick={() => setCurrentView('music')} 
-            icon={<Music size={24} />} 
-            label="Music" 
+          <NavButton
+            active={currentView === 'music'}
+            onClick={() => setCurrentView('music')}
+            icon={<Music size={24} />}
+            label={t('nav.music')}
           />
-          <NavButton 
-            active={currentView === 'quiz'} 
-            onClick={() => setCurrentView('quiz')} 
-            icon={<Brain size={24} />} 
-            label="Quiz" 
+          <NavButton
+            active={currentView === 'quiz'}
+            onClick={() => setCurrentView('quiz')}
+            icon={<Brain size={24} />}
+            label={t('nav.quiz')}
           />
-          <NavButton 
-            active={currentView === 'builder'} 
-            onClick={() => setCurrentView('builder')} 
-            icon={<PlusCircle size={24} />} 
-            label="Build" 
+          <NavButton
+            active={currentView === 'builder'}
+            onClick={() => setCurrentView('builder')}
+            icon={<PlusCircle size={24} />}
+            label={t('nav.build')}
           />
-          <NavButton 
-            active={currentView === 'settings'} 
-            onClick={() => setCurrentView('settings')} 
-            icon={<Settings size={24} />} 
-            label="Settings" 
+          <NavButton
+            active={currentView === 'settings'}
+            onClick={() => setCurrentView('settings')}
+            icon={<Settings size={24} />}
+            label={t('nav.settings')}
           />
         </div>
       </nav>

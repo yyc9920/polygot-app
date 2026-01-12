@@ -7,6 +7,7 @@ import { generateSongLyrics, generatePhraseFromLyric } from '../lib/gemini';
 import { FunButton } from '../components/FunButton';
 import { generateId } from '../lib/utils';
 import type { SongData, PhraseItem } from '../types';
+import useLanguage from '../hooks/useLanguage';
 
 export function MusicLearnView() {
   const { 
@@ -18,6 +19,7 @@ export function MusicLearnView() {
     musicState,
     setMusicState
   } = usePhraseAppContext();
+  const { t } = useLanguage();
   
   const { 
       query, 
@@ -55,7 +57,7 @@ export function MusicLearnView() {
     e.preventDefault();
     if (!query) return;
     if (!youtubeApiKey) {
-        alert("Please set your YouTube API Key in Settings first.");
+        alert(t('music.pleaseSetYoutubeKey'));
         return;
     }
 
@@ -90,7 +92,7 @@ export function MusicLearnView() {
 
     // Auto-generate materials if not cached
     if (!apiKey) {
-        alert("Gemini API Key is missing. Cannot generate materials.");
+        alert(t('music.geminiKeyMissing'));
         return;
     }
 
@@ -101,7 +103,7 @@ export function MusicLearnView() {
         updateState({ materials: data });
     } catch (err) {
         const error = err as Error;
-        alert("Failed to generate materials: " + error.message);
+        alert(t('music.failedGenerateMaterials').replace('{{error}}', error.message));
     } finally {
         updateState({ isLoading: false });
     }
@@ -139,7 +141,7 @@ export function MusicLearnView() {
          }
       } catch (err) {
          const error = err as Error;
-         alert("Failed to generate phrase: " + error.message);
+         alert(t('music.failedGeneratePhrase').replace('{{error}}', error.message));
       } finally {
          setGeneratingIdx(null);
       }
@@ -180,14 +182,14 @@ export function MusicLearnView() {
                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                <input 
                  type="text" 
-                 placeholder="Search song or artist..." 
+                 placeholder={t('music.searchPlaceholder')}
                  value={query}
                  onChange={(e) => updateState({ query: e.target.value })}
                  className="w-full pl-10 p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                />
             </div>
             <FunButton type="submit" variant="primary" disabled={isSearching}>
-               {isSearching ? '...' : 'Search'}
+               {isSearching ? t('music.searching') : t('music.search')}
             </FunButton>
           </form>
   
@@ -209,7 +211,7 @@ export function MusicLearnView() {
                   {results.length === 0 && !isSearching && (
                       <div className="text-center text-gray-400 mt-10">
                           <Music size={48} className="mx-auto mb-2 opacity-50" />
-                          <p>Search for a song to start learning!</p>
+                          <p>{t('music.searchToStart')}</p>
                       </div>
                   )}
               </div>
@@ -222,7 +224,7 @@ export function MusicLearnView() {
                           onClick={() => updateState({ selectedVideo: null })}
                           className="text-sm text-blue-500 hover:underline"
                       >
-                          &larr; Back to results
+                          &larr; {t('music.backToResults')}
                       </button>
                   </div>
                   <div className="rounded-xl overflow-hidden shadow-lg bg-black aspect-video">
@@ -245,7 +247,7 @@ export function MusicLearnView() {
           <div className="flex-1 flex flex-col p-4 bg-white dark:bg-gray-800 overflow-hidden">             {isLoading ? (
                  <div className="flex-1 flex flex-col items-center justify-center text-gray-400 gap-4">
                      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
-                     <p className="animate-pulse">Generating lyrics and phrases with AI...</p>
+                     <p className="animate-pulse">{t('music.generating')}</p>
                  </div>
              ) : materials ? (
                  <>
@@ -254,13 +256,13 @@ export function MusicLearnView() {
                             className={`flex-1 py-3 text-sm font-bold border-b-2 ${activeTab === 'lyrics' ? 'border-blue-500 text-blue-500' : 'border-transparent text-gray-500'}`}
                             onClick={() => updateState({ activeTab: 'lyrics' })}
                         >
-                            Lyrics
+                            {t('music.lyricsTab')}
                         </button>
                         <button 
                             className={`flex-1 py-3 text-sm font-bold border-b-2 ${activeTab === 'phrase' ? 'border-blue-500 text-blue-500' : 'border-transparent text-gray-500'}`}
                             onClick={() => updateState({ activeTab: 'phrase' })}
                         >
-                            Phrases ({materials.phrases?.length || 0})
+                            {t('music.phrasesTab')} ({materials.phrases?.length || 0})
                         </button>
                     </div>
 
@@ -281,7 +283,7 @@ export function MusicLearnView() {
                                                 ? 'opacity-100 text-green-500 bg-green-50 dark:bg-green-900/20 cursor-default' 
                                                 : 'opacity-0 group-hover:opacity-100 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20'
                                           }`}
-                                          title={line.isGenerated ? "Card Generated" : "Generate Card"}
+                                          title={line.isGenerated ? t('music.cardGenerated') : t('music.generateCard')}
                                         >
                                           {generatingIdx === idx ? (
                                               <Loader2 size={20} className="animate-spin" />
@@ -317,12 +319,13 @@ export function MusicLearnView() {
                                             saved={saved}
                                             onSave={() => handleSavePhrase(phrase)}
                                             speak={speak}
+                                            t={t}
                                         />
                                     );
                                 }) : (
                                   <div className="text-center text-gray-400 mt-10">
                                     <Sparkles size={32} className="mx-auto mb-2 opacity-50" />
-                                    <p>Go to Lyrics tab and click the sparkle icon to generate phrases!</p>
+                                    <p>{t('music.clickSparkle')}</p>
                                   </div>
                                 )}
                             </div>
@@ -331,7 +334,7 @@ export function MusicLearnView() {
                  </>
              ) : (
                  <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
-                     <p>Select a video to generate materials.</p>
+                     <p>{t('music.selectVideo')}</p>
                  </div>
              )}
         </div>
@@ -340,12 +343,13 @@ export function MusicLearnView() {
   );
 }
 
-function FlipListItem({ item, idx, saved, onSave, speak }: { 
+function FlipListItem({ item, idx, saved, onSave, speak, t }: { 
     item: PhraseItem, 
     idx: number, 
-    saved: boolean,
+    saved: boolean, 
     onSave: () => void,
-    speak: (t:string)=>void
+    speak: (t:string)=>void,
+    t: (key: string) => string
 }) {
   const [showMeaning, setShowMeaning] = useState(false);
 
@@ -365,12 +369,12 @@ function FlipListItem({ item, idx, saved, onSave, speak }: {
           {showMeaning ? (
              <span className="text-blue-500 font-medium">{item.sentence}</span>
           ) : (
-             <span className="opacity-50 text-xs">Tap to reveal meaning</span>
+             <span className="opacity-50 text-xs">{t('learn.tapToRevealMeaning')}</span>
           )}
         </p>
         <div className="flex gap-1 mt-1 pl-8 items-center">
             {/* Using saved status instead of learning status for this view */}
-           {saved && <span className="text-[10px] bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-1.5 py-0.5 rounded font-bold">SAVED</span>}
+           {saved && <span className="text-[10px] bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-1.5 py-0.5 rounded font-bold">{t('music.savedBadge')}</span>}
            {item.pronunciation && (
                <span className="text-[10px] font-mono bg-gray-200 dark:bg-gray-600 px-1.5 py-0.5 rounded text-gray-600 dark:text-gray-300">/{item.pronunciation}/</span>
            )}
