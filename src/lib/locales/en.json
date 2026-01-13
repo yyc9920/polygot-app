@@ -39,6 +39,8 @@
     "apiKeyStoredLocally": "Your key is stored locally in your browser and used only for AI features.",
     "youtubeApiKey": "YouTube Data API Key",
     "youtubeRequiredForMusic": "Required for searching music videos.",
+    "geniusApiKey": "Genius API Key",
+    "geniusRequiredForExactLyrics": "Required for fetching exact song lyrics from Genius database.",
     "getApiKey": "Get Key",
     "ttsVoice": "TTS Voice",
     "autoDetect": "Auto-detect",

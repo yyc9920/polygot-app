@@ -3,6 +3,7 @@ export interface YouTubeVideo {
   title: string;
   artist: string;
   thumbnailUrl: string;
+  hasLyrics?: boolean;
 }
 
 interface SearchResult {

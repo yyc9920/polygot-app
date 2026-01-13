@@ -1,4 +1,3 @@
-import React from 'react';
 import { Package, Check, ShoppingCart, Globe } from 'lucide-react';
 import { usePhraseAppContext } from '../context/PhraseContext';
 import { LANGUAGE_NAMES, type Language } from '../hooks/useLanguage';

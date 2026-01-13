@@ -32,17 +32,19 @@ import useLanguage from '../hooks/useLanguage';
 import { StarterPackageSelection } from '../components/StarterPackageSelection';
 
 export function SettingsView() {
-  const { 
-    voiceURI, 
-    setVoiceURI, 
-    handleReset, 
-    handleDeleteAllData, 
-    status, 
+  const {
+    voiceURI,
+    setVoiceURI,
+    handleReset,
+    handleDeleteAllData,
+    status,
     setStatus,
-    apiKey, 
+    apiKey,
     setApiKey,
     youtubeApiKey,
     setYoutubeApiKey,
+    geniusApiKey,
+    setGeniusApiKey,
     phraseList,
     setPhraseList,
     savedUrls,
@@ -59,6 +61,7 @@ export function SettingsView() {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [showApiKey, setShowApiKey] = useState(false);
   const [showYoutubeApiKey, setShowYoutubeApiKey] = useState(false);
+  const [showGeniusApiKey, setShowGeniusApiKey] = useState(false);
   const [voiceFilter, setVoiceFilter] = useState('');
   
   // Progress Filter
@@ -477,39 +480,72 @@ export function SettingsView() {
           </p>
         </div>
 
-        <div className="flex flex-col gap-2 mt-4">
-          <div className="flex justify-between items-center">
-            <label className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('settings.youtubeApiKey')}</label>
-            <a 
-              href="https://console.developers.google.com/apis" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-xs text-red-500 hover:text-red-600 flex items-center gap-1 font-medium"
-            >
-              {t('settings.getApiKey')} <ExternalLink size={12} />
-            </a>
-          </div>
-          <div className="flex gap-2 relative">
-             <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-             <input 
-               type={showYoutubeApiKey ? "text" : "password"}
-               placeholder={t('settings.apiKeyPlaceholder')}
-               value={youtubeApiKey} 
-               onChange={(e) => setYoutubeApiKey(e.target.value)}
-               className="flex-1 pl-10 pr-10 p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-red-500 transition-all"
-             />
-             <button 
-               onClick={() => setShowYoutubeApiKey(!showYoutubeApiKey)}
-               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+         <div className="flex flex-col gap-2 mt-4">
+           <div className="flex justify-between items-center">
+             <label className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('settings.youtubeApiKey')}</label>
+             <a
+               href="https://console.developers.google.com/apis"
+               target="_blank"
+               rel="noopener noreferrer"
+               className="text-xs text-red-500 hover:text-red-600 flex items-center gap-1 font-medium"
              >
-               {showYoutubeApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
-             </button>
-          </div>
-          <p className="text-xs text-gray-400 mt-1">
-            {t('settings.youtubeRequiredForMusic')}
-          </p>
-        </div>
-      </section>
+               {t('settings.getApiKey')} <ExternalLink size={12} />
+             </a>
+           </div>
+           <div className="flex gap-2 relative">
+              <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+              <input
+                type={showYoutubeApiKey ? "text" : "password"}
+                placeholder={t('settings.apiKeyPlaceholder')}
+                value={youtubeApiKey}
+                onChange={(e) => setYoutubeApiKey(e.target.value)}
+                className="flex-1 pl-10 pr-10 p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-red-500 transition-all"
+              />
+              <button
+                onClick={() => setShowYoutubeApiKey(!showYoutubeApiKey)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showYoutubeApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+           </div>
+           <p className="text-xs text-gray-400 mt-1">
+             {t('settings.youtubeRequiredForMusic')}
+           </p>
+         </div>
+
+         <div className="flex flex-col gap-2 mt-4">
+           <div className="flex justify-between items-center">
+             <label className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('settings.geniusApiKey')}</label>
+             <a
+               href="https://genius.com/api-clients"
+               target="_blank"
+               rel="noopener noreferrer"
+               className="text-xs text-green-500 hover:text-green-600 flex items-center gap-1 font-medium"
+             >
+               {t('settings.getApiKey')} <ExternalLink size={12} />
+             </a>
+           </div>
+           <div className="flex gap-2 relative">
+              <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+              <input
+                type={showGeniusApiKey ? "text" : "password"}
+                placeholder={t('settings.apiKeyPlaceholder')}
+                value={geniusApiKey}
+                onChange={(e) => setGeniusApiKey(e.target.value)}
+                className="flex-1 pl-10 pr-10 p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
+              />
+              <button
+                onClick={() => setShowGeniusApiKey(!showGeniusApiKey)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showGeniusApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+           </div>
+           <p className="text-xs text-gray-400 mt-1">
+             {t('settings.geniusRequiredForExactLyrics')}
+           </p>
+         </div>
+       </section>
 
       {/* 4. Text-to-Speech Settings */}
       <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">

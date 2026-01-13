@@ -5,25 +5,32 @@ import useCloudStorage from '../hooks/useCloudStorage';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { parseCSV, generateId } from '../lib/utils';
 import type { YouTubeVideo } from '../lib/youtube';
+import type { GeniusSong } from '../lib/lyrics';
 import { PHRASE_DICTIONARY, type LanguageCode } from '../data/phraseDictionary';
 
 export interface MusicViewState {
   query: string;
   results: YouTubeVideo[];
+  geniusResults: GeniusSong[];
   selectedVideo: YouTubeVideo | null;
+  selectedSong: GeniusSong | null;
   materials: SongMaterials | null;
   isLoading: boolean;
   isSearching: boolean;
+  searchStep: 'song' | 'video';
   activeTab: 'lyrics' | 'phrase';
 }
 
 const initialMusicState: MusicViewState = {
   query: '',
   results: [],
+  geniusResults: [],
   selectedVideo: null,
+  selectedSong: null,
   materials: null,
   isLoading: false,
   isSearching: false,
+  searchStep: 'song',
   activeTab: 'lyrics',
 };
 
@@ -38,6 +45,8 @@ interface PhraseAppContextType {
   setApiKey: Dispatch<SetStateAction<string>>;
   youtubeApiKey: string;
   setYoutubeApiKey: Dispatch<SetStateAction<string>>;
+  geniusApiKey: string;
+  setGeniusApiKey: Dispatch<SetStateAction<string>>;
   savedUrls: string[];
   setSavedUrls: Dispatch<SetStateAction<string[]>>;
   currentView: ViewMode;
@@ -73,6 +82,7 @@ export const PhraseAppProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [voiceURI, setVoiceURI] = useLocalStorage<string | null>('ttsVoiceURI', null);
   const [apiKey, setApiKey] = useLocalStorage<string>('geminiApiKey', '');
   const [youtubeApiKey, setYoutubeApiKey] = useLocalStorage<string>('youtubeApiKey', '');
+  const [geniusApiKey, setGeniusApiKey] = useLocalStorage<string>('geniusApiKey', '');
   
   const [currentView, setCurrentView] = useState<ViewMode>('learn');
   const [reviewMode, setReviewMode] = useState(false);
@@ -232,6 +242,8 @@ export const PhraseAppProvider: React.FC<{ children: ReactNode }> = ({ children 
     setApiKey,
     youtubeApiKey,
     setYoutubeApiKey,
+    geniusApiKey,
+    setGeniusApiKey,
     savedUrls,
     setSavedUrls,
     currentView,
