@@ -60,6 +60,8 @@ export interface GeniusSong {
   url: string;
 }
 
+const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+
 async function performSearch(query: string, apiKey?: string): Promise<GeniusSong[]> {
   const params = new URLSearchParams({
     q: encodeURIComponent(query)
@@ -70,9 +72,13 @@ async function performSearch(query: string, apiKey?: string): Promise<GeniusSong
     headers['x-genius-token'] = apiKey;
   }
 
-  const response = await fetch(`/api/search-genius?${params}`, {
+  console.log(`Params: ${params.toString()}`);
+  console.log('Headers:', JSON.stringify(headers));
+  console.log('backend:', backendUrl);
+  const response = await fetch(`${backendUrl}/api/search-genius?${params}`, {
     headers
   });
+  console.log('Response:', JSON.stringify(response));
 
   if (!response.ok) {
     console.warn(`Failed to search Genius for query: ${query}`);
@@ -160,7 +166,7 @@ export async function fetchExactLyrics(artist: string, title: string, apiKey?: s
     headers['x-genius-token'] = apiKey;
   }
 
-  const response = await fetch(`/api/lyrics?${params}`, {
+  const response = await fetch(`${backendUrl}/api/lyrics?${params}`, {
     headers
   });
 
