@@ -60,32 +60,40 @@ export interface GeniusSong {
   url: string;
 }
 
-const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+const backendUrl = (import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000').replace(/\/$/, '');
 
 async function performSearch(query: string, apiKey?: string): Promise<GeniusSong[]> {
   const params = new URLSearchParams({
-    q: encodeURIComponent(query)
+    q: query
   });
 
   const headers: HeadersInit = {};
-  if (apiKey) {
+  if (apiKey && apiKey !== 'undefined' && apiKey.trim() !== '') {
     headers['x-genius-token'] = apiKey;
   }
 
   console.log(`Params: ${params.toString()}`);
   console.log('Headers:', JSON.stringify(headers));
   console.log('backend:', backendUrl);
+  
   const response = await fetch(`${backendUrl}/api/search-genius?${params}`, {
     headers
   });
-  console.log('Response:', JSON.stringify(response));
+  console.log('Response Status:', response.status, response.statusText);
 
   if (!response.ok) {
     console.warn(`Failed to search Genius for query: ${query}`);
+    try {
+      const text = await response.text();
+      console.warn('Error response body:', text);
+    } catch (e) {
+      console.warn('Could not read error response body');
+    }
     return [];
   }
 
   const data = await response.json();
+  console.log('Data:', JSON.stringify(data));
   return data.songs || [];
 }
 
