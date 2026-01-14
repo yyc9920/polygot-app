@@ -125,8 +125,9 @@ export function MusicLearnView() {
     try {
         const artist = selectedSong ? selectedSong.artist : video.artist;
         const title = selectedSong ? selectedSong.title : video.title;
+        const songId = selectedSong ? selectedSong.id : undefined;
 
-        const data = await generateSongLyrics(artist, title, apiKey, geniusApiKey);
+        const data = await generateSongLyrics(artist, title, apiKey, geniusApiKey, songId);
         localStorage.setItem(cacheKey, JSON.stringify(data));
         updateState({ materials: data });
     } catch (err) {

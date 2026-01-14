@@ -42,10 +42,10 @@ export const callGemini = async (prompt: string, apiKey: string, options: Gemini
   return result.candidates?.[0]?.content?.parts?.[0]?.text || "";
 };
 
-export const generateSongLyrics = async (artist: string, title: string, apiKey: string, geniusApiKey?: string) => {
+export const generateSongLyrics = async (artist: string, title: string, apiKey: string, geniusApiKey?: string, songId?: number) => {
   try {
-    console.log(`Fetching exact lyrics for "${title}" by "${artist}"`);
-    const lyricsData = await fetchExactLyrics(artist, title, geniusApiKey);
+    console.log(`Fetching exact lyrics for "${title}" by "${artist}" (ID: ${songId})`);
+    const lyricsData = await fetchExactLyrics(artist, title, geniusApiKey, songId);
     const originalLines = parseLyricsLines(lyricsData.lyrics);
 
     console.log(`Found exact lyrics with ${originalLines.length} lines. Using AI for translation only.`);

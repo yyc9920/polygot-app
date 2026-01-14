@@ -159,21 +159,28 @@ export async function searchGeniusSongs(query: string, apiKey?: string): Promise
 }
 
 
-export async function fetchExactLyrics(artist: string, title: string, apiKey?: string): Promise<LyricsResponse> {
-  const cleanArtist = cleanSearchQuery(artist);
-  const cleanTitle = cleanSearchQuery(title);
+export async function fetchExactLyrics(artist: string, title: string, apiKey?: string, songId?: number): Promise<LyricsResponse> {
+  let params: URLSearchParams;
 
-  const searchQuery = `${cleanArtist} ${cleanTitle}`;
-
-  const params = new URLSearchParams({
-    q: searchQuery
-  });
+  if (songId) {
+     params = new URLSearchParams({
+       id: songId.toString()
+     });
+  } else {
+    const cleanArtist = cleanSearchQuery(artist);
+    const cleanTitle = cleanSearchQuery(title);
+    const searchQuery = `${cleanArtist} ${cleanTitle}`;
+    params = new URLSearchParams({
+      q: searchQuery
+    });
+  }
 
   const headers: HeadersInit = {};
-  if (apiKey) {
+  if (apiKey && apiKey !== 'undefined' && apiKey.trim() !== '') {
     headers['x-genius-token'] = apiKey;
   }
 
+  console.log(`${backendUrl}/api/lyrics?${params}`);
   const response = await fetch(`${backendUrl}/api/lyrics?${params}`, {
     headers
   });
