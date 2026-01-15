@@ -1,20 +1,21 @@
 import React, { useState } from 'react';
 import YouTube from 'react-youtube';
-import { Search, Music, Plus, Check, Volume2, Loader2, Sparkles, User as UserIcon, Youtube } from 'lucide-react';
+import { Search, Plus, Check, Volume2, Loader2, Sparkles, User as UserIcon, Youtube, ChevronLeft, ChevronRight } from 'lucide-react';
 import { usePhraseAppContext } from '../context/PhraseContext';
 import { searchYouTube, type YouTubeVideo } from '../lib/youtube';
 import { generateSongLyrics, generatePhraseFromLyric } from '../lib/gemini';
-import { searchGeniusSongs, type GeniusSong } from '../lib/lyrics';
+import { searchSongs, type Song } from '../lib/lyrics';
 import { FunButton } from '../components/FunButton';
 import { generateId } from '../lib/utils';
 import type { SongData, PhraseItem } from '../types';
 import useLanguage from '../hooks/useLanguage';
 
+const SONGS_PER_PAGE = 5;
+
 export function MusicLearnView() {
   const { 
     apiKey, 
     youtubeApiKey, 
-    geniusApiKey,
     setPhraseList, 
     phraseList, 
     voiceURI,
@@ -26,14 +27,15 @@ export function MusicLearnView() {
   const { 
       query, 
       results,
-      geniusResults,
+      songResults,
       selectedVideo, 
       selectedSong,
       materials, 
       isLoading, 
       isSearching,
       searchStep,
-      activeTab 
+      activeTab,
+      songPage
   } = musicState;
 
   const [generatingIdx, setGeneratingIdx] = useState<number | null>(null);
@@ -61,11 +63,11 @@ export function MusicLearnView() {
     e.preventDefault();
     if (!query) return;
 
-    updateState({ isSearching: true, searchStep: 'song', selectedSong: null, selectedVideo: null, materials: null, results: [], geniusResults: [] });
+    updateState({ isSearching: true, searchStep: 'song', selectedSong: null, selectedVideo: null, materials: null, results: [], songResults: [], songPage: 1 });
     
     try {
-      const songs = await searchGeniusSongs(query, geniusApiKey);
-      updateState({ geniusResults: songs });
+      const songs = await searchSongs(query);
+      updateState({ songResults: songs });
     } catch (err) {
       const error = err as Error;
       alert(error.message);
@@ -74,7 +76,7 @@ export function MusicLearnView() {
     }
   };
 
-  const handleSelectSong = async (song: GeniusSong) => {
+  const handleSelectSong = async (song: Song) => {
     if (!youtubeApiKey) {
       alert(t('music.pleaseSetYoutubeKey'));
       return;
@@ -125,11 +127,10 @@ export function MusicLearnView() {
     try {
         const artist = selectedSong ? selectedSong.artist : video.artist;
         const title = selectedSong ? selectedSong.title : video.title;
-        const songId = selectedSong ? selectedSong.id : undefined;
         
         const targetLanguageName = LANGUAGE_NAMES[language];
 
-        const data = await generateSongLyrics(artist, title, apiKey, targetLanguageName, geniusApiKey, songId);
+        const data = await generateSongLyrics(artist, title, apiKey, targetLanguageName);
         localStorage.setItem(cacheKey, JSON.stringify(data));
         updateState({ materials: data });
     } catch (err) {
@@ -202,6 +203,20 @@ export function MusicLearnView() {
       });
   };
 
+  const totalPages = Math.ceil(songResults.length / SONGS_PER_PAGE);
+  const currentSongs = songResults.slice(
+      (songPage - 1) * SONGS_PER_PAGE, 
+      songPage * SONGS_PER_PAGE
+  );
+
+  const handlePrevPage = () => {
+      if (songPage > 1) updateState({ songPage: songPage - 1 });
+  };
+
+  const handleNextPage = () => {
+      if (songPage < totalPages) updateState({ songPage: songPage + 1 });
+  };
+
     return (
       <div className="h-full flex flex-col overflow-hidden bg-gray-50 dark:bg-gray-900">
         <div className={`${selectedVideo ? 'h-[40%] flex-shrink-0' : 'flex-1'} flex flex-col p-4 overflow-y-auto border-b border-gray-200 dark:border-gray-800 transition-all duration-300`}>
@@ -226,9 +241,9 @@ export function MusicLearnView() {
   
           {!selectedVideo && searchStep === 'song' && (
               <div className="space-y-3">
-                  {geniusResults.length > 0 && <h3 className="font-bold text-gray-500 text-xs uppercase tracking-wider mb-2">Select a Song</h3>}
+                  {songResults.length > 0 && <h3 className="font-bold text-gray-500 text-xs uppercase tracking-wider mb-2">Select a Song</h3>}
                   
-                  {geniusResults.map(song => (
+                  {currentSongs.map(song => (
                       <div 
                           key={song.id} 
                           onClick={() => handleSelectSong(song)}
@@ -252,65 +267,74 @@ export function MusicLearnView() {
                              </div>
                           </div>
                       </div>
-                  ))}
-                  
-                  {geniusResults.length === 0 && !isSearching && query && (
-                      <div className="text-center text-gray-400 mt-10">
-                          <p>No songs found. Try a different search.</p>
-                      </div>
-                  )}
+                   ))}
+                
+                {totalPages > 1 && (
+                  <div className="flex justify-center items-center gap-4 mt-4 pb-2">
+                    <button 
+                        onClick={handlePrevPage} 
+                        disabled={songPage === 1}
+                        className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                        <ChevronLeft size={20} />
+                    </button>
+                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        {songPage} / {totalPages}
+                    </span>
+                    <button 
+                        onClick={handleNextPage} 
+                        disabled={songPage === totalPages}
+                        className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                        <ChevronRight size={20} />
+                    </button>
+                  </div>
+                )}
+             </div>
+           )}
 
-                  {geniusResults.length === 0 && !isSearching && !query && (
-                      <div className="text-center text-gray-400 mt-10 space-y-4">
-                          <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full mx-auto flex items-center justify-center">
-                            <Music size={40} className="opacity-30" />
-                          </div>
-                          <p>{t('music.searchToStart')}</p>
-                      </div>
-                  )}
-              </div>
-          )}
-
-          {!selectedVideo && searchStep === 'video' && (
-            <div className="space-y-4">
-               <div className="flex items-center justify-between">
-                 <button 
-                    onClick={() => updateState({ searchStep: 'song', results: [] })}
-                    className="text-sm text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 flex items-center gap-1"
-                 >
-                    &larr; Back to Songs
-                 </button>
-                 <span className="text-xs font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-lg">
-                    {selectedSong?.title} - {selectedSong?.artist}
-                 </span>
+           {!selectedVideo && searchStep === 'video' && (
+               <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                   <div className="flex items-center gap-2 mb-2">
+                       <button 
+                           onClick={() => updateState({ searchStep: 'song', results: [] })}
+                           className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+                       >
+                           <ChevronLeft size={24} />
+                       </button>
+                       <div className="flex-1">
+                           <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100 leading-tight">
+                               {selectedSong?.title}
+                           </h3>
+                           <p className="text-sm text-gray-500">{selectedSong?.artist}</p>
+                       </div>
+                   </div>
+                   
+                   <div className="grid gap-3">
+                       {results.map(video => (
+                           <div 
+                               key={video.videoId}
+                               onClick={() => handleSelectVideo(video)}
+                               className="flex gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all shadow-sm border border-transparent hover:border-blue-200 dark:hover:border-blue-800 group"
+                           >
+                               <div className="w-32 aspect-video bg-gray-200 rounded-lg overflow-hidden flex-shrink-0 shadow-sm relative">
+                                   <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                               </div>
+                               <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
+                                   <h4 className="font-bold text-sm text-gray-900 dark:text-gray-100 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                       {video.title}
+                                   </h4>
+                                   <div className="flex items-center gap-1 text-xs text-gray-500">
+                                       <Youtube size={12} />
+                                       <span className="truncate">{video.artist}</span>
+                                   </div>
+                               </div>
+                           </div>
+                       ))}
+                   </div>
                </div>
-
-               <div className="space-y-3">
-                  <h3 className="font-bold text-gray-500 text-xs uppercase tracking-wider">Select a Video Version</h3>
-                  {results.map(video => (
-                      <div 
-                          key={video.videoId} 
-                          onClick={() => handleSelectVideo(video)}
-                          className="flex gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all shadow-sm border border-transparent hover:border-red-200 dark:hover:border-red-900 group"
-                      >
-                          <div className="relative w-32 aspect-video bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
-                             <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover" />
-                             <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
-                             <div className="absolute bottom-1 right-1 bg-black/70 text-white text-[10px] px-1 rounded">
-                                <Youtube size={10} />
-                             </div>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                              <h4 className="font-bold text-sm text-gray-900 dark:text-gray-100 line-clamp-2 leading-snug group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
-                                {video.title}
-                              </h4>
-                              <p className="text-xs text-gray-500 mt-1 line-clamp-1">{video.artist}</p>
-                          </div>
-                      </div>
-                  ))}
-               </div>
-            </div>
-          )}
+           )}
   
           {selectedVideo && (
               <div className="space-y-4 max-w-2xl mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500">

@@ -5,26 +5,27 @@ import useCloudStorage from '../hooks/useCloudStorage';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { parseCSV, generateId } from '../lib/utils';
 import type { YouTubeVideo } from '../lib/youtube';
-import type { GeniusSong } from '../lib/lyrics';
+import type { Song } from '../lib/lyrics';
 import { PHRASE_DICTIONARY, type LanguageCode } from '../data/phraseDictionary';
 
 export interface MusicViewState {
   query: string;
   results: YouTubeVideo[];
-  geniusResults: GeniusSong[];
+  songResults: Song[];
   selectedVideo: YouTubeVideo | null;
-  selectedSong: GeniusSong | null;
+  selectedSong: Song | null;
   materials: SongMaterials | null;
   isLoading: boolean;
   isSearching: boolean;
   searchStep: 'song' | 'video';
   activeTab: 'lyrics' | 'phrase';
+  songPage: number;
 }
 
 const initialMusicState: MusicViewState = {
   query: '',
   results: [],
-  geniusResults: [],
+  songResults: [],
   selectedVideo: null,
   selectedSong: null,
   materials: null,
@@ -32,6 +33,7 @@ const initialMusicState: MusicViewState = {
   isSearching: false,
   searchStep: 'song',
   activeTab: 'lyrics',
+  songPage: 1,
 };
 
 interface PhraseAppContextType {
@@ -44,9 +46,6 @@ interface PhraseAppContextType {
   apiKey: string;
   setApiKey: Dispatch<SetStateAction<string>>;
   youtubeApiKey: string;
-  setYoutubeApiKey: Dispatch<SetStateAction<string>>;
-  geniusApiKey: string;
-  setGeniusApiKey: Dispatch<SetStateAction<string>>;
   savedUrls: string[];
   setSavedUrls: Dispatch<SetStateAction<string[]>>;
   currentView: ViewMode;
@@ -81,8 +80,8 @@ export const PhraseAppProvider: React.FC<{ children: ReactNode }> = ({ children 
   // Use Local Storage for Device-Specific Settings (API Keys, Voices, etc)
   const [voiceURI, setVoiceURI] = useLocalStorage<string | null>('ttsVoiceURI', null);
   const [apiKey, setApiKey] = useLocalStorage<string>('geminiApiKey', '');
-  const [youtubeApiKey, setYoutubeApiKey] = useLocalStorage<string>('youtubeApiKey', '');
-  const [geniusApiKey, setGeniusApiKey] = useLocalStorage<string>('geniusApiKey', '');
+  
+  const youtubeApiKey = import.meta.env.VITE_YOUTUBE_API_KEY || '';
   
   const [currentView, setCurrentView] = useState<ViewMode>('learn');
   const [reviewMode, setReviewMode] = useState(false);
@@ -241,9 +240,6 @@ export const PhraseAppProvider: React.FC<{ children: ReactNode }> = ({ children 
     apiKey,
     setApiKey,
     youtubeApiKey,
-    setYoutubeApiKey,
-    geniusApiKey,
-    setGeniusApiKey,
     savedUrls,
     setSavedUrls,
     currentView,
