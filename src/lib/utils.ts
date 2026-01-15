@@ -9,6 +9,17 @@ export const generateId = (meaning: string, sentence: string): string => {
   return (hash >>> 0).toString(16);
 };
 
+export const detectLanguage = (text: string): string => {
+  const koPattern = /[\uAC00-\uD7AF]/;
+  const jaPattern = /[\u3040-\u309F\u30A0-\u30FF]/;
+  const zhPattern = /[\u4E00-\u9FFF]/;
+  
+  if (koPattern.test(text)) return 'ko';
+  if (jaPattern.test(text)) return 'ja';
+  if (zhPattern.test(text)) return 'zh';
+  return 'en';
+};
+
 // Enhanced Fuzzy Matching
 export const checkAnswer = (input: string, answer: string): boolean => {
   const normalize = (str: string) => 

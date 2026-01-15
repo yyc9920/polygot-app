@@ -39,4 +39,16 @@ export interface LearningStatus {
   quizStats?: Record<string, { correct: QuizType[], incorrect: QuizType[] }>;
 }
 
+export interface PlaylistItem {
+  id: string;
+  song: SongData;
+  video: {
+    videoId: string;
+    title: string;
+    thumbnailUrl: string;
+  };
+  language: string;
+  addedAt: number;
+}
+
 export type ViewMode = 'learn' | 'quiz' | 'builder' | 'settings' | 'music';

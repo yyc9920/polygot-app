@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, type ReactNode, type Dispatch, type SetStateAction } from 'react';
-import type { LearningStatus, PhraseItem, ViewMode, SongMaterials } from '../types';
+import type { LearningStatus, PhraseItem, ViewMode, SongMaterials, PlaylistItem } from '../types';
 import { SAMPLE_DATA } from '../constants';
 import useCloudStorage from '../hooks/useCloudStorage';
 import useLocalStorage from '../hooks/useLocalStorage';
@@ -17,9 +17,10 @@ export interface MusicViewState {
   materials: SongMaterials | null;
   isLoading: boolean;
   isSearching: boolean;
-  searchStep: 'song' | 'video';
+  searchStep: 'song' | 'video' | 'playlist';
   activeTab: 'lyrics' | 'phrase';
   songPage: number;
+  videoPage: number;
 }
 
 const initialMusicState: MusicViewState = {
@@ -34,6 +35,7 @@ const initialMusicState: MusicViewState = {
   searchStep: 'song',
   activeTab: 'lyrics',
   songPage: 1,
+  videoPage: 1,
 };
 
 interface PhraseAppContextType {
@@ -60,6 +62,8 @@ interface PhraseAppContextType {
   handleDeleteAllData: () => void;
   syncUrl: (url: string) => Promise<void>;
   totalCount: number;
+  playlist: PlaylistItem[];
+  setPlaylist: Dispatch<SetStateAction<PlaylistItem[]>>;
 }
 
 const PhraseContext = createContext<PhraseAppContextType | undefined>(undefined);
@@ -76,6 +80,7 @@ export const PhraseAppProvider: React.FC<{ children: ReactNode }> = ({ children 
   
   const [savedUrls, setSavedUrls] = useCloudStorage<string[]>('csvSourceUrls', []);
   const [purchasedPackages, setPurchasedPackages] = useCloudStorage<string[]>('purchasedPackages', []);
+  const [playlist, setPlaylist] = useCloudStorage<PlaylistItem[]>('playlist', []);
 
   // Use Local Storage for Device-Specific Settings (API Keys, Voices, etc)
   const [voiceURI, setVoiceURI] = useLocalStorage<string | null>('ttsVoiceURI', null);
@@ -225,6 +230,7 @@ export const PhraseAppProvider: React.FC<{ children: ReactNode }> = ({ children 
       setStatus({ completedIds: [], incorrectIds: [], points: 0, quizStats: {} });
       setSavedUrls([]);
       setPurchasedPackages([]);
+      setPlaylist([]);
     }
   };
 
@@ -254,6 +260,8 @@ export const PhraseAppProvider: React.FC<{ children: ReactNode }> = ({ children 
     handleDeleteAllData,
     syncUrl,
     totalCount,
+    playlist,
+    setPlaylist,
   };
 
   return <PhraseContext.Provider value={value}>{children}</PhraseContext.Provider>;
