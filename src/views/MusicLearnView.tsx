@@ -128,7 +128,7 @@ export function MusicLearnView() {
                 <div className="space-y-4 max-w-2xl mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500 h-full flex flex-col">
                     <div className="flex justify-between items-center flex-none">
                         <button 
-                            onClick={() => updateState({ selectedVideo: null, searchStep: 'video' })}
+                            onClick={() => updateState({ selectedVideo: null, searchStep: 'song', selectedSong: null, results: [] })}
                             className="text-sm text-blue-500 hover:underline flex items-center gap-1"
                         >
                             &larr; {t('music.backToResults')}
