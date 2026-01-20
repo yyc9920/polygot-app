@@ -1,7 +1,8 @@
-import { User, LogOut } from 'lucide-react';
+import { User, LogOut, Globe } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { usePhraseAppContext } from '../../context/PhraseContext';
 import { FunButton } from '../../components/FunButton';
-import useLanguage from '../../hooks/useLanguage';
+import useLanguage, { type Language } from '../../hooks/useLanguage';
 
 interface UserProfileSectionProps {
   onShowLoginModal: () => void;
@@ -9,7 +10,12 @@ interface UserProfileSectionProps {
 
 export function UserProfileSection({ onShowLoginModal }: UserProfileSectionProps) {
   const { user, signOut } = useAuth();
-  const { t } = useLanguage();
+  const { t, LANGUAGE_NAMES } = useLanguage();
+  const { status } = usePhraseAppContext();
+
+  const learningLangName = status.learningLanguage 
+    ? LANGUAGE_NAMES[status.learningLanguage as Language] || status.learningLanguage 
+    : null;
 
   return (
     <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
@@ -31,6 +37,12 @@ export function UserProfileSection({ onShowLoginModal }: UserProfileSectionProps
           <div className="flex-1 min-w-0">
             <p className="font-bold text-gray-800 dark:text-gray-100 truncate">{user.displayName}</p>
             <p className="text-sm text-gray-500 truncate">{user.email}</p>
+            {learningLangName && (
+               <div className="flex items-center gap-1 mt-1 text-xs text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full w-fit">
+                 <Globe size={12} />
+                 <span>Learning: {learningLangName}</span>
+               </div>
+            )}
           </div>
           <button 
             onClick={() => signOut()}
@@ -51,6 +63,12 @@ export function UserProfileSection({ onShowLoginModal }: UserProfileSectionProps
           >
             <User size={18} /> {t('settings.signIn')}
           </FunButton>
+          {learningLangName && (
+            <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
+               <Globe size={12} />
+               <span>Currently learning: {learningLangName}</span>
+            </div>
+          )}
         </div>
       )}
     </section>

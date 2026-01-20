@@ -37,6 +37,7 @@ export interface LearningStatus {
   completedIds: string[];
   incorrectIds: string[];
   points: number;
+  learningLanguage?: string;
   quizStats?: Record<string, { correct: QuizType[], incorrect: QuizType[] }>;
 }
 

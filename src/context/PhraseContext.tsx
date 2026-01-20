@@ -3,7 +3,7 @@ import type { LearningStatus, PhraseItem, ViewMode } from '../types';
 import { SAMPLE_DATA } from '../constants';
 import useCloudStorage from '../hooks/useCloudStorage';
 import useLocalStorage from '../hooks/useLocalStorage';
-import { parseCSV, generateId } from '../lib/utils';
+import { parseCSV, generateId, detectLanguageFromTags } from '../lib/utils';
 import { PHRASE_DICTIONARY, type LanguageCode } from '../data/phraseDictionary';
 
 interface PhraseAppContextType {
@@ -42,6 +42,21 @@ export const PhraseAppProvider: React.FC<{ children: ReactNode }> = ({ children 
   );
   
   const [status, setStatus] = useCloudStorage<LearningStatus>('learningStatus', { completedIds: [], incorrectIds: [], points: 0, quizStats: {} });
+  
+  // Auto-detect learning language
+  useEffect(() => {
+    if (phraseList.length > 0) {
+      const allTags = phraseList.flatMap(v => v.tags);
+      const detectedLang = detectLanguageFromTags(allTags);
+      
+      if (detectedLang && status.learningLanguage !== detectedLang) {
+        setStatus(prev => ({
+          ...prev,
+          learningLanguage: detectedLang
+        }));
+      }
+    }
+  }, [phraseList, status.learningLanguage, setStatus]);
   
   const [savedUrls, setSavedUrls] = useCloudStorage<string[]>('csvSourceUrls', []);
   const [purchasedPackages, setPurchasedPackages] = useCloudStorage<string[]>('purchasedPackages', []);

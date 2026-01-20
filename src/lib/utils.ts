@@ -20,6 +20,29 @@ export const detectLanguage = (text: string): string => {
   return 'en';
 };
 
+export const detectLanguageFromTags = (tags: string[]): string | undefined => {
+  const lowerTags = new Set(tags.map(t => t.toLowerCase()));
+  
+  const langMap: Record<string, string> = {
+    'japanese': 'ja', '일본어': 'ja', 'japan': 'ja',
+    'english': 'en', '영어': 'en',
+    'korean': 'ko', '한국어': 'ko',
+    'chinese': 'zh', '중국어': 'zh',
+    'spanish': 'es', '스페인어': 'es',
+    'french': 'fr', '프랑스어': 'fr',
+    'german': 'de', '독일어': 'de',
+    'portuguese': 'pt', '포르투갈어': 'pt'
+  };
+
+  for (const tag of lowerTags) {
+    if (langMap[tag]) {
+      return langMap[tag];
+    }
+  }
+  
+  return undefined;
+};
+
 // Enhanced Fuzzy Matching
 export const checkAnswer = (input: string, answer: string): boolean => {
   const normalize = (str: string) => 
