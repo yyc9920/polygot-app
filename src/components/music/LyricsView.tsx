@@ -10,7 +10,7 @@ import type { PhraseItem, SongMaterials } from '../../types';
 import { generatePhraseFromLyric } from '../../lib/gemini';
 import { generateId, detectLanguage } from '../../lib/utils';
 
-import type { MusicContextType } from '../../context/MusicContext';
+import type { MusicContextType } from '../../context/MusicContextDefinition';
 
 interface LyricsViewProps {
   onMaterialsUpdate: (materials: SongMaterials) => void;

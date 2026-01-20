@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, type Tool, type Schema } from "@google/generative-ai";
+import { GoogleGenerativeAI, type Tool, type Schema, SchemaType } from "@google/generative-ai";
 
 export interface GeminiOptions {
   maxTokens?: number;
@@ -49,23 +49,23 @@ export const callGemini = async (prompt: string, apiKey: string, options: Gemini
 export const generateSongLyrics = async (artist: string, title: string, apiKey: string, locale: string) => {
   console.log(`Searching lyrics for "${title}" by "${artist}" using Gemini Google Search...`);
 
-  const schema = {
-    type: "OBJECT",
+  const schema: Schema = {
+    type: SchemaType.OBJECT,
     properties: {
       lyrics: {
-        type: "ARRAY",
+        type: SchemaType.ARRAY,
         items: {
-          type: "OBJECT",
+          type: SchemaType.OBJECT,
           properties: {
-            original: { type: "STRING" },
-            translated: { type: "STRING" }
+            original: { type: SchemaType.STRING },
+            translated: { type: SchemaType.STRING }
           },
           required: ["original", "translated"]
         }
       },
-      artist: { type: "STRING" },
-      title: { type: "STRING" },
-      genre: { type: "STRING" }
+      artist: { type: SchemaType.STRING },
+      title: { type: SchemaType.STRING },
+      genre: { type: SchemaType.STRING }
     },
     required: ["lyrics", "artist", "title"]
   };
@@ -79,7 +79,7 @@ export const generateSongLyrics = async (artist: string, title: string, apiKey: 
     `;
 
     const searchResult = await callGemini(searchPrompt, apiKey, {
-      tools: [{ googleSearch: {} }] as Tool[]
+      tools: [{ googleSearch: {} } as unknown as Tool]
     });
 
     console.log("Search completed. Now formatting to JSON...");
@@ -151,13 +151,13 @@ export const generatePhraseFromLyric = async (lyric: string, artist: string, tit
   Tags: "music" and any other relevant tags (e.g. "expression", "love", etc.)
   `;
 
-  const schema = {
-    type: "OBJECT",
+  const schema: Schema = {
+    type: SchemaType.OBJECT,
     properties: {
-      meaning: { type: "STRING" },
-      sentence: { type: "STRING" },
-      pronunciation: { type: "STRING" },
-      tags: { type: "ARRAY", items: { type: "STRING" } }
+      meaning: { type: SchemaType.STRING },
+      sentence: { type: SchemaType.STRING },
+      pronunciation: { type: SchemaType.STRING },
+      tags: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } }
     },
     required: ["meaning", "sentence"]
   };

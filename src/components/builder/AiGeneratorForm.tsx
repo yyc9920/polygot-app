@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Sparkles, Loader2 } from 'lucide-react';
+import { SchemaType, type Schema } from '@google/generative-ai';
 import { FunButton } from '../FunButton';
 import { callGemini } from '../../lib/gemini';
 import { generateId } from '../../lib/utils';
@@ -47,15 +48,15 @@ Tags: Tags in Native language (e.g. "일상,비즈니스"). If context implies a
       9. 감정
 `;
 
-      const schema = {
-        type: "ARRAY",
+      const schema: Schema = {
+        type: SchemaType.ARRAY,
         items: {
-            type: "OBJECT",
+            type: SchemaType.OBJECT,
             properties: {
-                meaning: { type: "STRING" },
-                sentence: { type: "STRING" },
-                pronunciation: { type: "STRING" },
-                tags: { type: "ARRAY", items: { type: "STRING" } }
+                meaning: { type: SchemaType.STRING },
+                sentence: { type: SchemaType.STRING },
+                pronunciation: { type: SchemaType.STRING },
+                tags: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } }
             },
             required: ["meaning", "sentence"]
         }

@@ -3,6 +3,14 @@ import type { SongMaterials, PlaylistItem } from '../types';
 import useCloudStorage from '../hooks/useCloudStorage';
 import { MusicContext, initialMusicState, type MusicViewState } from './MusicContextDefinition';
 
+const mergePlaylist = (local: PlaylistItem[], cloud: PlaylistItem[]) => {
+    const cloudIds = new Set(cloud.map(c => c.id));
+    const localUnique = local.filter(l => !cloudIds.has(l.id));
+    return [...cloud, ...localUnique];
+};
+
+const mergeLyrics = (local: Record<string, SongMaterials>, cloud: Record<string, SongMaterials>) => ({ ...local, ...cloud });
+
 export const MusicProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [musicState, setMusicState] = useState<MusicViewState>(initialMusicState);
   
@@ -10,18 +18,14 @@ export const MusicProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     'playlist', 
     [], 
     undefined,
-    (local, cloud) => {
-        const cloudIds = new Set(cloud.map(c => c.id));
-        const localUnique = local.filter(l => !cloudIds.has(l.id));
-        return [...cloud, ...localUnique];
-    }
+    mergePlaylist
   );
 
   const [songLyrics, setSongLyrics] = useCloudStorage<Record<string, SongMaterials>>(
     'song_lyrics',
     {},
     undefined,
-    (local, cloud) => ({ ...local, ...cloud })
+    mergeLyrics
   );
 
   const value = {
