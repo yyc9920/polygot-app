@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { CheckCircle, AlertCircle, Volume2, BookOpen, MessageCircleQuestion, Music, Pencil } from 'lucide-react';
 import type { PhraseItem, LearningStatus } from '../types';
 import useLanguage from '../hooks/useLanguage';
+import { useTTS } from '../hooks/useTTS';
+import { useDailyStats } from '../hooks/useDailyStats';
 
 interface PhraseCardProps {
   item: PhraseItem;
@@ -12,6 +14,45 @@ interface PhraseCardProps {
   onOpenMemo?: (e: React.MouseEvent) => void;
   onEdit?: () => void;
   className?: string;
+}
+
+export function FlippablePhraseCard({ 
+  item, 
+  status, 
+  onFlip,
+  className = ""
+}: { 
+  item: PhraseItem, 
+  status: LearningStatus, 
+  onFlip?: () => void,
+  className?: string
+}) {
+  const [isFlipped, setIsFlipped] = useState(false);
+  const { speak } = useTTS();
+  const { increment } = useDailyStats();
+
+  const handleFlip = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isFlipped && onFlip) {
+        onFlip();
+    }
+    setIsFlipped(!isFlipped);
+  };
+  
+  return (
+    <div 
+      className="cursor-pointer transition-transform duration-200 active:scale-95"
+      onClick={handleFlip}
+    >
+        <PhraseCard 
+            item={item} 
+            status={status} 
+            side={isFlipped ? 'back' : 'front'}
+            className={`${className} hover:shadow-xl transition-all`}
+            onSpeak={!isFlipped ? () => { speak(item.sentence); increment('speakCount'); } : undefined}
+        />
+    </div>
+  );
 }
 
 export function PhraseCard({ 

@@ -1,16 +1,15 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { usePhraseAppContext } from '../context/PhraseContext';
 import { useMusicContext } from '../context/MusicContext';
-import { PhraseCard } from '../components/PhraseCard';
+import { FlippablePhraseCard } from '../components/PhraseCard';
 import { Sparkles, Brain, Calendar, Music as MusicIcon, Tag, CheckCircle2, RefreshCw } from 'lucide-react';
 import { StarterPackageSelection } from '../components/StarterPackageSelection';
 import useLanguage from '../hooks/useLanguage';
 import useLocalStorage from '../hooks/useLocalStorage';
-import { useTTS } from '../hooks/useTTS';
 import { useDailyStats } from '../hooks/useDailyStats';
-import type { PhraseItem, LearningStatus, PlaylistItem, DailyMission, DailyRecommendation } from '../types';
+import type { PlaylistItem, DailyMission, DailyRecommendation } from '../types';
 
-import { BottomSheet } from '../components/BottomSheet';
+import { KeywordPhrasesModal } from '../components/KeywordPhrasesModal';
 import { HomeSongView } from './home/HomeSongView';
 
 const MISSION_POOL: Omit<DailyMission, 'text'>[] = [
@@ -22,35 +21,6 @@ const MISSION_POOL: Omit<DailyMission, 'text'>[] = [
   { id: 'review_10', type: 'review', target: 10 },
   { id: 'speak_10', type: 'speak', target: 10 },
 ];
-
-function FlippablePhraseCard({ item, status, onFlip }: { item: PhraseItem, status: LearningStatus, onFlip?: () => void }) {
-  const [isFlipped, setIsFlipped] = useState(false);
-  const { speak } = useTTS();
-  const { increment } = useDailyStats();
-
-  const handleFlip = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!isFlipped && onFlip) {
-        onFlip();
-    }
-    setIsFlipped(!isFlipped);
-  };
-  
-  return (
-    <div 
-      className="cursor-pointer transition-transform duration-200 active:scale-95"
-      onClick={handleFlip}
-    >
-        <PhraseCard 
-            item={item} 
-            status={status} 
-            side={isFlipped ? 'back' : 'front'}
-            className="!min-h-[200px] !p-6 hover:shadow-xl transition-all"
-            onSpeak={!isFlipped ? () => { speak(item.sentence); increment('speakCount'); } : undefined}
-        />
-    </div>
-  );
-}
 
 export function HomeView() {
   const { phraseList, status, setCurrentView, setCustomQuizQueue, apiKey } = usePhraseAppContext();
@@ -293,6 +263,7 @@ export function HomeView() {
                 key={item.id} 
                 item={item} 
                 status={status} 
+                className="!min-h-[200px] !p-6"
                 onFlip={() => increment('reviewCount', 1, item.id)}
               />
             ))}
@@ -379,35 +350,13 @@ export function HomeView() {
         </div>
       )}
 
-      {/* Keyword Phrases Bottom Sheet */}
-      <BottomSheet
-        isOpen={!!selectedKeyword}
+      {/* Keyword Phrases Modal */}
+      <KeywordPhrasesModal
+        keyword={selectedKeyword}
+        phrases={keywordPhrases}
+        status={status}
         onClose={() => setSelectedKeyword(null)}
-        initialSnap={0.5}
-        title={
-            <div className="flex items-center gap-2">
-                <Tag size={20} className="text-blue-500" />
-                <h3 className="font-bold text-lg">#{selectedKeyword}</h3>
-            </div>
-        }
-      >
-        <div className="p-4 overflow-y-auto h-full flex flex-col gap-4">
-            {keywordPhrases.length > 0 ? (
-                keywordPhrases.map(item => (
-                    <FlippablePhraseCard 
-                        key={item.id} 
-                        item={item} 
-                        status={status} 
-                        onFlip={() => increment('reviewCount', 1, item.id)} 
-                    />
-                ))
-            ) : (
-                <div className="text-center py-8 text-gray-500">
-                    {t('home.noPhrasesForKeyword')}
-                </div>
-            )}
-        </div>
-      </BottomSheet>
+      />
 
       {/* Independent Song View Portal */}
       {selectedHomeSong && (
