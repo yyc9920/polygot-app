@@ -71,4 +71,5 @@ export interface DailyRecommendation {
   missions: DailyMission[];
   keywordPhraseIds?: Record<string, string[]>;
   songPhraseIds?: string[];
+  updatedAt?: number;
 }

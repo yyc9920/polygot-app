@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
-import useLocalStorage from './useLocalStorage';
+import useCloudStorage from './useCloudStorage';
+import { getLocalDate } from '../lib/dateUtils';
 
 export interface DailyStats {
   date: string;
@@ -9,10 +10,10 @@ export interface DailyStats {
   addCount: number;
   listenCount: number;
   reviewedIds: string[];
+  updatedAt?: number;
 }
 
-const INITIAL_STATS: DailyStats = {
-  date: new Date().toISOString().split('T')[0],
+const INITIAL_STATS_TEMPLATE: Omit<DailyStats, 'date'> = {
   speakCount: 0,
   quizCount: 0,
   reviewCount: 0,
@@ -21,46 +22,79 @@ const INITIAL_STATS: DailyStats = {
   reviewedIds: [],
 };
 
+const mergeStats = (local: Record<string, DailyStats>, cloud: Record<string, DailyStats>): Record<string, DailyStats> => {
+    const merged = { ...local };
+    for (const [key, cloudVal] of Object.entries(cloud)) {
+        const localVal = merged[key];
+        if (!localVal) {
+             merged[key] = cloudVal;
+        } else {
+             const cloudTime = cloudVal.updatedAt || 0;
+             const localTime = localVal.updatedAt || 0;
+             if (cloudTime > localTime) {
+                 merged[key] = cloudVal;
+             }
+        }
+    }
+    return merged;
+};
+
 export const useDailyStats = () => {
-  const [stats, setStats] = useLocalStorage<DailyStats>('dailyStats', INITIAL_STATS);
+  const [statsHistory, setStatsHistory] = useCloudStorage<Record<string, DailyStats>>(
+    'daily_stats_history',
+    {},
+    undefined,
+    mergeStats
+  );
 
-  const checkDate = useCallback((currentStats: DailyStats) => {
-    const today = new Date().toISOString().split('T')[0];
-    if (currentStats.date !== today) {
-      return { ...INITIAL_STATS, date: today };
-    }
-    // Migration for old stats without reviewedIds
-    if (!currentStats.reviewedIds) {
-        return { ...currentStats, reviewedIds: [] };
-    }
-    return currentStats;
-  }, []);
+  const today = getLocalDate();
 
-  const increment = useCallback((key: keyof Omit<DailyStats, 'date' | 'reviewedIds'>, amount = 1, itemId?: string) => {
-    setStats(prev => {
-      const current = checkDate(prev);
-      
-      // Prevent duplicate review counts
+  const getStatsForDate = useCallback((date: string): DailyStats => {
+    return statsHistory[date] || { ...INITIAL_STATS_TEMPLATE, date };
+  }, [statsHistory]);
+
+  const increment = useCallback((key: keyof Omit<DailyStats, 'date' | 'reviewedIds' | 'updatedAt'>, amount = 1, itemId?: string) => {
+    setStatsHistory(prev => {
+      const date = getLocalDate();
+      const current = prev[date] || { ...INITIAL_STATS_TEMPLATE, date };
+
+      const safeCurrent = {
+        ...INITIAL_STATS_TEMPLATE,
+        ...current,
+        date
+      };
+
+      let newStats: DailyStats;
+
       if (key === 'reviewCount' && itemId) {
-          if (current.reviewedIds.includes(itemId)) {
-              return current;
+          if (safeCurrent.reviewedIds?.includes(itemId)) {
+              return prev;
           }
-          return {
-              ...current,
-              reviewCount: current.reviewCount + 1,
-              reviewedIds: [...current.reviewedIds, itemId]
+          newStats = {
+              ...safeCurrent,
+              reviewCount: (safeCurrent.reviewCount || 0) + 1,
+              reviewedIds: [...(safeCurrent.reviewedIds || []), itemId],
+              updatedAt: Date.now()
+          };
+      } else {
+          newStats = {
+            ...safeCurrent,
+            [key]: (safeCurrent[key] as number) + amount,
+            updatedAt: Date.now()
           };
       }
 
       return {
-        ...current,
-        [key]: (current[key] as number) + amount
+        ...prev,
+        [date]: newStats
       };
     });
-  }, [setStats, checkDate]);
+  }, [setStatsHistory]);
 
   return {
-    stats: checkDate(stats),
-    increment
+    stats: getStatsForDate(today),
+    history: statsHistory,
+    increment,
+    getStatsForDate
   };
 };
