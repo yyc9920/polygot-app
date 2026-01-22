@@ -2,11 +2,13 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { usePhraseAppContext } from '../context/PhraseContext';
 import { useMusicContext } from '../context/MusicContext';
 import { FlippablePhraseCard } from '../components/PhraseCard';
-import { Sparkles, Brain, Calendar, Music as MusicIcon, Tag, CheckCircle2, RefreshCw } from 'lucide-react';
+import { Sparkles, Brain, Calendar, Music as MusicIcon, Tag, CheckCircle2, RefreshCw, History } from 'lucide-react';
 import { StarterPackageSelection } from '../components/StarterPackageSelection';
 import useLanguage from '../hooks/useLanguage';
-import useLocalStorage from '../hooks/useLocalStorage';
+import useCloudStorage from '../hooks/useCloudStorage';
 import { useDailyStats } from '../hooks/useDailyStats';
+import type { DailyStats } from '../hooks/useDailyStats';
+import { getLocalDate, formatDateDisplay } from '../lib/dateUtils';
 import type { PlaylistItem, DailyMission, DailyRecommendation } from '../types';
 
 import { KeywordPhrasesModal } from '../components/KeywordPhrasesModal';
@@ -22,22 +24,42 @@ const MISSION_POOL: Omit<DailyMission, 'text'>[] = [
   { id: 'speak_10', type: 'speak', target: 10 },
 ];
 
+const mergeDailyHistory = (local: Record<string, DailyRecommendation>, cloud: Record<string, DailyRecommendation>): Record<string, DailyRecommendation> => {
+    const merged = { ...local };
+    for (const [key, cloudVal] of Object.entries(cloud)) {
+        const localVal = merged[key];
+        if (!localVal) {
+             merged[key] = cloudVal;
+        } else {
+             const cloudTime = cloudVal.updatedAt || 0;
+             const localTime = localVal.updatedAt || 0;
+             if (cloudTime > localTime) {
+                 merged[key] = cloudVal;
+             }
+        }
+    }
+    return merged;
+};
+
 export function HomeView() {
   const { phraseList, status, setCurrentView, setCustomQuizQueue, apiKey } = usePhraseAppContext();
   const { playlist } = useMusicContext();
   const { t, language, LANGUAGE_NAMES } = useLanguage();
-  const { stats, increment } = useDailyStats();
+  const { stats, increment, getStatsForDate } = useDailyStats();
   
-  const [dailyData, setDailyData] = useLocalStorage<DailyRecommendation | null>('dailyRecommendation', null, (data) => {
-    if (!data) return null;
-    const rec = data as Partial<DailyRecommendation>;
-    if (!rec.missions || !Array.isArray(rec.missions) || !Array.isArray(rec.phraseIds)) {
-        return null; 
-    }
-    return data;
-  });
+  const [dailyHistory, setDailyHistory] = useCloudStorage<Record<string, DailyRecommendation>>(
+    'daily_recommendation_history', 
+    {},
+    undefined,
+    mergeDailyHistory
+  );
+  
+  const today = getLocalDate();
+  const dailyData = dailyHistory[today] || null;
+
   const [selectedKeyword, setSelectedKeyword] = useState<string | null>(null);
   const [selectedHomeSong, setSelectedHomeSong] = useState<PlaylistItem | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
 
   const handleOpenSong = (song: PlaylistItem) => {
     increment('listenCount');
@@ -46,8 +68,8 @@ export function HomeView() {
 
   const handleCloseSong = useCallback(() => setSelectedHomeSong(null), []);
 
-  const generateDaily = useCallback(() => {
-    const today = new Date().toISOString().split('T')[0];
+  const generateDaily = useCallback((keepMissions = false) => {
+    const todayStr = getLocalDate();
     
     const unlearned = phraseList.filter(item => !status.completedIds.includes(item.id));
     const pool = unlearned.length >= 3 ? unlearned : phraseList;
@@ -60,7 +82,6 @@ export function HomeView() {
         const randomSong = playlist[Math.floor(Math.random() * playlist.length)];
         selectedSongId = randomSong.id;
         
-        // Select up to 5 random phrases from this song
         const songVideoId = randomSong.video.videoId;
         const songPhrases = phraseList.filter(p => p.song?.videoId === songVideoId);
         selectedSongPhrases = songPhrases
@@ -73,7 +94,6 @@ export function HomeView() {
     const shuffledTags = allTags.sort(() => 0.5 - Math.random());
     const selectedKeywords = shuffledTags.slice(0, 5);
     
-    // Select up to 5 random phrases for each keyword
     const keywordPhraseMap: Record<string, string[]> = {};
     selectedKeywords.forEach(keyword => {
         const phrasesForTag = phraseList.filter(p => p.tags.includes(keyword));
@@ -83,25 +103,35 @@ export function HomeView() {
             .map(p => p.id);
     });
 
-    const shuffledMissions = [...MISSION_POOL].sort(() => 0.5 - Math.random());
-    const selectedMissions = shuffledMissions.slice(0, 3);
+    let selectedMissions;
+    if (keepMissions && dailyData?.missions) {
+        selectedMissions = dailyData.missions;
+    } else {
+        const shuffledMissions = [...MISSION_POOL].sort(() => 0.5 - Math.random());
+        selectedMissions = shuffledMissions.slice(0, 3);
+    }
     
-    setDailyData({
-        date: today,
+    const newDaily: DailyRecommendation = {
+        date: todayStr,
         phraseIds: selectedPhrases,
         songId: selectedSongId,
         keywords: selectedKeywords,
         missions: selectedMissions,
         keywordPhraseIds: keywordPhraseMap,
-        songPhraseIds: selectedSongPhrases
-    });
-  }, [phraseList, playlist, status.completedIds, setDailyData]);
+        songPhraseIds: selectedSongPhrases,
+        updatedAt: Date.now()
+    };
+
+    setDailyHistory(prev => ({
+        ...prev,
+        [todayStr]: newDaily
+    }));
+  }, [phraseList, playlist, status.completedIds, setDailyHistory, dailyData]);
 
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
-    if (!dailyData || dailyData.date !== today) {
+    if (!dailyData) {
         if (phraseList.length > 0) {
-            generateDaily();
+            generateDaily(false);
         }
     }
   }, [dailyData, phraseList, generateDaily]);
@@ -119,13 +149,11 @@ export function HomeView() {
   const keywordPhrases = useMemo(() => {
     if (!selectedKeyword || !dailyData?.keywordPhraseIds) return [];
     
-    // Use the stored random selection if available
     const storedIds = dailyData.keywordPhraseIds[selectedKeyword];
     if (storedIds) {
         return phraseList.filter(p => storedIds.includes(p.id));
     }
     
-    // Fallback to old behavior if data missing (e.g. old data)
     return phraseList.filter(p => p.tags.includes(selectedKeyword)).slice(0, 5);
   }, [selectedKeyword, phraseList, dailyData]);
 
@@ -134,25 +162,25 @@ export function HomeView() {
     return (status.completedIds.length / phraseList.length) * 100;
   }, [phraseList.length, status.completedIds.length]);
 
-  const isMissionCompleted = (mission: DailyMission) => {
+  const isMissionCompleted = (mission: DailyMission, dateStats: DailyStats) => {
       switch (mission.type) {
-          case 'review': return stats.reviewCount >= mission.target;
-          case 'speak': return stats.speakCount >= mission.target;
-          case 'quiz': return stats.quizCount >= mission.target;
-          case 'add': return stats.addCount >= mission.target;
-          case 'listen': return stats.listenCount >= mission.target;
+          case 'review': return dateStats.reviewCount >= mission.target;
+          case 'speak': return dateStats.speakCount >= mission.target;
+          case 'quiz': return dateStats.quizCount >= mission.target;
+          case 'add': return dateStats.addCount >= mission.target;
+          case 'listen': return dateStats.listenCount >= mission.target;
           default: return false;
       }
   };
 
-  const getProgress = (mission: DailyMission) => {
+  const getProgress = (mission: DailyMission, dateStats: DailyStats) => {
       let current = 0;
       switch (mission.type) {
-          case 'review': current = stats.reviewCount; break;
-          case 'speak': current = stats.speakCount; break;
-          case 'quiz': current = stats.quizCount; break;
-          case 'add': current = stats.addCount; break;
-          case 'listen': current = stats.listenCount; break;
+          case 'review': current = dateStats.reviewCount; break;
+          case 'speak': current = dateStats.speakCount; break;
+          case 'quiz': current = dateStats.quizCount; break;
+          case 'add': current = dateStats.addCount; break;
+          case 'listen': current = dateStats.listenCount; break;
       }
       return Math.min(current, mission.target);
   };
@@ -178,6 +206,15 @@ export function HomeView() {
     setCurrentView('quiz');
   };
 
+  const getHistoryCompletion = (date: string) => {
+      const rec = dailyHistory[date];
+      const dateStats = getStatsForDate(date);
+      if (!rec || !rec.missions || rec.missions.length === 0) return 0;
+
+      const completedCount = rec.missions.filter(m => isMissionCompleted(m, dateStats)).length;
+      return Math.round((completedCount / rec.missions.length) * 100);
+  };
+
   return (
     <div className="flex flex-col gap-8 pb-24">
       <div className="bg-gradient-to-r from-violet-600 to-indigo-600 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
@@ -201,13 +238,42 @@ export function HomeView() {
 
       {dailyData && dailyData.missions?.length > 0 && (
         <div className="flex flex-col gap-3">
-             <h3 className="font-bold text-xl flex items-center gap-2 text-gray-800 dark:text-white px-2">
-                <Calendar className="text-green-500" size={20} />
-                {t('home.dailyMission')}
-            </h3>
+             <div className="flex items-center justify-between px-2">
+                <h3 className="font-bold text-xl flex items-center gap-2 text-gray-800 dark:text-white">
+                    <Calendar className="text-green-500" size={20} />
+                    {t('home.dailyMission')}
+                </h3>
+                <button 
+                    onClick={() => setShowHistory(!showHistory)}
+                    className="p-2 text-gray-400 hover:text-blue-500 transition-colors"
+                >
+                    <History size={20} />
+                </button>
+             </div>
+
+             {showHistory && (
+                 <div className="mb-4 overflow-x-auto pb-2">
+                     <div className="flex gap-2">
+                         {Object.keys(dailyHistory)
+                             .sort((a, b) => b.localeCompare(a))
+                             .slice(0, 7)
+                             .map(date => {
+                                 const isToday = date === today;
+                                 const completion = getHistoryCompletion(date);
+                                 return (
+                                     <div key={date} className={`flex-shrink-0 p-3 rounded-xl border ${isToday ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-100'} flex flex-col items-center min-w-[80px]`}>
+                                         <span className="text-xs text-gray-500">{formatDateDisplay(date, language)}</span>
+                                         <span className={`font-bold mt-1 ${completion === 100 ? 'text-green-500' : 'text-gray-700'}`}>{completion}%</span>
+                                     </div>
+                                 );
+                             })}
+                     </div>
+                 </div>
+             )}
+
             {dailyData.missions?.map(mission => {
-                const completed = isMissionCompleted(mission);
-                const current = getProgress(mission);
+                const completed = isMissionCompleted(mission, stats);
+                const current = getProgress(mission, stats);
                 return (
                     <div 
                         key={mission.id}
@@ -248,7 +314,7 @@ export function HomeView() {
             {t('home.todaysPicks')}
           </h3>
           <button 
-             onClick={generateDaily}
+             onClick={() => generateDaily(true)}
              className="text-gray-400 hover:text-blue-500 transition-colors p-2"
              title="Refresh recommendations"
           >
@@ -350,7 +416,6 @@ export function HomeView() {
         </div>
       )}
 
-      {/* Keyword Phrases Modal */}
       <KeywordPhrasesModal
         keyword={selectedKeyword}
         phrases={keywordPhrases}
@@ -358,7 +423,6 @@ export function HomeView() {
         onClose={() => setSelectedKeyword(null)}
       />
 
-      {/* Independent Song View Portal */}
       {selectedHomeSong && (
           <HomeSongView 
              song={selectedHomeSong}
