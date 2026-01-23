@@ -193,7 +193,11 @@
     "original": "Original",
     "translation": "Tradução",
     "pasteOriginal": "Cole a letra original aqui...",
-    "pasteTranslation": "Cole a tradução aqui..."
+    "pasteTranslation": "Cole a tradução aqui...",
+    "confirmLanguage": "Confirmar idioma",
+    "fetchLyricsIn": "Buscar letras em",
+    "selectLanguage": "Selecionar idioma",
+    "editLyricsGuide": "Edite a letra abaixo. Cole a letra original à esquerda e a tradução à direita. As linhas devem corresponder."
   },
   "quiz": {
     "start": "Iniciar Quiz",
@@ -271,6 +275,10 @@
     "removeItem": "Remover item",
     "saveChanges": "Salvar Alterações",
     "updateList": "Atualizar Lista",
-    "viewMemo": "Ver Nota"
+    "viewMemo": "Ver Nota",
+    "clickToChangeLanguage": "Clique para mudar de idioma"
+  },
+  "error": {
+    "generic": "Algo deu errado. Por favor, tente novamente."
   }
 }

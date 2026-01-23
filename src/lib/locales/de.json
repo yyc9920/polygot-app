@@ -193,7 +193,11 @@
     "original": "Original",
     "translation": "Übersetzung",
     "pasteOriginal": "Originaltext hier einfügen...",
-    "pasteTranslation": "Übersetzung hier einfügen..."
+    "pasteTranslation": "Übersetzung hier einfügen...",
+    "confirmLanguage": "Sprache bestätigen",
+    "fetchLyricsIn": "Songtext abrufen in",
+    "selectLanguage": "Sprache auswählen",
+    "editLyricsGuide": "Bearbeiten Sie den Songtext unten. Fügen Sie links den Originaltext und rechts die Übersetzung ein. Die Zeilen sollten übereinstimmen."
   },
   "quiz": {
     "start": "Quiz Starten",
@@ -271,6 +275,10 @@
     "removeItem": "Element löschen",
     "saveChanges": "Änderungen speichern",
     "updateList": "Liste aktualisieren",
-    "viewMemo": "Notiz ansehen"
+    "viewMemo": "Notiz ansehen",
+    "clickToChangeLanguage": "Klicken Sie zum Ändern der Sprache"
+  },
+  "error": {
+    "generic": "Etwas ist schief gelaufen. Bitte versuchen Sie es erneut."
   }
 }

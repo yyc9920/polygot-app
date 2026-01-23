@@ -193,7 +193,11 @@
     "original": "Original",
     "translation": "Traduction",
     "pasteOriginal": "Collez les paroles originales ici...",
-    "pasteTranslation": "Collez la traduction ici..."
+    "pasteTranslation": "Collez la traduction ici...",
+    "confirmLanguage": "Confirmer la langue",
+    "fetchLyricsIn": "Récupérer les paroles en",
+    "selectLanguage": "Sélectionner la langue",
+    "editLyricsGuide": "Modifiez les paroles ci-dessous. Collez les paroles originales à gauche et la traduction à droite. Les lignes doivent correspondre."
   },
   "quiz": {
     "start": "Démarrer",
@@ -271,6 +275,10 @@
     "removeItem": "Supprimer l'élément",
     "saveChanges": "Sauvegarder",
     "updateList": "Mettre à jour",
-    "viewMemo": "Voir Mémo"
+    "viewMemo": "Voir Mémo",
+    "clickToChangeLanguage": "Cliquez pour changer de langue"
+  },
+  "error": {
+    "generic": "Une erreur s'est produite. Veuillez réessayer."
   }
 }
