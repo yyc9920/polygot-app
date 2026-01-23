@@ -193,7 +193,11 @@
     "original": "原文",
     "translation": "译文",
     "pasteOriginal": "在此粘贴原文歌词...",
-    "pasteTranslation": "在此粘贴译文..."
+    "pasteTranslation": "在此粘贴译文...",
+    "confirmLanguage": "确认语言",
+    "fetchLyricsIn": "获取歌词于",
+    "selectLanguage": "选择语言",
+    "editLyricsGuide": "编辑下面的歌词。将原文歌词粘贴在左侧，译文粘贴在右侧。行数应对应。"
   },
   "quiz": {
     "start": "开始测验",
@@ -271,6 +275,10 @@
     "removeItem": "移除项目",
     "saveChanges": "保存更改",
     "updateList": "更新列表",
-    "viewMemo": "查看备忘"
+    "viewMemo": "查看备忘",
+    "clickToChangeLanguage": "点击更改语言"
+  },
+  "error": {
+    "generic": "出错了。请重试。"
   }
 }

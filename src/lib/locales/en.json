@@ -212,7 +212,11 @@
     "pasteOriginal": "Paste original lyrics here...",
     "pasteTranslation": "Paste translation here...",
     "lyricsAndPhrases": "Lyrics & Phrases",
-    "showLyrics": "Show Lyrics"
+    "showLyrics": "Show Lyrics",
+    "confirmLanguage": "Confirm Language",
+    "fetchLyricsIn": "Fetch lyrics in",
+    "selectLanguage": "Select Language",
+    "editLyricsGuide": "Edit the lyrics below. Paste the original lyrics on the left and translation on the right. Lines should match."
   },
   "quiz": {
     "start": "Start Quiz",
@@ -310,5 +314,8 @@
     "description": "Sign in to save your progress and access your phrases from any device.",
     "googleSignIn": "Sign in with Google",
     "failed": "Failed to sign in"
+  },
+  "error": {
+    "generic": "Something went wrong. Please try again."
   }
 }

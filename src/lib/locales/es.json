@@ -210,7 +210,11 @@
     "original": "Original",
     "translation": "Traducción",
     "pasteOriginal": "Pega la letra original aquí...",
-    "pasteTranslation": "Pega la traducción aquí..."
+    "pasteTranslation": "Pega la traducción aquí...",
+    "confirmLanguage": "Confirmar idioma",
+    "fetchLyricsIn": "Obtener letras en",
+    "selectLanguage": "Seleccionar idioma",
+    "editLyricsGuide": "Edita la letra a continuación. Pega la letra original a la izquierda y la traducción a la derecha. Las líneas deben coincidir."
   },
   "quiz": {
     "start": "Empezar",
@@ -302,5 +306,8 @@
     "description": "Inicia sesión para guardar tu progreso y acceder a tus frases desde cualquier dispositivo.",
     "googleSignIn": "Iniciar sesión con Google",
     "failed": "Error al iniciar sesión"
+  },
+  "error": {
+    "generic": "Algo salió mal. Por favor, inténtalo de nuevo."
   }
 }

@@ -193,7 +193,11 @@
     "original": "原文",
     "translation": "翻訳",
     "pasteOriginal": "ここに原文の歌詞を貼り付け...",
-    "pasteTranslation": "ここに翻訳を貼り付け..."
+    "pasteTranslation": "ここに翻訳を貼り付け...",
+    "confirmLanguage": "言語を確認",
+    "fetchLyricsIn": "歌詞を取得: ",
+    "selectLanguage": "言語を選択",
+    "editLyricsGuide": "以下の歌詞を編集してください。左側に元の歌詞、右側に翻訳を貼り付けます。行が一致する必要があります。"
   },
   "quiz": {
     "start": "開始",
@@ -271,6 +275,10 @@
     "removeItem": "削除",
     "saveChanges": "変更を保存",
     "updateList": "リスト更新",
-    "viewMemo": "メモ表示"
+    "viewMemo": "メモ表示",
+    "clickToChangeLanguage": "言語を変更するにはクリック"
+  },
+  "error": {
+    "generic": "問題が発生しました。もう一度お試しください。"
   }
 }

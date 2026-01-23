@@ -193,7 +193,11 @@
     "original": "मूल",
     "translation": "अनुवाद",
     "pasteOriginal": "मूल गीत यहाँ पेस्ट करें...",
-    "pasteTranslation": "अनुवाद यहाँ पेस्ट करें..."
+    "pasteTranslation": "अनुवाद यहाँ पेस्ट करें...",
+    "confirmLanguage": "भाषा की पुष्टि करें",
+    "fetchLyricsIn": "इसमें गीत प्राप्त करें",
+    "selectLanguage": "भाषा चुनें",
+    "editLyricsGuide": "नीचे दिए गए बोलों को संपादित करें। मूल बोलों को बाईं ओर और अनुवाद को दाईं ओर पेस्ट करें। पंक्तियां मेल खानी चाहिए।"
   },
   "quiz": {
     "start": "क्विज़ शुरू",
@@ -271,6 +275,10 @@
     "removeItem": "आइटम हटाएं",
     "saveChanges": "परिवर्तन सहेजें",
     "updateList": "सूची अपडेट करें",
-    "viewMemo": "मेमो देखें"
+    "viewMemo": "मेमो देखें",
+    "clickToChangeLanguage": "भाषा बदलने के लिए क्लिक करें"
+  },
+  "error": {
+    "generic": "कुछ गलत हो गया। कृपया पुन: प्रयास करें।"
   }
 }

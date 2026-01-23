@@ -193,7 +193,11 @@
     "original": "원문",
     "translation": "번역",
     "pasteOriginal": "원문 가사 붙여넣기...",
-    "pasteTranslation": "번역 붙여넣기..."
+    "pasteTranslation": "번역 붙여넣기...",
+    "confirmLanguage": "언어 확인",
+    "fetchLyricsIn": "가사 가져오기: ",
+    "selectLanguage": "언어 선택",
+    "editLyricsGuide": "아래 가사를 편집하세요. 원본 가사를 왼쪽에, 번역을 오른쪽에 붙여넣으세요. 줄이 일치해야 합니다."
   },
   "quiz": {
     "start": "퀴즈 시작",
@@ -273,5 +277,8 @@
     "updateList": "목록 업데이트",
     "viewMemo": "메모 보기",
     "clickToChangeLanguage": "클릭하여 언어 변경"
+  },
+  "error": {
+    "generic": "문제가 발생했습니다. 다시 시도해 주세요."
   }
 }
