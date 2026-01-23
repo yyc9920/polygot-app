@@ -145,17 +145,19 @@ export const generateSongLyrics = async (artist: string, title: string, apiKey: 
   }
 };
 
-export const generatePhraseFromLyric = async (lyric: string, artist: string, title: string, apiKey: string, locale: string) => {
+export const generatePhraseFromLyric = async (lyric: string, translated: string, artist: string, title: string, apiKey: string, locale: string) => {
   const prompt = `Act like a function that generates a vocabulary list.
-  Context: The lyric line "${lyric}" from the song "${title}" by "${artist}".
+  Context: The lyric and translation line "${lyric}", "${translated}" from the song "${title}" by "${artist}".
   Task: Generate 1 vocabulary item or phrase card based on this lyric.
   Output: Corresponding vocabulary or phrases.
   Format: JSON object with meaning, sentence, pronunciation, tags.
-  Meaning: ${locale} translation of the phrase/sentence
-  Sentence: The original lyric line or key phrase from it
-  Pronunciation: Pronunciation guide (e.g. Romaji for Japanese, Pinyin for Chinese, or Phonetic for English)
-  Tags: "music" and any other relevant tags (e.g. "expression", "love", etc.)
+  Meaning: ${translated}
+  Sentence: ${lyric}
+  Pronunciation: Pronunciation guide (e.g. Let empty for English, 振り仮名(ふりがな) for Japanese, Pinyin for Chinese, or Phonetic for Other languages)
+  Tags: "music", "${artist}", "${title}", language tag(e.g. "japanese" for japanese sentnece,"chinese" for Chinese. In ${locale} language) and any other relevant tags (e.g. "expression", "love", etc.)
   `;
+
+  console.log("Prompt: ", prompt);
 
   const schema: Schema = {
     type: SchemaType.OBJECT,

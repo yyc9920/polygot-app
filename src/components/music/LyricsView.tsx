@@ -75,12 +75,12 @@ export function LyricsView({ onMaterialsUpdate, contextOverrides }: LyricsViewPr
     setIsEditingLyrics(false);
   };
 
-  const handleGenerateCard = async (line: string, index: number) => {
+  const handleGenerateCard = async (line: string, translated: string, index: number) => {
     if (!apiKey || !selectedVideo || !materials) return;
     setGeneratingIdx(index);
     try {
        const targetLanguageName = LANGUAGE_NAMES[language];
-       const phraseData = await generatePhraseFromLyric(line, selectedVideo.artist, selectedVideo.title, apiKey, targetLanguageName);
+       const phraseData = await generatePhraseFromLyric(line, translated, selectedVideo.artist, selectedVideo.title, apiKey, targetLanguageName);
        
        if (phraseData && phraseData.meaning && phraseData.sentence) {
            const newPhrase = {
@@ -173,7 +173,7 @@ export function LyricsView({ onMaterialsUpdate, contextOverrides }: LyricsViewPr
 
     <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar h-full flex flex-col min-h-0">
         {activeTab === 'lyrics' && (
-            <div className="space-y-6 pb-10 flex-1 flex flex-col min-h-0">
+            <div className="space-y-6 pb-32 flex-1 flex flex-col min-h-0">
                 {isEditingLyrics ? (
                     <div className="space-y-4 p-2 h-full flex flex-col min-h-0">
                         <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg text-sm text-blue-600 dark:text-blue-300 flex items-start gap-2 flex-shrink-0">
@@ -226,7 +226,7 @@ export function LyricsView({ onMaterialsUpdate, contextOverrides }: LyricsViewPr
                                     {line.translated && <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{line.translated}</p>}
                                 </div>
                                 <button 
-                                  onClick={() => handleGenerateCard(line.original, idx)}
+                                  onClick={() => handleGenerateCard(line.original, line.translated, idx)}
                                   disabled={generatingIdx === idx || line.isGenerated}
                                   className={`p-2 rounded-full transition-all flex-shrink-0 ${
                                       line.isGenerated 
@@ -245,13 +245,15 @@ export function LyricsView({ onMaterialsUpdate, contextOverrides }: LyricsViewPr
                                 </button>
                             </div>
                         ))}
+                        <div className="flex items-start gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-700/30 rounded-xl group transition-colors" />
+                        <div className="flex items-start gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-700/30 rounded-xl group transition-colors" />
                     </>
                 )}
             </div>
         )}
 
         {activeTab === 'phrase' && (
-            <div className="space-y-3 pb-10">
+            <div className="space-y-3 pb-32">
                 {materials.phrases?.length > 0 ? materials.phrases.map((phrase, idx) => {
                     const saved = isSaved(phrase.meaning, phrase.sentence);
                     
@@ -289,6 +291,8 @@ export function LyricsView({ onMaterialsUpdate, contextOverrides }: LyricsViewPr
                     <p>{t('music.clickSparkle')}</p>
                   </div>
                 )}
+                <div className="flex items-start gap-4 p-3 rounded-xl group transition-colors" />
+                <div className="flex items-start gap-4 p-3 rounded-xl group transition-colors" />
             </div>
         )}
     </div>

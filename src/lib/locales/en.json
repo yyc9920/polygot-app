@@ -211,7 +211,8 @@
     "translation": "Translation",
     "pasteOriginal": "Paste original lyrics here...",
     "pasteTranslation": "Paste translation here...",
-    "lyricsAndPhrases": "Lyrics & Phrases"
+    "lyricsAndPhrases": "Lyrics & Phrases",
+    "showLyrics": "Show Lyrics"
   },
   "quiz": {
     "start": "Start Quiz",
