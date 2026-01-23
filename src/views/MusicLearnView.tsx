@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import YouTube from 'react-youtube';
 import { useMusicContext } from '../context/MusicContext';
 import { usePhraseAppContext } from '../context/PhraseContext';
@@ -36,6 +36,14 @@ export function MusicLearnView() {
   // New state for confirmation flow
   const [confirmationStep, setConfirmationStep] = useState<'none' | 'confirm' | 'select'>('none');
   const [pendingVideo, setPendingVideo] = useState<YouTubeVideo | null>(null);
+
+  // Reset confirmation state when video is deselected
+  useEffect(() => {
+      if (!selectedVideo) {
+          setConfirmationStep('none');
+          setPendingVideo(null);
+      }
+  }, [selectedVideo]);
 
   const updateState = (updates: Partial<typeof musicState>) => {
       setMusicState(prev => ({ ...prev, ...updates }));
