@@ -133,11 +133,7 @@ export const HomeSongView = React.memo(function HomeSongView({
         setSongLyrics: setSongLyrics
     }), [localMusicState, localPlaylist, songLyrics, setSongLyrics]);
 
-    const [isSheetOpen, setIsSheetOpen] = useState(false);
-    useEffect(() => {
-        const timer = setTimeout(() => setIsSheetOpen(true), 50);
-        return () => clearTimeout(timer);
-    }, []);
+    const [isSheetOpen] = useState(true);
 
     if (typeof document === 'undefined') return null;
 
@@ -258,14 +254,7 @@ export const HomeSongView = React.memo(function HomeSongView({
                                             ))}
                                         </div>
                                         <button 
-                                            onClick={() => {
-                                                setConfirmationStep('none');
-                                                // If canceling from selection, we probably want to go back to empty/manual mode too?
-                                                // Or just go back to confirmation? 
-                                                // "Cancel" in "Select Language" usually means "Go back".
-                                                // Let's make it go back to 'confirm' as before, BUT if the user wants to cancel everything, they use the cancel on the confirm screen.
-                                                setConfirmationStep('confirm');
-                                            }}
+                                            onClick={() => setConfirmationStep('confirm')}
                                             className="mt-4 w-full py-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 font-medium"
                                         >
                                             {t('common.cancel') || "Cancel"}

@@ -9,9 +9,11 @@ import { PhraseContext } from './PhraseContextDefinition';
 
 const uniquePhrases = (items: PhraseItem[]) => items.filter((item, index, self) => index === self.findIndex(t => t.id === item.id));
 
+import { LoadingSpinner } from '../components/LoadingSpinner';
+
 export const PhraseAppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // Use Cloud Storage for Syncable Data
-  const [phraseList, setPhraseList] = useCloudStorage<PhraseItem[]>(
+  const [phraseList, setPhraseList, isPhraseListReady] = useCloudStorage<PhraseItem[]>(
     'phraseList', 
     SAMPLE_DATA, 
     uniquePhrases
@@ -188,6 +190,14 @@ export const PhraseAppProvider: React.FC<{ children: ReactNode }> = ({ children 
       setPurchasedPackages([]);
     }
   };
+
+  if (!isPhraseListReady) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   const totalCount = phraseList.length;
 

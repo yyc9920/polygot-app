@@ -1,3 +1,4 @@
+import { Suspense, lazy } from 'react';
 import {
   BookOpen,
   Brain,
@@ -14,13 +15,15 @@ import useTheme from './hooks/useTheme';
 import { PhraseAppProvider, usePhraseAppContext } from './context/PhraseContext';
 import { AuthProvider } from './context/AuthContext';
 import { MusicProvider } from './context/MusicContext';
-import { LearnView } from './views/LearnView';
-import { QuizView } from './views/QuizView';
-import { BuilderView } from './views/BuilderView';
-import { SettingsView } from './views/SettingsView';
-import { MusicLearnView } from './views/MusicLearnView';
-import { HomeView } from './views/HomeView';
 import useLanguage from './hooks/useLanguage';
+import { LoadingSpinner } from './components/LoadingSpinner';
+
+const LearnView = lazy(() => import('./views/LearnView').then(module => ({ default: module.LearnView })));
+const QuizView = lazy(() => import('./views/QuizView').then(module => ({ default: module.QuizView })));
+const BuilderView = lazy(() => import('./views/BuilderView').then(module => ({ default: module.BuilderView })));
+const SettingsView = lazy(() => import('./views/SettingsView').then(module => ({ default: module.SettingsView })));
+const MusicLearnView = lazy(() => import('./views/MusicLearnView').then(module => ({ default: module.MusicLearnView })));
+const HomeView = lazy(() => import('./views/HomeView').then(module => ({ default: module.HomeView })));
 
 function AppContent() {
   const { currentView, setCurrentView, customQuizQueue } = usePhraseAppContext();
@@ -46,12 +49,14 @@ function AppContent() {
       {/* Main Content */}
       <main className="flex-1 overflow-hidden w-full max-w-md mx-auto relative">
         <div className="absolute inset-0 overflow-y-auto p-4 pb-0">
-          {currentView === 'home' && <HomeView />}
-          {currentView === 'learn' && <LearnView />}
-          {currentView === 'quiz' && <QuizView customQueue={customQuizQueue.length > 0 ? customQuizQueue : undefined} />}
-          {currentView === 'builder' && <BuilderView />}
-          {currentView === 'settings' && <SettingsView />}
-          {currentView === 'music' && <MusicLearnView />}
+          <Suspense fallback={<LoadingSpinner />}>
+            {currentView === 'home' && <HomeView />}
+            {currentView === 'learn' && <LearnView />}
+            {currentView === 'quiz' && <QuizView customQueue={customQuizQueue.length > 0 ? customQuizQueue : undefined} />}
+            {currentView === 'builder' && <BuilderView />}
+            {currentView === 'settings' && <SettingsView />}
+            {currentView === 'music' && <MusicLearnView />}
+          </Suspense>
         </div>
       </main>
 

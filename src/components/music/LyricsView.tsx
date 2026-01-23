@@ -245,8 +245,8 @@ export function LyricsView({ onMaterialsUpdate, contextOverrides }: LyricsViewPr
                                 </button>
                             </div>
                         ))}
-                        <div className="flex items-start gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-700/30 rounded-xl group transition-colors" />
-                        <div className="flex items-start gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-700/30 rounded-xl group transition-colors" />
+                        <div className="flex items-start gap-4 p-3 rounded-xl group transition-colors" />
+                        <div className="flex items-start gap-4 p-3 rounded-xl group transition-colors" />
                     </>
                 )}
             </div>

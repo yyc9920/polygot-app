@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useAnimation, useDragControls, type PanInfo } from 'framer-motion';
 import { X } from 'lucide-react';
@@ -25,7 +25,6 @@ export function BottomSheet({
   const [windowHeight, setWindowHeight] = useState(typeof window !== 'undefined' ? window.innerHeight : 800);
   const controls = useAnimation();
   const dragControls = useDragControls();
-  const prevIsOpen = useRef(isOpen);
 
   useEffect(() => {
     const handleResize = () => setWindowHeight(window.innerHeight);
@@ -39,14 +38,14 @@ export function BottomSheet({
   const SNAP_CLOSED = windowHeight;
 
   useEffect(() => {
-    const wasOpen = prevIsOpen.current;
-    if (isOpen && !wasOpen) {
-      controls.start({ y: SNAP_INITIAL });
-    } else if (!isOpen && wasOpen) {
-      controls.start({ y: SNAP_CLOSED });
+    if (isOpen) {
+      // Small timeout to ensure component is fully mounted/measured
+      const timer = setTimeout(() => {
+        controls.start({ y: SNAP_INITIAL });
+      }, 10);
+      return () => clearTimeout(timer);
     }
-    prevIsOpen.current = isOpen;
-  }, [isOpen, SNAP_INITIAL, SNAP_CLOSED, controls]);
+  }, [isOpen, SNAP_INITIAL, controls]);
 
   const handleDragEnd = (_: any, info: PanInfo) => {
     const velocity = info.velocity.y;
@@ -73,7 +72,11 @@ export function BottomSheet({
   return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex flex-col justify-end pointer-events-none isolate">
+        <motion.div 
+          className="fixed inset-0 z-[100] flex flex-col justify-end pointer-events-none isolate"
+          initial={{ opacity: 1 }}
+          exit={{ opacity: 1, transition: { duration: 0.5 } }}
+        >
           {/* Backdrop */}
           {modal && (
             <motion.div 
@@ -129,7 +132,7 @@ export function BottomSheet({
               {children}
             </div>
           </motion.div>
-        </div>
+        </motion.div>
       )}
     </AnimatePresence>,
     document.body
