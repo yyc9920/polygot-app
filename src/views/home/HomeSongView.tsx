@@ -40,6 +40,10 @@ export const HomeSongView = React.memo(function HomeSongView({
     const fetchingRef = useRef<string | null>(null);
     const [confirmationStep, setConfirmationStep] = useState<'none' | 'confirm' | 'select'>('none');
 
+    // Use ref to access latest songLyrics without adding to dependency array
+    const songLyricsRef = useRef(songLyrics);
+    songLyricsRef.current = songLyrics;
+
     const fetchLyrics = async (targetLang: string) => {
         const video = { ...song.video, artist: song.song.artist };
         const cacheKey = `song_lyrics_${video.videoId}_${targetLang}`;
@@ -84,10 +88,12 @@ export const HomeSongView = React.memo(function HomeSongView({
             const video = { ...song.video, artist: song.song.artist };
             const cacheKey = `song_lyrics_${video.videoId}_${language}`;
             
-            const cachedMaterials = songLyrics[cacheKey];
+            // Use ref to get latest songLyrics value
+            const cachedMaterials = songLyricsRef.current[cacheKey];
 
             if (cachedMaterials) {
                 setLocalMusicState(prev => ({ ...prev, materials: cachedMaterials }));
+                setConfirmationStep('none');  // FIX: Reset confirmation when cache found
                 return;
             }
 
@@ -97,6 +103,7 @@ export const HomeSongView = React.memo(function HomeSongView({
                     const parsed = JSON.parse(rawCached);
                     setSongLyrics(prev => ({ ...prev, [cacheKey]: parsed }));
                     setLocalMusicState(prev => ({ ...prev, materials: parsed }));
+                    setConfirmationStep('none');  // FIX: Reset confirmation when cache found
                     return;
                 } catch {
                     localStorage.removeItem(cacheKey);
@@ -108,7 +115,7 @@ export const HomeSongView = React.memo(function HomeSongView({
         };
 
         loadLyrics();
-    }, [song, apiKey, language, LANGUAGE_NAMES, t, songLyrics, setSongLyrics]);
+    }, [song, language, setSongLyrics]);
 
     const handleMaterialsUpdate = (newMaterials: SongMaterials) => {
         setLocalMusicState(prev => ({ ...prev, materials: newMaterials }));
