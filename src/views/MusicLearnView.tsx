@@ -32,6 +32,18 @@ export function MusicLearnView() {
 
   // Track active fetch to prevent duplicates
   const loadingRef = useRef<string | null>(null);
+
+  // Fix for BottomSheet not appearing immediately: Add a small delay
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+
+  useEffect(() => {
+    if (selectedVideo) {
+        const timer = setTimeout(() => setIsSheetOpen(true), 100);
+        return () => clearTimeout(timer);
+    } else {
+        setIsSheetOpen(false);
+    }
+  }, [selectedVideo]);
   
   // New state for confirmation flow
   const [confirmationStep, setConfirmationStep] = useState<'none' | 'confirm' | 'select'>('none');
@@ -200,7 +212,7 @@ export function MusicLearnView() {
       </div>
 
       <BottomSheet
-        isOpen={!!selectedVideo}
+        isOpen={isSheetOpen}
         onClose={() => updateState({ selectedVideo: null })}
         initialSnap={0.5}
         modal={false}
