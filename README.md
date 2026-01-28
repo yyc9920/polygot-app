@@ -22,7 +22,7 @@ Polyglot is a modern web application designed to help language learners build se
 
 * **Quiz Mode:** Test your knowledge with interactive quizzes.
 
-* **Local Storage:** Your progress is saved locally and synced to the cloud.
+* **IndexedDB Storage:** Your progress is saved locally and synced to the cloud.
 
 ## 🚀 User Guide
 
@@ -84,7 +84,7 @@ src/
 
 ### State Management (`src/context/PhraseContext.tsx`)
 
-The app uses a central Context to manage the list of words and user interactions. Data persistence uses an offline-first strategy: `useCloudStorage` hook syncs LocalStorage with Firebase for cross-device access while maintaining offline functionality.
+The app uses a central Context to manage the list of words and user interactions. Data persistence uses an offline-first strategy: `useCloudStorage` hook syncs IndexedDB with Firebase for cross-device access while maintaining offline functionality.
 
 ### Installation & Run
 
