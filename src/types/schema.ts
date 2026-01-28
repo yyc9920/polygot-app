@@ -162,3 +162,24 @@ export function validateImportData(data: unknown[]): ImportPhrase[] {
     }
   });
 }
+
+/** Helper function to create a PhraseEntity with required v2 fields */
+export function createPhraseEntity(
+  id: string,
+  meaning: string,
+  sentence: string,
+  tags: string[] = [],
+  overrides?: Partial<Omit<PhraseEntity, 'id' | 'meaning' | 'sentence' | 'tags'>>
+): PhraseEntity {
+  const now = new Date().toISOString();
+  return {
+    id,
+    meaning,
+    sentence,
+    tags,
+    createdAt: now,
+    updatedAt: now,
+    isDeleted: false,
+    ...overrides,
+  };
+}

@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { X, Save } from 'lucide-react';
 import { FunButton } from './FunButton';
-import type { PhraseItem } from '../types';
+import type { PhraseEntity } from '../types/schema';
 import useLanguage from '../hooks/useLanguage';
 
 interface EditPhraseModalProps {
-  item: PhraseItem | null;
-  onSave: (updatedItem: PhraseItem) => void;
+  item: PhraseEntity | null;
+  onSave: (updatedItem: PhraseEntity) => void;
   onCancel: () => void;
 }
 
@@ -38,7 +38,7 @@ export function EditPhraseModal({ item, onSave, onCancel }: EditPhraseModalProps
         return;
     }
 
-    const updatedItem: PhraseItem = {
+     const updatedItem: PhraseEntity = {
         ...item,
         meaning: form.meaning,
         sentence: form.sentence,

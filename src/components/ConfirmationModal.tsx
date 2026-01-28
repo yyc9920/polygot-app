@@ -1,19 +1,19 @@
 import { Sparkles, X, Check, Trash2, Tag } from 'lucide-react';
-import type { PhraseItem } from '../types';
+import type { PhraseEntity } from '../types/schema';
 import { generateId } from '../lib/utils';
 import useLanguage from '../hooks/useLanguage';
 
 interface ConfirmationModalProps {
-  items: PhraseItem[];
+  items: PhraseEntity[];
   onConfirm: () => void;
   onCancel: () => void;
-  onUpdate: (items: PhraseItem[]) => void;
+  onUpdate: (items: PhraseEntity[]) => void;
 }
 
 export function ConfirmationModal({ items, onConfirm, onCancel, onUpdate }: ConfirmationModalProps) {
   const { t } = useLanguage();
 
-  const handleChange = (index: number, field: keyof PhraseItem, value: string) => {
+  const handleChange = (index: number, field: keyof PhraseEntity, value: string) => {
       const newItems = [...items];
       let updatedValue: string | string[] = value;
 

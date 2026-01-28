@@ -1,4 +1,5 @@
-import type { PhraseItem, QuizItem, QuizType } from '../types';
+import type { PhraseEntity } from '../types/schema';
+import type { QuizItem, QuizType } from '../types';
 import i18n from './i18n';
 
 export const POINT_SYSTEM: Record<Exclude<QuizType, 'random'>, number> = {
@@ -15,7 +16,7 @@ export const LEVELS = {
   legend: { total: 20, distribution: { cloze: 4, listening: 4, speaking: 4, interpretation: 4, writing: 4 } }
 };
 
-export const createCloze = (item: PhraseItem): QuizItem => {
+export const createCloze = (item: PhraseEntity): QuizItem => {
   const sentence = item.sentence.trim();
   // Check if space-separated
   const hasSpaces = sentence.includes(' ');
@@ -77,7 +78,7 @@ export const createCloze = (item: PhraseItem): QuizItem => {
   };
 };
 
-export const createQuizItem = (item: PhraseItem, type: QuizType | 'random'): QuizItem => {
+export const createQuizItem = (item: PhraseEntity, type: QuizType | 'random'): QuizItem => {
   // Handle Random Type
   if (type === 'random') {
     const types: QuizType[] = ['writing', 'interpretation', 'cloze', 'speaking', 'listening'];

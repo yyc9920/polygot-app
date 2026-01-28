@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 import type { LearningStatus, ViewMode, QuizItem } from '../types';
 import type { PhraseEntity } from '../types/schema';
+import { createPhraseEntity } from '../types/schema';
 import { SAMPLE_DATA } from '../constants';
 import useCloudStorage from '../hooks/useCloudStorage';
 import useLocalStorage from '../hooks/useLocalStorage';
@@ -74,19 +75,19 @@ export const PhraseAppProvider: React.FC<{ children: ReactNode }> = ({ children 
           const rows = parseCSV(cleanText);
           const startIdx = rows.length > 0 && rows[0].some(cell => cell.toLowerCase().includes('meaning')) ? 1 : 0;
           
-          const items: PhraseEntity[] = [];
-          for (let i = startIdx; i < rows.length; i++) {
-              const row = rows[i];
-              if (row.length < 2) continue;
-              if (!row[0] && !row[1]) continue;
-              items.push({
-                  id: generateId(row[0], row[1]),
-                  meaning: row[0],
-                  sentence: row[1],
-                  pronunciation: row[2] || '',
-                  tags: row[3] ? row[3].split(',').map(t => t.trim()) : []
-              });
-          }
+           const items: PhraseEntity[] = [];
+           for (let i = startIdx; i < rows.length; i++) {
+               const row = rows[i];
+               if (row.length < 2) continue;
+               if (!row[0] && !row[1]) continue;
+               items.push(createPhraseEntity(
+                   generateId(row[0], row[1]),
+                   row[0],
+                   row[1],
+                   row[3] ? row[3].split(',').map(t => t.trim()) : [],
+                   { pronunciation: row[2] || '' }
+               ));
+           }
           return items;
       } catch (error) {
           console.error(`Failed to fetch from ${url}:`, error);
@@ -147,14 +148,13 @@ export const PhraseAppProvider: React.FC<{ children: ReactNode }> = ({ children 
       const source = entry.translations[sourceLang] || entry.translations['en'];
       const target = entry.translations[targetLang];
       
-      return {
-        id: generateId(source.text, target.text),
-        meaning: source.text,
-        sentence: target.text,
-        pronunciation: target.pron || '',
-        tags: [...entry.tags, 'Starter'],
-        packageId: packageId
-      };
+      return createPhraseEntity(
+        generateId(source.text, target.text),
+        source.text,
+        target.text,
+        [...entry.tags, 'Starter'],
+        { pronunciation: target.pron || '', packageId: packageId }
+      );
     });
 
     mergePhraseList(newItems);

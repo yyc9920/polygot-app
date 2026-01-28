@@ -2,14 +2,15 @@ import { useState } from 'react';
 import { FileText, X, Save } from 'lucide-react';
 import { FunButton } from '../FunButton';
 import { parseCSV, generateId } from '../../lib/utils';
-import type { PhraseItem } from '../../types';
+import type { PhraseEntity } from '../../types/schema';
+import { createPhraseEntity } from '../../types/schema';
 import useLanguage from '../../hooks/useLanguage';
 
 interface CsvEditorModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialContent: string;
-  onSave: (items: PhraseItem[]) => void;
+  onSave: (items: PhraseEntity[]) => void;
 }
 
 export function CsvEditorModal({ isOpen, onClose, initialContent, onSave }: CsvEditorModalProps) {
@@ -38,20 +39,20 @@ export function CsvEditorModal({ isOpen, onClose, initialContent, onSave }: CsvE
     try {
         const rows = parseCSV(cleanText);
         const startIdx = rows.length > 0 && rows[0].some(cell => cell.toLowerCase().includes('meaning')) ? 1 : 0;
-        const newItems: PhraseItem[] = [];
+        const newItems: PhraseEntity[] = [];
         
         for (let i = startIdx; i < rows.length; i++) {
           const row = rows[i];
           if (row.length < 2) continue;
           if (!row[0] && !row[1]) continue;
           
-          newItems.push({
-            id: generateId(row[0], row[1]),
-            meaning: row[0],
-            sentence: row[1],
-            pronunciation: row[2] || '',
-            tags: row[3] ? row[3].split(',').map(t => t.trim()).filter(Boolean) : []
-          });
+          newItems.push(createPhraseEntity(
+             generateId(row[0], row[1]),
+             row[0],
+             row[1],
+             row[3] ? row[3].split(',').map(t => t.trim()).filter(Boolean) : [],
+             { pronunciation: row[2] || '' }
+           ));
         }
         
         if (newItems.length === 0 && !confirm("No valid items found. Clear list?")) {

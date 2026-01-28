@@ -4,7 +4,7 @@ import useLocalStorage from '../hooks/useLocalStorage';
 import useLanguage from '../hooks/useLanguage';
 import { useTTS } from '../hooks/useTTS';
 import { callGemini } from '../lib/gemini';
-import type { PhraseItem } from '../types';
+import type { PhraseEntity } from '../types/schema';
 
 import { LearnHeader } from './learn/LearnHeader';
 import { TagFilter } from './learn/TagFilter';
@@ -25,7 +25,7 @@ export function LearnView() {
   const [currentIndex, setCurrentIndex] = useLocalStorage<number>('learnCurrentIndex', 0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isShuffled, setIsShuffled] = useLocalStorage<boolean>('learnIsShuffled', false);
-  const [displayList, setDisplayList] = useState<PhraseItem[]>(phraseList);
+  const [displayList, setDisplayList] = useState<PhraseEntity[]>(phraseList);
   const [selectedTags, setSelectedTags] = useLocalStorage<string[]>('learnSelectedTags', []);
   const [searchTerm, setSearchTerm] = useLocalStorage<string>('learnSearchTerm', '');
   
@@ -34,7 +34,7 @@ export function LearnView() {
   const [showAiModal, setShowAiModal] = useState(false);
   const [showMemoList, setShowMemoList] = useState(false);
   
-  const [editingItem, setEditingItem] = useState<PhraseItem | null>(null);
+  const [editingItem, setEditingItem] = useState<PhraseEntity | null>(null);
 
   const prevItemIdRef = React.useRef<string | null>(null);
   
@@ -111,8 +111,8 @@ export function LearnView() {
     setCurrentIndex((prev: number) => (prev - 1 + displayList.length) % displayList.length);
   };
 
-  const handleSaveEdit = (updatedItem: PhraseItem) => {
-      setPhraseList((prev: PhraseItem[]) => prev.map(item => {
+  const handleSaveEdit = (updatedItem: PhraseEntity) => {
+       setPhraseList((prev: PhraseEntity[]) => prev.map(item => {
           if (item.id === updatedItem.id) {
               return updatedItem;
           }
@@ -190,7 +190,7 @@ export function LearnView() {
       alert(t('learn.memoSaved'));
   };
 
-  const handleUpdatePhrase = (id: string, updates: Partial<PhraseItem>) => {
+  const handleUpdatePhrase = (id: string, updates: Partial<PhraseEntity>) => {
     setPhraseList(prev => prev.map(item => 
         item.id === id ? { ...item, ...updates } : item
     ));

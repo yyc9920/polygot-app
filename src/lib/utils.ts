@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from 'uuid';
+import type { PhraseEntity } from '../types/schema';
 
 export const generateId = (meaning: string, sentence: string): string => {
   const input = `${meaning.trim()}|${sentence.trim()}`;
@@ -8,6 +10,20 @@ export const generateId = (meaning: string, sentence: string): string => {
   }
   return (hash >>> 0).toString(16);
 };
+
+export function createPhraseEntity(
+  data: Omit<PhraseEntity, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted'>
+): PhraseEntity {
+  const now = new Date().toISOString();
+  return {
+    id: uuidv4(),
+    ...data,
+    tags: data.tags || [],
+    createdAt: now,
+    updatedAt: now,
+    isDeleted: false,
+  };
+}
 
 export const detectLanguage = (text: string): string => {
   const koPattern = /[\uAC00-\uD7AF]/;

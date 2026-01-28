@@ -5,10 +5,10 @@ import { FunButton } from '../../components/FunButton';
 import { useTTS } from '../../hooks/useTTS';
 import { useDailyStats } from '../../hooks/useDailyStats';
 import useLanguage from '../../hooks/useLanguage';
-import type { PhraseItem, LearningStatus } from '../../types';
+import type { PhraseEntity, LearningStatus } from '../../types/schema';
 
 interface CardDeckProps {
-  displayList: PhraseItem[];
+  displayList: PhraseEntity[];
   currentIndex: number;
   status: LearningStatus;
   isFlipped: boolean;

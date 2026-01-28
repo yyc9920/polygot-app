@@ -1,12 +1,12 @@
 import { X, Tag } from 'lucide-react';
-import type { PhraseItem, LearningStatus } from '../types';
+import type { PhraseEntity, LearningStatus } from '../types/schema';
 import { useDailyStats } from '../hooks/useDailyStats';
 import { FlippablePhraseCard } from './PhraseCard';
 import useLanguage from '../hooks/useLanguage';
 
 interface KeywordPhrasesModalProps {
   keyword: string | null;
-  phrases: PhraseItem[];
+  phrases: PhraseEntity[];
   status: LearningStatus;
   onClose: () => void;
 }

@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Volume2 } from 'lucide-react';
-import type { PhraseItem } from '../types';
+import type { PhraseEntity } from '../types/schema';
 import useLanguage from '../hooks/useLanguage';
 
 interface FlipListItemProps {
-  item: PhraseItem;
+  item: PhraseEntity;
   index: number;
   onSpeak: () => void;
   badges?: React.ReactNode;

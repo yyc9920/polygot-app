@@ -26,7 +26,9 @@ export interface PhraseItem {
 
 export type QuizType = 'writing' | 'interpretation' | 'cloze' | 'speaking' | 'listening';
 
-export interface QuizItem extends PhraseItem {
+import type { PhraseEntity } from './schema';
+
+export interface QuizItem extends PhraseEntity {
   type: QuizType;
   questionText: string;
   answerText: string;

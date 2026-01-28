@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { CheckCircle, AlertCircle, Volume2, BookOpen, MessageCircleQuestion, Music, Pencil } from 'lucide-react';
-import type { PhraseItem, LearningStatus } from '../types';
+import type { PhraseEntity, LearningStatus } from '../types/schema';
 import useLanguage from '../hooks/useLanguage';
 import { useTTS } from '../hooks/useTTS';
 import { useDailyStats } from '../hooks/useDailyStats';
 
 interface PhraseCardProps {
-  item: PhraseItem;
+  item: PhraseEntity;
   status: LearningStatus;
   side: 'front' | 'back';
   onSpeak?: () => void;
@@ -22,7 +22,7 @@ export function FlippablePhraseCard({
   onFlip,
   className = ""
 }: { 
-  item: PhraseItem, 
+  item: PhraseEntity, 
   status: LearningStatus, 
   onFlip?: () => void,
   className?: string

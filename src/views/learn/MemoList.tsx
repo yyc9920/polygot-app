@@ -2,12 +2,12 @@ import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { BookOpen, X, Pencil } from 'lucide-react';
 import useLanguage from '../../hooks/useLanguage';
-import type { PhraseItem } from '../../types';
+import type { PhraseEntity } from '../../types/schema';
 
 interface MemoListProps {
-  memoList: PhraseItem[];
+  memoList: PhraseEntity[];
   onClose: () => void;
-  onUpdatePhrase: (id: string, updates: Partial<PhraseItem>) => void;
+  onUpdatePhrase: (id: string, updates: Partial<PhraseEntity>) => void;
 }
 
 export function MemoList({ memoList, onClose, onUpdatePhrase }: MemoListProps) {

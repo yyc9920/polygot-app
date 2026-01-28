@@ -9,7 +9,8 @@ import {
   Pencil,
   FileText
 } from 'lucide-react';
-import type { PhraseItem } from '../types';
+import type { PhraseEntity } from '../types/schema';
+import { createPhraseEntity } from '../types/schema';
 import { generateId, parseCSV } from '../lib/utils';
 import { usePhraseAppContext } from '../context/PhraseContext';
 import { ConfirmationModal } from '../components/ConfirmationModal';
@@ -33,16 +34,16 @@ export function BuilderView() {
   const [showCsvEditor, setShowCsvEditor] = useState(false);
   const [csvEditorContent, setCsvEditorContent] = useState('');
 
-  const [editingItem, setEditingItem] = useState<PhraseItem | null>(null);
+  const [editingItem, setEditingItem] = useState<PhraseEntity | null>(null);
   
-  const [generatedItems, setGeneratedItems] = useState<PhraseItem[] | null>(null);
+  const [generatedItems, setGeneratedItems] = useState<PhraseEntity[] | null>(null);
 
-  const handleAiResults = (newItems: PhraseItem[]) => {
+  const handleAiResults = (newItems: PhraseEntity[]) => {
       setGeneratedItems(newItems);
   };
 
-  const handleManualAdd = (newItem: PhraseItem) => {
-    setPhraseList((prev: PhraseItem[]) => {
+  const handleManualAdd = (newItem: PhraseEntity) => {
+    setPhraseList((prev: PhraseEntity[]) => {
         if (prev.some(v => v.id === newItem.id)) {
             alert(t('builder.itemAlreadyExists').replace('{{meaning}}', newItem.meaning));
             return prev;
@@ -53,8 +54,8 @@ export function BuilderView() {
   };
 
   const confirmGeneratedItems = () => {
-      if (!generatedItems) return;
-      setPhraseList((prev: PhraseItem[]) => {
+       if (!generatedItems) return;
+       setPhraseList((prev: PhraseEntity[]) => {
           const existingIds = new Set(prev.map(p => p.id));
           const uniqueNew = generatedItems.filter(item => !existingIds.has(item.id));
           if (uniqueNew.length === 0) {
@@ -67,8 +68,8 @@ export function BuilderView() {
       setGeneratedItems(null);
   };
 
-  const handleSaveEdit = (updatedItem: PhraseItem) => {
-      setPhraseList((prev: PhraseItem[]) => prev.map(item => {
+  const handleSaveEdit = (updatedItem: PhraseEntity) => {
+       setPhraseList((prev: PhraseEntity[]) => prev.map(item => {
           if (item.id === updatedItem.id) {
               return updatedItem;
           }
@@ -77,29 +78,29 @@ export function BuilderView() {
       setEditingItem(null);
   };
 
-  const processCSVText = (text: string) => {
-    const cleanText = text.replace(/^\uFEFF/, '').trim(); 
-    if (!cleanText) { alert(t('builder.fileIsEmpty')); return; }
-    const rows = parseCSV(cleanText);
-    const startIdx = rows.length > 0 && rows[0].some(cell => cell.toLowerCase().includes('meaning')) ? 1 : 0;
-    const newItems: PhraseItem[] = [];
+   const processCSVText = (text: string) => {
+     const cleanText = text.replace(/^\uFEFF/, '').trim(); 
+     if (!cleanText) { alert(t('builder.fileIsEmpty')); return; }
+     const rows = parseCSV(cleanText);
+     const startIdx = rows.length > 0 && rows[0].some(cell => cell.toLowerCase().includes('meaning')) ? 1 : 0;
+     const newItems: PhraseEntity[] = [];
     for (let i = startIdx; i < rows.length; i++) {
       const row = rows[i];
       if (row.length < 2) continue;
       if (!row[0] && !row[1]) continue;
-      newItems.push({
-        id: generateId(row[0], row[1]),
-        meaning: row[0],
-        sentence: row[1],
-        pronunciation: row[2] || '',
-        tags: row[3] ? row[3].split(',').map(t => t.trim()) : []
-      });
+      newItems.push(createPhraseEntity(
+         generateId(row[0], row[1]),
+         row[0],
+         row[1],
+         row[3] ? row[3].split(',').map(t => t.trim()) : [],
+         { pronunciation: row[2] || '' }
+       ));
     }
-    if (newItems.length > 0) {
-      setPhraseList((prev: PhraseItem[]) => {
-         const existingIds = new Set(prev.map(p => p.id));
-         const uniqueNew = newItems.filter(item => !existingIds.has(item.id));
-         const reallyUnique: PhraseItem[] = [];
+     if (newItems.length > 0) {
+       setPhraseList((prev: PhraseEntity[]) => {
+          const existingIds = new Set(prev.map(p => p.id));
+          const uniqueNew = newItems.filter(item => !existingIds.has(item.id));
+          const reallyUnique: PhraseEntity[] = [];
          const seenInBatch = new Set();
          for(const item of uniqueNew) {
            if(!seenInBatch.has(item.id)) {
@@ -144,9 +145,9 @@ export function BuilderView() {
     setShowCsvEditor(true);
   };
 
-  const handleSaveCsvEditor = (newItems: PhraseItem[]) => {
-      setPhraseList(newItems);
-  };
+   const handleSaveCsvEditor = (newItems: PhraseEntity[]) => {
+       setPhraseList(newItems);
+   };
 
   const exportCSV = () => {
     const csvContent = "\uFEFF" + prepareCsvContent();
@@ -167,8 +168,8 @@ export function BuilderView() {
       return;
     }
 
-    if (confirm(t('builder.deleteConfirmMessage').replace('{{tags}}', tagsToDelete.join(', ')))) {
-      setPhraseList((prev: PhraseItem[]) => {
+     if (confirm(t('builder.deleteConfirmMessage').replace('{{tags}}', tagsToDelete.join(', ')))) {
+       setPhraseList((prev: PhraseEntity[]) => {
         const initialLength = prev.length;
         const filtered = prev.filter(item => !item.tags.some(tag => tagsToDelete.includes(tag)));
         
@@ -273,13 +274,13 @@ export function BuilderView() {
                 >
                     <Pencil size={16} />
                 </button>
-                <button 
-                    onClick={(e) => { e.stopPropagation(); setPhraseList((prev: PhraseItem[]) => prev.filter(v => v.id !== item.id)); }}
-                    className="text-gray-400 hover:text-red-500 p-1" 
-                    type="button"
-                >
-                    <Trash2 size={16} />
-                </button>
+                 <button 
+                     onClick={(e) => { e.stopPropagation(); setPhraseList((prev: PhraseEntity[]) => prev.filter(v => v.id !== item.id)); }}
+                     className="text-gray-400 hover:text-red-500 p-1" 
+                     type="button"
+                 >
+                     <Trash2 size={16} />
+                 </button>
               </div>
             </div>
           ))}

@@ -6,9 +6,10 @@ import { FunButton } from '../FunButton';
 import { FlipListItem } from '../FlipListItem';
 import { useTTS } from '../../hooks/useTTS';
 import useLanguage from '../../hooks/useLanguage';
-import type { PhraseItem, SongMaterials } from '../../types';
+import type { PhraseEntity } from '../../types/schema';
+import type { SongMaterials } from '../../types';
 import { generatePhraseFromLyric } from '../../lib/gemini';
-import { generateId, detectLanguage } from '../../lib/utils';
+import { createPhraseEntity, detectLanguage, generateId } from '../../lib/utils';
 
 import type { MusicContextType } from '../../context/MusicContextDefinition';
 
@@ -111,8 +112,7 @@ export function LyricsView({ onMaterialsUpdate, contextOverrides }: LyricsViewPr
   const handleSavePhrase = (item: { meaning: string; sentence: string; pronunciation: string }) => {
     if (!selectedVideo) return;
 
-    const newItem: PhraseItem = {
-        id: generateId(item.meaning, item.sentence),
+    const newItem = createPhraseEntity({
         meaning: item.meaning,
         sentence: item.sentence,
         pronunciation: item.pronunciation,
@@ -124,7 +124,7 @@ export function LyricsView({ onMaterialsUpdate, contextOverrides }: LyricsViewPr
             artist: selectedVideo.artist,
             thumbnailUrl: selectedVideo.thumbnailUrl
         }
-    };
+    });
 
     setPhraseList(prev => {
         if (prev.some(v => v.id === newItem.id)) return prev;
@@ -257,12 +257,15 @@ export function LyricsView({ onMaterialsUpdate, contextOverrides }: LyricsViewPr
                 {materials.phrases?.length > 0 ? materials.phrases.map((phrase, idx) => {
                     const saved = isSaved(phrase.meaning, phrase.sentence);
                     
-                    const tempItem: PhraseItem = {
+                    const tempItem: PhraseEntity = {
                         id: `temp-${idx}`,
                         meaning: phrase.meaning,
                         sentence: phrase.sentence,
                         pronunciation: phrase.pronunciation,
-                        tags: ['music', 'generated']
+                        tags: ['music', 'generated'],
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString(),
+                        isDeleted: false,
                     };
 
                     return (

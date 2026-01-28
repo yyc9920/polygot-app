@@ -3,13 +3,13 @@ import { Sparkles, Loader2 } from 'lucide-react';
 import { SchemaType, type Schema } from '@google/generative-ai';
 import { FunButton } from '../FunButton';
 import { callGemini } from '../../lib/gemini';
-import { generateId } from '../../lib/utils';
+import { createPhraseEntity } from '../../lib/utils';
 import { usePhraseAppContext } from '../../context/PhraseContext';
-import type { PhraseItem } from '../../types';
+import type { PhraseEntity } from '../../types/schema';
 import useLanguage from '../../hooks/useLanguage';
 
 interface AiGeneratorFormProps {
-  onGenerate: (items: PhraseItem[]) => void;
+  onGenerate: (items: PhraseEntity[]) => void;
 }
 
 export function AiGeneratorForm({ onGenerate }: AiGeneratorFormProps) {
@@ -68,15 +68,14 @@ Tags: Tags in Native language (e.g. "일상,비즈니스"). If context implies a
       });
       const rows = JSON.parse(resultText);
       
-      const newItems: PhraseItem[] = [];
+      const newItems: PhraseEntity[] = [];
       for (const row of rows) {
-          newItems.push({
-              id: generateId(row.meaning, row.sentence),
+          newItems.push(createPhraseEntity({
               meaning: row.meaning,
               sentence: row.sentence,
               pronunciation: row.pronunciation || '',
               tags: row.tags || []
-          });
+          }));
       }
 
       if (newItems.length > 0) {

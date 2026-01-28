@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { PlusCircle } from 'lucide-react';
 import { FunButton } from '../FunButton';
 import { generateId } from '../../lib/utils';
-import type { PhraseItem } from '../../types';
+import type { PhraseEntity } from '../../types/schema';
+import { createPhraseEntity } from '../../types/schema';
 import useLanguage from '../../hooks/useLanguage';
 
 interface ManualEntryFormProps {
-  onAdd: (item: PhraseItem) => void;
+  onAdd: (item: PhraseEntity) => void;
 }
 
 export function ManualEntryForm({ onAdd }: ManualEntryFormProps) {
@@ -17,13 +18,13 @@ export function ManualEntryForm({ onAdd }: ManualEntryFormProps) {
     e.preventDefault();
     if (!form.meaning || !form.sentence) return;
     
-    const newItem: PhraseItem = {
-      id: generateId(form.meaning, form.sentence),
-      meaning: form.meaning,
-      sentence: form.sentence,
-      pronunciation: form.pronunciation,
-      tags: form.tags.split(',').map(t => t.trim()).filter(Boolean)
-    };
+    const newItem = createPhraseEntity(
+      generateId(form.meaning, form.sentence),
+      form.meaning,
+      form.sentence,
+      form.tags.split(',').map(t => t.trim()).filter(Boolean),
+      { pronunciation: form.pronunciation }
+    );
     
     onAdd(newItem);
     setForm({ meaning: '', sentence: '', pronunciation: '', tags: '' });
