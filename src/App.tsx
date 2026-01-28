@@ -17,6 +17,7 @@ import { AuthProvider } from './context/AuthContext';
 import { MusicProvider } from './context/MusicContext';
 import { MigrationProvider } from './context/MigrationContext';
 import { DialogProvider } from './context/DialogContext';
+import { ToastProvider } from './context/ToastContext';
 import useLanguage from './hooks/useLanguage';
 import { LoadingSpinner } from './components/LoadingSpinner';
 
@@ -113,13 +114,15 @@ export default function App() {
   return (
     <MigrationProvider>
       <DialogProvider>
-        <AuthProvider>
-          <PhraseAppProvider>
-            <MusicProvider>
-              <AppContent />
-            </MusicProvider>
-          </PhraseAppProvider>
-        </AuthProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <PhraseAppProvider>
+              <MusicProvider>
+                <AppContent />
+              </MusicProvider>
+            </PhraseAppProvider>
+          </AuthProvider>
+        </ToastProvider>
       </DialogProvider>
     </MigrationProvider>
   );
