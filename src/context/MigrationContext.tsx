@@ -1,10 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import {
-  getStorageMetadata,
-  needsMigration,
-  runMigration,
-  type MigrationResult,
-} from '../lib/migration';
+import { MigrationService, type MigrationResult } from '../lib/services/MigrationService';
 import { purgeTombstones } from '../lib/sync';
 import { get, set } from 'idb-keyval';
 import { LoadingSpinner } from '../components/LoadingSpinner';
@@ -31,9 +26,9 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
 
     async function checkAndRunMigration() {
       try {
-        const metadata = await getStorageMetadata();
+        const metadata = await MigrationService.getStorageMetadata();
 
-        if (!needsMigration(metadata)) {
+        if (!MigrationService.needsMigration(metadata)) {
           if (mounted) {
             setMigrationComplete(true);
             setMigrationResult({ success: true, migratedCount: 0, migrationMap: {} });
@@ -42,7 +37,7 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
         }
 
         console.log('[Migration] Starting migration from v1 to v2...');
-        const result = await runMigration();
+        const result = await MigrationService.runMigration();
 
         if (mounted) {
           setMigrationResult(result);

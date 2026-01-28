@@ -1,16 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import {
-  migrateLegacyPhrase,
-  migrateIdReferences,
-  migrateLearningStatus,
-} from './migration';
+import { MigrationService } from './MigrationService';
 import {
   type LegacyPhrase,
   type MigrationMap,
   type LearningStatus,
   isLegacyPhrase,
   isV2Phrase,
-} from '../types/schema';
+} from '../../types/schema';
 
 vi.mock('idb-keyval', () => ({
   get: vi.fn(),
@@ -22,7 +18,7 @@ vi.mock('uuid', () => ({
   v4: vi.fn(() => 'mock-uuid-1234'),
 }));
 
-describe('migration utilities', () => {
+describe('MigrationService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -105,7 +101,7 @@ describe('migration utilities', () => {
       };
       const migrationMap: MigrationMap = {};
 
-      const result = migrateLegacyPhrase(legacy, migrationMap);
+      const result = MigrationService.migrateLegacyPhrase(legacy, migrationMap);
 
       expect(result.id).toBe('mock-uuid-1234');
       expect(result.meaning).toBe('Hello');
@@ -130,7 +126,7 @@ describe('migration utilities', () => {
         'old-content-hash': 'existing-uuid-5678',
       };
 
-      const result = migrateLegacyPhrase(legacy, migrationMap);
+      const result = MigrationService.migrateLegacyPhrase(legacy, migrationMap);
 
       expect(result.id).toBe('existing-uuid-5678');
     });
@@ -144,7 +140,7 @@ describe('migration utilities', () => {
       };
       const migrationMap: MigrationMap = {};
 
-      const result = migrateLegacyPhrase(legacy, migrationMap);
+      const result = MigrationService.migrateLegacyPhrase(legacy, migrationMap);
 
       expect(result.pronunciation).toBeUndefined();
       expect(result.memo).toBeUndefined();
@@ -162,7 +158,7 @@ describe('migration utilities', () => {
         id2: 'uuid-2',
       };
 
-      const result = migrateIdReferences(oldIds, migrationMap);
+      const result = MigrationService.migrateIdReferences(oldIds, migrationMap);
 
       expect(result).toEqual(['uuid-1', 'uuid-2', 'id3']);
     });
@@ -171,13 +167,13 @@ describe('migration utilities', () => {
       const oldIds = ['already-uuid', 'another-uuid'];
       const migrationMap: MigrationMap = {};
 
-      const result = migrateIdReferences(oldIds, migrationMap);
+      const result = MigrationService.migrateIdReferences(oldIds, migrationMap);
 
       expect(result).toEqual(['already-uuid', 'another-uuid']);
     });
 
     it('handles empty arrays', () => {
-      const result = migrateIdReferences([], {});
+      const result = MigrationService.migrateIdReferences([], {});
       expect(result).toEqual([]);
     });
   });
@@ -200,7 +196,7 @@ describe('migration utilities', () => {
         old3: 'new-uuid-3',
       };
 
-      const result = migrateLearningStatus(status, migrationMap);
+      const result = MigrationService.migrateLearningStatus(status, migrationMap);
 
       expect(result.completedIds).toEqual(['new-uuid-1', 'new-uuid-2']);
       expect(result.incorrectIds).toEqual(['new-uuid-3']);
@@ -220,7 +216,7 @@ describe('migration utilities', () => {
         old1: 'new-uuid-1',
       };
 
-      const result = migrateLearningStatus(status, migrationMap);
+      const result = MigrationService.migrateLearningStatus(status, migrationMap);
 
       expect(result.completedIds).toEqual(['new-uuid-1']);
       expect(result.quizStats).toBeUndefined();
