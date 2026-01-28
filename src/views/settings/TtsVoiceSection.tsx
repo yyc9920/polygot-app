@@ -2,13 +2,15 @@ import { useState, useEffect } from 'react';
 import { Mic, Search } from 'lucide-react';
 import { usePhraseAppContext } from '../../context/PhraseContext';
 import useLanguage from '../../hooks/useLanguage';
+import { useToast } from '../../context/ToastContext';
 
 export function TtsVoiceSection() {
-  const { voiceURI, setVoiceURI, phraseList } = usePhraseAppContext();
-  const { t } = useLanguage();
-  
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
-  const [voiceFilter, setVoiceFilter] = useState('');
+   const { voiceURI, setVoiceURI, phraseList } = usePhraseAppContext();
+   const { t } = useLanguage();
+   const toast = useToast();
+   
+   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+   const [voiceFilter, setVoiceFilter] = useState('');
 
   useEffect(() => {
     const loadVoices = () => {
@@ -46,18 +48,18 @@ export function TtsVoiceSection() {
       }
     }
 
-    if (!targetLang) {
-      alert(t('settings.noRecognizableLanguageTags'));
-      return;
-    }
+     if (!targetLang) {
+       toast.warning(t('settings.noRecognizableLanguageTags'));
+       return;
+     }
 
-    const bestVoice = voices.find(v => v.lang.toLowerCase().startsWith(targetLang));
-    if (bestVoice) {
-      setVoiceURI(bestVoice.voiceURI);
-      alert(t('settings.voiceSelected').replace('{{name}}', bestVoice.name).replace('{{lang}}', bestVoice.lang));
-    } else {
-      alert(t('settings.noVoiceFound').replace('{{lang}}', targetLang));
-    }
+     const bestVoice = voices.find(v => v.lang.toLowerCase().startsWith(targetLang));
+     if (bestVoice) {
+       setVoiceURI(bestVoice.voiceURI);
+       toast.success(t('settings.voiceSelected').replace('{{name}}', bestVoice.name).replace('{{lang}}', bestVoice.lang));
+     } else {
+       toast.warning(t('settings.noVoiceFound').replace('{{lang}}', targetLang));
+     }
   };
 
   const filteredVoices = voices.filter(v => 

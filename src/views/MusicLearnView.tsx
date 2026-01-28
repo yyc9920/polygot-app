@@ -11,19 +11,21 @@ import { LyricsView } from '../components/music/LyricsView';
 import { VideoSearchPanel } from '../components/music/VideoSearchPanel';
 import { BottomSheet } from '../components/BottomSheet';
 import { Music as MusicIcon } from 'lucide-react';
+import { useToast } from '../context/ToastContext';
 
 export function MusicLearnView() {
-  const { 
-    apiKey, 
-  } = usePhraseAppContext();
-  const {
-    musicState,
-    setMusicState,
-    setPlaylist,
-    songLyrics,
-    setSongLyrics
-  } = useMusicContext();
-  const { t, language, LANGUAGE_NAMES } = useLanguage();
+   const { 
+     apiKey, 
+   } = usePhraseAppContext();
+   const {
+     musicState,
+     setMusicState,
+     setPlaylist,
+     songLyrics,
+     setSongLyrics
+   } = useMusicContext();
+   const { t, language, LANGUAGE_NAMES } = useLanguage();
+   const toast = useToast();
   
   const { 
       selectedVideo, 
@@ -79,11 +81,11 @@ export function MusicLearnView() {
     });
   };
 
-  const fetchLyrics = async (video: YouTubeVideo, targetLang: string) => {
-    if (!apiKey) {
-        alert(t('music.geminiKeyMissing'));
-        return;
-    }
+   const fetchLyrics = async (video: YouTubeVideo, targetLang: string) => {
+     if (!apiKey) {
+         toast.warning(t('music.geminiKeyMissing'));
+         return;
+     }
 
     loadingRef.current = video.videoId;
     updateState({ isLoading: true });
@@ -111,12 +113,12 @@ export function MusicLearnView() {
           // Use the fetched lyrics language for playlist item
           addToPlaylist(video, video.artist, video.title, data.lyrics[0].original, genre);
         }
-    } catch (err) {
-        const error = err as Error;
-        alert(t('music.failedGenerateMaterials').replace('{{error}}', error.message));
-        
-        // Fallback: Enable manual entry
-        updateState({ 
+     } catch (err) {
+         const error = err as Error;
+         toast.error(t('music.failedGenerateMaterials').replace('{{error}}', error.message));
+         
+         // Fallback: Enable manual entry
+         updateState({
             materials: { 
                 artist: video.artist,
                 title: video.title,

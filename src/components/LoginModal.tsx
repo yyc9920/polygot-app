@@ -2,24 +2,26 @@ import { X, LogIn } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { FunButton } from './FunButton';
 import useLanguage from '../hooks/useLanguage';
+import { useToast } from '../context/ToastContext';
 
 interface LoginModalProps {
   onClose: () => void;
 }
 
 export function LoginModal({ onClose }: LoginModalProps) {
-  const { signIn, user } = useAuth();
-  const { t } = useLanguage();
+   const { signIn, user } = useAuth();
+   const { t } = useLanguage();
+   const toast = useToast();
 
-  const handleLogin = async () => {
-    try {
-      await signIn();
-      onClose();
-    } catch (error) {
-      console.error(error);
-      alert(t('login.failed'));
-    }
-  };
+   const handleLogin = async () => {
+     try {
+       await signIn();
+       onClose();
+     } catch (error) {
+       console.error(error);
+       toast.error(t('login.failed'));
+     }
+   };
 
   if (user) return null;
 

@@ -8,6 +8,7 @@ import { generateSongLyrics } from '../../lib/gemini';
 import { initialMusicState, type MusicViewState } from '../../context/MusicContextDefinition';
 import { useMusicContext } from '../../context/MusicContext';
 import type { PlaylistItem, SongMaterials } from '../../types';
+import { useToast } from '../../context/ToastContext';
 
 interface HomeSongViewProps {
   song: PlaylistItem;
@@ -19,14 +20,15 @@ interface HomeSongViewProps {
 }
 
 export const HomeSongView = React.memo(function HomeSongView({ 
-    song, 
-    onClose,
-    apiKey,
-    language,
-    LANGUAGE_NAMES,
-    t
+     song, 
+     onClose,
+     apiKey,
+     language,
+     LANGUAGE_NAMES,
+     t
 }: HomeSongViewProps) {
-    const { songLyrics, setSongLyrics } = useMusicContext();
+     const { songLyrics, setSongLyrics } = useMusicContext();
+     const toast = useToast();
 
     const [localMusicState, setLocalMusicState] = useState<MusicViewState>({
         ...initialMusicState,
@@ -64,11 +66,11 @@ export const HomeSongView = React.memo(function HomeSongView({
             
             setSongLyrics(prev => ({ ...prev, [cacheKey]: data }));
             setLocalMusicState(prev => ({ ...prev, materials: data }));
-        } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Unknown error';
-            alert(t('music.failedGenerateMaterials').replace('{{error}}', message));
-            // Fallback: Enable manual entry
-            setLocalMusicState(prev => ({ 
+         } catch (err: unknown) {
+             const message = err instanceof Error ? err.message : 'Unknown error';
+             toast.error(t('music.failedGenerateMaterials').replace('{{error}}', message));
+             // Fallback: Enable manual entry
+             setLocalMusicState(prev => ({
                 ...prev, 
                 materials: { 
                     artist: video.artist,

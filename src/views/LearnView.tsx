@@ -5,6 +5,7 @@ import useLanguage from '../hooks/useLanguage';
 import { useTTS } from '../hooks/useTTS';
 import { callGemini } from '../lib/gemini';
 import type { PhraseEntity } from '../types/schema';
+import { useToast } from '../context/ToastContext';
 
 import { LearnHeader } from './learn/LearnHeader';
 import { TagFilter } from './learn/TagFilter';
@@ -17,9 +18,10 @@ import { EditPhraseModal } from '../components/EditPhraseModal';
 import { CheckCircle, AlertCircle, BookOpen } from 'lucide-react';
 
 export function LearnView() {
-  const { phraseList, setPhraseList, status, apiKey, reviewMode, setReviewMode } = usePhraseAppContext();
-  const { t, language, LANGUAGE_NAMES } = useLanguage();
-  const { speak } = useTTS();
+   const { phraseList, setPhraseList, status, apiKey, reviewMode, setReviewMode } = usePhraseAppContext();
+   const { t, language, LANGUAGE_NAMES } = useLanguage();
+   const { speak } = useTTS();
+   const toast = useToast();
 
   const [viewMode, setViewMode] = useLocalStorage<'card' | 'list'>('learnViewMode', 'card');
   const [currentIndex, setCurrentIndex] = useLocalStorage<number>('learnCurrentIndex', 0);
@@ -121,12 +123,12 @@ export function LearnView() {
       setEditingItem(null);
   };
 
-  const handleAiExplain = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!apiKey) {
-      alert(t('learn.pleaseEnterApiKey'));
-      return;
-    }
+   const handleAiExplain = async (e: React.MouseEvent) => {
+     e.stopPropagation();
+     if (!apiKey) {
+       toast.warning(t('learn.pleaseEnterApiKey'));
+       return;
+     }
     
     setShowAiModal(true);
 
@@ -181,14 +183,14 @@ export function LearnView() {
     }
   };
 
-  const handleSaveMemo = () => {
-      if (!aiExplanation) return;
-      const currentItem = displayList[currentIndex];
-      setPhraseList(prev => prev.map(item => 
-          item.id === currentItem.id ? { ...item, memo: aiExplanation } : item
-      ));
-      alert(t('learn.memoSaved'));
-  };
+   const handleSaveMemo = () => {
+       if (!aiExplanation) return;
+       const currentItem = displayList[currentIndex];
+       setPhraseList(prev => prev.map(item => 
+           item.id === currentItem.id ? { ...item, memo: aiExplanation } : item
+       ));
+       toast.success(t('learn.memoSaved'));
+   };
 
   const handleUpdatePhrase = (id: string, updates: Partial<PhraseEntity>) => {
     setPhraseList(prev => prev.map(item => 

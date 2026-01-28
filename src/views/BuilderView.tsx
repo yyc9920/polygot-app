@@ -22,12 +22,14 @@ import { CsvEditorModal } from '../components/builder/CsvEditorModal';
 import { EditPhraseModal } from '../components/EditPhraseModal';
 import useLanguage from '../hooks/useLanguage';
 import { useDailyStats } from '../hooks/useDailyStats';
+import { useToast } from '../context/ToastContext';
 
 export function BuilderView() {
-  const { phraseList, setPhraseList } = usePhraseAppContext();
-  const { t } = useLanguage();
-  const { increment } = useDailyStats();
-  const { confirm } = useDialog();
+   const { phraseList, setPhraseList } = usePhraseAppContext();
+   const { t } = useLanguage();
+   const { increment } = useDailyStats();
+   const { confirm } = useDialog();
+   const toast = useToast();
 
   const [activeTab, setActiveTab] = useState<'manual' | 'ai'>('ai'); 
   const [showDeleteInput, setShowDeleteInput] = useState(false);
@@ -44,31 +46,31 @@ export function BuilderView() {
       setGeneratedItems(newItems);
   };
 
-  const handleManualAdd = (newItem: PhraseEntity) => {
-    setPhraseList((prev: PhraseEntity[]) => {
-        if (prev.some(v => v.id === newItem.id)) {
-            alert(t('builder.itemAlreadyExists').replace('{{meaning}}', newItem.meaning));
-            return prev;
-        }
-        increment('addCount', 1);
-        return [...prev, newItem];
-    });
-  };
-
-  const confirmGeneratedItems = () => {
-       if (!generatedItems) return;
-       setPhraseList((prev: PhraseEntity[]) => {
-          const existingIds = new Set(prev.map(p => p.id));
-          const uniqueNew = generatedItems.filter(item => !existingIds.has(item.id));
-          if (uniqueNew.length === 0) {
-             alert(t('builder.allGeneratedDuplicates'));
+   const handleManualAdd = (newItem: PhraseEntity) => {
+     setPhraseList((prev: PhraseEntity[]) => {
+         if (prev.some(v => v.id === newItem.id)) {
+             toast.warning(t('builder.itemAlreadyExists').replace('{{meaning}}', newItem.meaning));
              return prev;
-          }
-          increment('addCount', uniqueNew.length);
-          return [...prev, ...uniqueNew];
-      });
-      setGeneratedItems(null);
-  };
+         }
+         increment('addCount', 1);
+         return [...prev, newItem];
+     });
+   };
+
+   const confirmGeneratedItems = () => {
+        if (!generatedItems) return;
+        setPhraseList((prev: PhraseEntity[]) => {
+           const existingIds = new Set(prev.map(p => p.id));
+           const uniqueNew = generatedItems.filter(item => !existingIds.has(item.id));
+           if (uniqueNew.length === 0) {
+              toast.warning(t('builder.allGeneratedDuplicates'));
+              return prev;
+           }
+           increment('addCount', uniqueNew.length);
+           return [...prev, ...uniqueNew];
+       });
+       setGeneratedItems(null);
+   };
 
   const handleSaveEdit = (updatedItem: PhraseEntity) => {
        setPhraseList((prev: PhraseEntity[]) => prev.map(item => {
@@ -80,9 +82,9 @@ export function BuilderView() {
       setEditingItem(null);
   };
 
-   const processCSVText = (text: string) => {
-     const cleanText = text.replace(/^\uFEFF/, '').trim(); 
-     if (!cleanText) { alert(t('builder.fileIsEmpty')); return; }
+    const processCSVText = (text: string) => {
+      const cleanText = text.replace(/^\uFEFF/, '').trim(); 
+      if (!cleanText) { toast.warning(t('builder.fileIsEmpty')); return; }
      const rows = parseCSV(cleanText);
      const startIdx = rows.length > 0 && rows[0].some(cell => cell.toLowerCase().includes('meaning')) ? 1 : 0;
      const newItems: PhraseEntity[] = [];
@@ -110,17 +112,17 @@ export function BuilderView() {
              reallyUnique.push(item);
            }
          }
-         if (reallyUnique.length === 0) {
-           alert(t('builder.allDuplicates'));
-           return prev;
-         }
-         alert(t('builder.successImport').replace('{{count}}', reallyUnique.length.toString()));
-         increment('addCount', reallyUnique.length);
-         return [...prev, ...reallyUnique];
-      });
-    } else {
-      alert(t('builder.noDataFound'));
-    }
+          if (reallyUnique.length === 0) {
+            toast.warning(t('builder.allDuplicates'));
+            return prev;
+          }
+          toast.success(t('builder.successImport').replace('{{count}}', reallyUnique.length.toString()));
+          increment('addCount', reallyUnique.length);
+          return [...prev, ...reallyUnique];
+       });
+     } else {
+       toast.warning(t('builder.noDataFound'));
+     }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -161,14 +163,14 @@ export function BuilderView() {
     link.click();
   };
 
-   const executeTagDeletion = async (e: React.FormEvent) => {
-     e.preventDefault();
-     const tagsToDelete = deleteTagsInput.split(',').map(t => t.trim()).filter(Boolean);
-     
-     if (tagsToDelete.length === 0) {
-       alert(t('builder.pleaseEnterLeastOneTag'));
-       return;
-     }
+    const executeTagDeletion = async (e: React.FormEvent) => {
+      e.preventDefault();
+      const tagsToDelete = deleteTagsInput.split(',').map(t => t.trim()).filter(Boolean);
+      
+      if (tagsToDelete.length === 0) {
+        toast.warning(t('builder.pleaseEnterLeastOneTag'));
+        return;
+      }
 
       const confirmed = await confirm({
         title: t('common.confirm'),
@@ -179,16 +181,16 @@ export function BuilderView() {
         setPhraseList((prev: PhraseEntity[]) => {
          const initialLength = prev.length;
          const filtered = prev.filter(item => !item.tags.some(tag => tagsToDelete.includes(tag)));
-         
-         if (filtered.length === initialLength) {
-             alert(t('builder.noItemsFoundWithTags').replace('{{tags}}', tagsToDelete.join(', ')));
-             return prev;
-         }
-         
-         alert(t('builder.deletedItemsCount').replace('{{count}}', (initialLength - filtered.length).toString()));
-         setShowDeleteInput(false);
-         setDeleteTagsInput('');
-         return filtered;
+          
+          if (filtered.length === initialLength) {
+              toast.warning(t('builder.noItemsFoundWithTags').replace('{{tags}}', tagsToDelete.join(', ')));
+              return prev;
+          }
+          
+          toast.success(t('builder.deletedItemsCount').replace('{{count}}', (initialLength - filtered.length).toString()));
+          setShowDeleteInput(false);
+          setDeleteTagsInput('');
+          return filtered;
        });
      }
    };

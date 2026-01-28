@@ -6,6 +6,7 @@ import { FunButton } from '../FunButton';
 import { FlipListItem } from '../FlipListItem';
 import { useTTS } from '../../hooks/useTTS';
 import useLanguage from '../../hooks/useLanguage';
+import { useToast } from '../../context/ToastContext';
 import type { PhraseEntity } from '../../types/schema';
 import type { SongMaterials } from '../../types';
 import { generatePhraseFromLyric } from '../../lib/gemini';
@@ -19,12 +20,13 @@ interface LyricsViewProps {
 }
 
 export function LyricsView({ onMaterialsUpdate, contextOverrides }: LyricsViewProps) {
-  const globalContext = useMusicContext();
-  const { musicState, setMusicState, setPlaylist } = contextOverrides ? { ...globalContext, ...contextOverrides } : globalContext;
-  const { materials, activeTab, selectedVideo, isLoading } = musicState;
-  const { apiKey, phraseList, setPhraseList } = usePhraseAppContext();
-  const { t, language, LANGUAGE_NAMES } = useLanguage();
-  const { speak } = useTTS();
+   const globalContext = useMusicContext();
+   const { musicState, setMusicState, setPlaylist } = contextOverrides ? { ...globalContext, ...contextOverrides } : globalContext;
+   const { materials, activeTab, selectedVideo, isLoading } = musicState;
+   const { apiKey, phraseList, setPhraseList } = usePhraseAppContext();
+   const { t, language, LANGUAGE_NAMES } = useLanguage();
+   const { speak } = useTTS();
+   const toast = useToast();
 
   const [generatingIdx, setGeneratingIdx] = useState<number | null>(null);
   const [isEditingLyrics, setIsEditingLyrics] = useState(false);
@@ -101,10 +103,10 @@ export function LyricsView({ onMaterialsUpdate, contextOverrides }: LyricsViewPr
            
            onMaterialsUpdate(updatedMaterials);
        }
-    } catch (err) {
-       const error = err as Error;
-       alert(t('music.failedGeneratePhrase').replace('{{error}}', error.message));
-    } finally {
+     } catch (err) {
+        const error = err as Error;
+        toast.error(t('music.failedGeneratePhrase').replace('{{error}}', error.message));
+     } finally {
        setGeneratingIdx(null);
     }
   };

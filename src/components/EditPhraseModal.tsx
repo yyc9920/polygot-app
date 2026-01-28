@@ -3,6 +3,7 @@ import { X, Save } from 'lucide-react';
 import { FunButton } from './FunButton';
 import type { PhraseEntity } from '../types/schema';
 import useLanguage from '../hooks/useLanguage';
+import { useToast } from '../context/ToastContext';
 
 interface EditPhraseModalProps {
   item: PhraseEntity | null;
@@ -11,10 +12,11 @@ interface EditPhraseModalProps {
 }
 
 export function EditPhraseModal({ item, onSave, onCancel }: EditPhraseModalProps) {
-  const { t } = useLanguage();
-  
-  // State to track the form values
-  const [form, setForm] = useState({ meaning: '', sentence: '', pronunciation: '', tags: '' });
+   const { t } = useLanguage();
+   const toast = useToast();
+   
+   // State to track the form values
+   const [form, setForm] = useState({ meaning: '', sentence: '', pronunciation: '', tags: '' });
   
   // State to track the current item ID for resetting form when item changes
   const [currentItemId, setCurrentItemId] = useState<string | undefined>(undefined);
@@ -32,11 +34,11 @@ export function EditPhraseModal({ item, onSave, onCancel }: EditPhraseModalProps
 
   if (!item) return null;
 
-  const handleSave = () => {
-    if (!form.meaning || !form.sentence) {
-        alert("Meaning and Sentence are required.");
-        return;
-    }
+   const handleSave = () => {
+     if (!form.meaning || !form.sentence) {
+         toast.warning("Meaning and Sentence are required.");
+         return;
+     }
 
      const updatedItem: PhraseEntity = {
         ...item,

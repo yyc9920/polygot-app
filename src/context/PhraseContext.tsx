@@ -127,40 +127,44 @@ export const PhraseAppProvider: React.FC<{ children: ReactNode }> = ({ children 
       });
   }, [setPhraseList]);
 
-  const syncUrl = async (url: string) => {
-      const items = await fetchFromUrl(url);
-      if (items.length > 0) {
-          mergePhraseList(items);
-          alert(`Successfully synced ${items.length} items from URL.`);
-      } else {
-          alert('No items found or failed to fetch from URL.');
-      }
-  };
+   const syncUrl = async (url: string) => {
+       const items = await fetchFromUrl(url);
+       if (items.length > 0) {
+           mergePhraseList(items);
+           // TODO: Replace with toast.success() - requires passing toast context to this function
+           alert(`Successfully synced ${items.length} items from URL.`);
+       } else {
+           // TODO: Replace with toast.warning() - requires passing toast context to this function
+           alert('No items found or failed to fetch from URL.');
+       }
+   };
 
-  const addStarterPackage = (targetLang: LanguageCode, sourceLang: LanguageCode = 'en') => {
-    const packageId = `starter_${targetLang}`;
-    if (purchasedPackages.includes(packageId)) {
-      alert('Package already purchased!');
-      return;
-    }
+   const addStarterPackage = (targetLang: LanguageCode, sourceLang: LanguageCode = 'en') => {
+     const packageId = `starter_${targetLang}`;
+     if (purchasedPackages.includes(packageId)) {
+       // TODO: Replace with toast.warning() - requires passing toast context to this function
+       alert('Package already purchased!');
+       return;
+     }
 
-    const newItems: PhraseEntity[] = PHRASE_DICTIONARY.map(entry => {
-      const source = entry.translations[sourceLang] || entry.translations['en'];
-      const target = entry.translations[targetLang];
-      
-      return createPhraseEntity(
-        generateId(source.text, target.text),
-        source.text,
-        target.text,
-        [...entry.tags, 'Starter'],
-        { pronunciation: target.pron || '', packageId: packageId }
-      );
-    });
+     const newItems: PhraseEntity[] = PHRASE_DICTIONARY.map(entry => {
+       const source = entry.translations[sourceLang] || entry.translations['en'];
+       const target = entry.translations[targetLang];
+       
+       return createPhraseEntity(
+         generateId(source.text, target.text),
+         source.text,
+         target.text,
+         [...entry.tags, 'Starter'],
+         { pronunciation: target.pron || '', packageId: packageId }
+       );
+     });
 
-    mergePhraseList(newItems);
-    setPurchasedPackages(prev => [...prev, packageId]);
-    alert(`Successfully added Starter Package for ${targetLang}!`);
-  };
+     mergePhraseList(newItems);
+     setPurchasedPackages(prev => [...prev, packageId]);
+     // TODO: Replace with toast.success() - requires passing toast context to this function
+     alert(`Successfully added Starter Package for ${targetLang}!`);
+   };
 
   // Auto-fetch data from savedUrls on mount/change
   useEffect(() => {

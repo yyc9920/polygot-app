@@ -7,24 +7,26 @@ import { createPhraseEntity } from '../../lib/utils';
 import { usePhraseAppContext } from '../../context/PhraseContext';
 import type { PhraseEntity } from '../../types/schema';
 import useLanguage from '../../hooks/useLanguage';
+import { useToast } from '../../context/ToastContext';
 
 interface AiGeneratorFormProps {
   onGenerate: (items: PhraseEntity[]) => void;
 }
 
 export function AiGeneratorForm({ onGenerate }: AiGeneratorFormProps) {
-  const { apiKey } = usePhraseAppContext();
-  const { t } = useLanguage();
-  const [aiPrompt, setAiPrompt] = useState('');
-  const [aiCount, setAiCount] = useState(5);
-  const [isGenerating, setIsGenerating] = useState(false);
+   const { apiKey } = usePhraseAppContext();
+   const { t } = useLanguage();
+   const toast = useToast();
+   const [aiPrompt, setAiPrompt] = useState('');
+   const [aiCount, setAiCount] = useState(5);
+   const [isGenerating, setIsGenerating] = useState(false);
 
-  const handleAiGenerate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!apiKey) {
-      alert(t('learn.pleaseEnterApiKey'));
-      return;
-    }
+   const handleAiGenerate = async (e: React.FormEvent) => {
+     e.preventDefault();
+     if (!apiKey) {
+       toast.warning(t('learn.pleaseEnterApiKey'));
+       return;
+     }
     if (!aiPrompt) return;
     setIsGenerating(true);
     try {
@@ -78,16 +80,16 @@ Tags: Tags in Native language (e.g. "일상,비즈니스"). If context implies a
           }));
       }
 
-      if (newItems.length > 0) {
-         onGenerate(newItems);
-         setAiPrompt('');
-      } else {
-        alert(t('builder.failedToParse'));
-      }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      alert(t('builder.aiGenerationFailed').replace('{{message}}', message));
-    } finally {
+       if (newItems.length > 0) {
+          onGenerate(newItems);
+          setAiPrompt('');
+       } else {
+         toast.error(t('builder.failedToParse'));
+       }
+     } catch (err: unknown) {
+       const message = err instanceof Error ? err.message : 'Unknown error';
+       toast.error(t('builder.aiGenerationFailed').replace('{{message}}', message));
+     } finally {
       setIsGenerating(false);
     }
   };

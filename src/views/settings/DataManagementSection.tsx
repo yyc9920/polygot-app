@@ -4,12 +4,14 @@ import { usePhraseAppContext } from '../../context/PhraseContext';
 import { useDialog } from '../../context/DialogContext';
 import { FunButton } from '../../components/FunButton';
 import useLanguage from '../../hooks/useLanguage';
+import { useToast } from '../../context/ToastContext';
 
 export function DataManagementSection() {
-  const { phraseList, status, voiceURI, apiKey, savedUrls, setPhraseList, setStatus, setVoiceURI, setApiKey, setSavedUrls, handleReset, handleDeleteAllData } = usePhraseAppContext();
-  const { confirm } = useDialog();
-  const { t } = useLanguage();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+   const { phraseList, status, voiceURI, apiKey, savedUrls, setPhraseList, setStatus, setVoiceURI, setApiKey, setSavedUrls, handleReset, handleDeleteAllData } = usePhraseAppContext();
+   const { confirm } = useDialog();
+   const { t } = useLanguage();
+   const toast = useToast();
+   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSaveData = () => {
     const data = {
@@ -58,18 +60,18 @@ export function DataManagementSection() {
         const list = data.phraseList || data.vocabList;
         if (!list || !Array.isArray(list)) throw new Error(t('settings.invalidFormat'));
 
-        setPhraseList(list);
-        if (data.status) setStatus(data.status);
-        if (data.voiceURI) setVoiceURI(data.voiceURI);
-        if (data.apiKey) setApiKey(data.apiKey);
-        if (data.savedUrls) setSavedUrls(data.savedUrls);
-        if (data.savedUrl && (!data.savedUrls || data.savedUrls.length === 0)) setSavedUrls([data.savedUrl]);
+         setPhraseList(list);
+         if (data.status) setStatus(data.status);
+         if (data.voiceURI) setVoiceURI(data.voiceURI);
+         if (data.apiKey) setApiKey(data.apiKey);
+         if (data.savedUrls) setSavedUrls(data.savedUrls);
+         if (data.savedUrl && (!data.savedUrls || data.savedUrls.length === 0)) setSavedUrls([data.savedUrl]);
 
-        alert(t('settings.loadSuccess'));
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
-        alert(t('settings.loadFailed').replace('{{error}}', message));
-      } finally {
+         toast.success(t('settings.loadSuccess'));
+       } catch (err: unknown) {
+         const message = err instanceof Error ? err.message : 'Unknown error';
+         toast.error(t('settings.loadFailed').replace('{{error}}', message));
+       } finally {
         e.target.value = '';
       }
     };

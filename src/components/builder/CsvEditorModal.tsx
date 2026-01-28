@@ -6,6 +6,7 @@ import type { PhraseEntity } from '../../types/schema';
 import { createPhraseEntity } from '../../types/schema';
 import useLanguage from '../../hooks/useLanguage';
 import { useDialog } from '../../context/DialogContext';
+import { useToast } from '../../context/ToastContext';
 
 interface CsvEditorModalProps {
   isOpen: boolean;
@@ -15,10 +16,11 @@ interface CsvEditorModalProps {
 }
 
 export function CsvEditorModal({ isOpen, onClose, initialContent, onSave }: CsvEditorModalProps) {
-  const { t } = useLanguage();
-  const { confirm } = useDialog();
-  const [content, setContent] = useState(initialContent);
-  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+   const { t } = useLanguage();
+   const { confirm } = useDialog();
+   const toast = useToast();
+   const [content, setContent] = useState(initialContent);
+   const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
 
   // Reset content when modal opens
   if (isOpen && !prevIsOpen) {
@@ -73,12 +75,12 @@ export function CsvEditorModal({ isOpen, onClose, initialContent, onSave }: CsvE
             }
         }
 
-        onSave(newItems);
-        onClose();
-        alert(`Saved ${newItems.length} items.`);
-    } catch {
-        alert("Error parsing CSV. Please check formatting.");
-    }
+         onSave(newItems);
+         onClose();
+         toast.success(`Saved ${newItems.length} items.`);
+     } catch {
+         toast.error("Error parsing CSV. Please check formatting.");
+     }
   };
 
   if (!isOpen) return null;

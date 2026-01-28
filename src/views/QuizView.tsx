@@ -10,6 +10,7 @@ import useLanguage from '../hooks/useLanguage';
 import { createQuizItem, LEVELS, POINT_SYSTEM } from '../lib/quiz-utils';
 import { useTTS } from '../hooks/useTTS';
 import { useDailyStats } from '../hooks/useDailyStats';
+import { useToast } from '../context/ToastContext';
 
 import { QuizSetup } from './quiz/QuizSetup';
 import { QuizSummary } from './quiz/QuizSummary';
@@ -24,12 +25,13 @@ export interface QuizViewProps {
 }
 
 export function QuizView({ customQueue }: QuizViewProps) {
-  const { phraseList, status, setStatus } = usePhraseAppContext();
-  const { playlist } = useMusicContext();
-  const { t } = useLanguage();
-  const { speak } = useTTS();
-  const { increment } = useDailyStats();
-  const { confirm } = useDialog();
+   const { phraseList, status, setStatus } = usePhraseAppContext();
+   const { playlist } = useMusicContext();
+   const { t } = useLanguage();
+   const { speak } = useTTS();
+   const { increment } = useDailyStats();
+   const { confirm } = useDialog();
+   const toast = useToast();
 
   const [isFlipped, setIsFlipped] = useState(false);
   const [isPlaying, setIsPlaying] = useLocalStorage<boolean>('quizIsPlaying', false);
@@ -77,11 +79,11 @@ export function QuizView({ customQueue }: QuizViewProps) {
     }
   }, [currentIndex, isPlaying, quizQueue, feedback, speak]);
 
-  const startListening = () => {
-    if (!SpeechRecognition) {
-      alert(t('quiz.speechNotSupported'));
-      return;
-    }
+   const startListening = () => {
+     if (!SpeechRecognition) {
+       toast.warning(t('quiz.speechNotSupported'));
+       return;
+     }
 
     const recognition = new SpeechRecognition();
     
@@ -114,21 +116,21 @@ export function QuizView({ customQueue }: QuizViewProps) {
 
 
    const startQuiz = async (skipConfirmation: boolean = false) => {
-    let list = [...phraseList];
+     let list = [...phraseList];
 
-    // 1. Filter by Scope
-    if (mode === 'daily') {
-       const dailyDataStr = localStorage.getItem('dailyRecommendation');
-       if (!dailyDataStr) {
-           alert(t('home.noDataToDisplay'));
-           return;
-       }
-       try {
-           const dailyData = JSON.parse(dailyDataStr) as DailyRecommendation;
-           if (!dailyData.phraseIds || dailyData.phraseIds.length === 0) {
-               alert(t('home.noDataToDisplay'));
-               return;
-           }
+     // 1. Filter by Scope
+     if (mode === 'daily') {
+        const dailyDataStr = localStorage.getItem('dailyRecommendation');
+        if (!dailyDataStr) {
+            toast.warning(t('home.noDataToDisplay'));
+            return;
+        }
+        try {
+            const dailyData = JSON.parse(dailyDataStr) as DailyRecommendation;
+            if (!dailyData.phraseIds || dailyData.phraseIds.length === 0) {
+                toast.warning(t('home.noDataToDisplay'));
+                return;
+            }
 
            const targetIds = new Set<string>(dailyData.phraseIds);
 
@@ -167,27 +169,27 @@ export function QuizView({ customQueue }: QuizViewProps) {
                }
            }
 
-           list = list.filter(v => targetIds.has(v.id));
-           
-           if (list.length === 0) {
-                alert(t('home.noDataToDisplay'));
-                return;
-           }
-       } catch (e) {
-           console.error(e);
-           alert(t('error.generic'));
-           return;
-       }
-    } else if (mode === 'incorrect') {
-      list = list.filter(v => status.incorrectIds.includes(v.id));
-    } else if (mode === 'tag' && selectedTag) {
-      list = list.filter(v => v.tags.includes(selectedTag));
-    }
+            list = list.filter(v => targetIds.has(v.id));
+            
+            if (list.length === 0) {
+                 toast.warning(t('home.noDataToDisplay'));
+                 return;
+            }
+        } catch (e) {
+            console.error(e);
+            toast.error(t('error.generic'));
+            return;
+        }
+     } else if (mode === 'incorrect') {
+       list = list.filter(v => status.incorrectIds.includes(v.id));
+     } else if (mode === 'tag' && selectedTag) {
+       list = list.filter(v => v.tags.includes(selectedTag));
+     }
 
-    if (list.length === 0) {
-      alert(t('learn.noDataToDisplay'));
-      return;
-    }
+     if (list.length === 0) {
+       toast.warning(t('learn.noDataToDisplay'));
+       return;
+     }
 
     // 2. Shuffle
     list = list.sort(() => Math.random() - 0.5);

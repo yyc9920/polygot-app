@@ -4,23 +4,25 @@ import { usePhraseAppContext } from '../../context/PhraseContext';
 import { useDialog } from '../../context/DialogContext';
 import { FunButton } from '../../components/FunButton';
 import useLanguage from '../../hooks/useLanguage';
+import { useToast } from '../../context/ToastContext';
 
 export function ContentSourcesSection() {
-  const { savedUrls, setSavedUrls, syncUrl } = usePhraseAppContext();
-  const { t } = useLanguage();
-  const { confirm } = useDialog();
-  
-  const [newUrl, setNewUrl] = useState('');
-  const [isSyncing, setIsSyncing] = useState<string | null>(null);
-  const [showCSVGuide, setShowCSVGuide] = useState(false);
+   const { savedUrls, setSavedUrls, syncUrl } = usePhraseAppContext();
+   const { t } = useLanguage();
+   const { confirm } = useDialog();
+   const toast = useToast();
+   
+   const [newUrl, setNewUrl] = useState('');
+   const [isSyncing, setIsSyncing] = useState<string | null>(null);
+   const [showCSVGuide, setShowCSVGuide] = useState(false);
 
-  const handleAddUrl = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newUrl) return;
-    if (savedUrls.includes(newUrl)) {
-      alert(t('settings.urlExists'));
-      return;
-    }
+   const handleAddUrl = (e: React.FormEvent) => {
+     e.preventDefault();
+     if (!newUrl) return;
+     if (savedUrls.includes(newUrl)) {
+       toast.warning(t('settings.urlExists'));
+       return;
+     }
     setSavedUrls([...savedUrls, newUrl]);
     setNewUrl('');
   };

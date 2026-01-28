@@ -6,6 +6,7 @@ import { searchYouTube, type YouTubeVideo } from '../../lib/youtube';
 import { getTopTracksByTag } from '../../lib/lastfm';
 import { PlaylistPanel } from './PlaylistPanel';
 import useLanguage from '../../hooks/useLanguage';
+import { useToast } from '../../context/ToastContext';
 
 import { SearchBar } from './video-search/SearchBar';
 import { RecommendationList } from './video-search/RecommendationList';
@@ -20,23 +21,24 @@ interface VideoSearchPanelProps {
 }
 
 export function VideoSearchPanel({ onVideoSelect }: VideoSearchPanelProps) {
-  const { musicState, setMusicState } = useMusicContext();
-  const { 
-    query, 
-    results, 
-    songResults, 
-    selectedSong, 
-    isSearching, 
-    searchStep, 
-    songPage, 
-    videoPage 
-  } = musicState;
-  
-  const { youtubeApiKey, lastFmApiKey } = usePhraseAppContext();
-  const { t } = useLanguage();
-  const [recommendations, setRecommendations] = useState<Song[]>([]);
-  const [loadingRecs, setLoadingRecs] = useState(false);
-  const { playlist } = useMusicContext();
+   const { musicState, setMusicState } = useMusicContext();
+   const { 
+     query, 
+     results, 
+     songResults, 
+     selectedSong, 
+     isSearching, 
+     searchStep, 
+     songPage, 
+     videoPage 
+   } = musicState;
+   
+   const { youtubeApiKey, lastFmApiKey } = usePhraseAppContext();
+   const { t } = useLanguage();
+   const toast = useToast();
+   const [recommendations, setRecommendations] = useState<Song[]>([]);
+   const [loadingRecs, setLoadingRecs] = useState(false);
+   const { playlist } = useMusicContext();
 
   useEffect(() => {
     const fetchRecommendations = async () => {
@@ -95,22 +97,22 @@ export function VideoSearchPanel({ onVideoSelect }: VideoSearchPanelProps) {
 
     updateState({ isSearching: true, searchStep: 'song', selectedSong: null, selectedVideo: null, materials: null, results: [], songResults: [], songPage: 1 });
     
-    try {
-      const songs = await searchSongs(query);
-      updateState({ songResults: songs });
-    } catch (err) {
-      const error = err as Error;
-      alert(error.message);
-    } finally {
-      updateState({ isSearching: false });
-    }
+     try {
+       const songs = await searchSongs(query);
+       updateState({ songResults: songs });
+     } catch (err) {
+       const error = err as Error;
+       toast.error(error.message);
+     } finally {
+       updateState({ isSearching: false });
+     }
   };
 
-  const handleSelectSong = async (song: Song) => {
-    if (!youtubeApiKey) {
-      alert(t('music.pleaseSetYoutubeKey'));
-      return;
-    }
+   const handleSelectSong = async (song: Song) => {
+     if (!youtubeApiKey) {
+       toast.warning(t('music.pleaseSetYoutubeKey'));
+       return;
+     }
 
     updateState({ 
       selectedSong: song, 
@@ -119,17 +121,17 @@ export function VideoSearchPanel({ onVideoSelect }: VideoSearchPanelProps) {
       videoPage: 1
     });
 
-    try {
-      const searchQuery = `${song.artist} ${song.title}`;
-      const videos = await searchYouTube(searchQuery, youtubeApiKey);
-      updateState({ results: videos });
-    } catch (err) {
-      const error = err as Error;
-      alert(error.message);
-      updateState({ searchStep: 'song', selectedSong: null });
-    } finally {
-      updateState({ isSearching: false });
-    }
+     try {
+       const searchQuery = `${song.artist} ${song.title}`;
+       const videos = await searchYouTube(searchQuery, youtubeApiKey);
+       updateState({ results: videos });
+     } catch (err) {
+       const error = err as Error;
+       toast.error(error.message);
+       updateState({ searchStep: 'song', selectedSong: null });
+     } finally {
+       updateState({ isSearching: false });
+     }
   };
 
   const totalPages = Math.ceil(songResults.length / SONGS_PER_PAGE);
