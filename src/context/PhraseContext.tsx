@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
-import type { LearningStatus, PhraseItem, ViewMode, QuizItem } from '../types';
+import type { LearningStatus, ViewMode, QuizItem } from '../types';
+import type { PhraseEntity } from '../types/schema';
 import { SAMPLE_DATA } from '../constants';
 import useCloudStorage from '../hooks/useCloudStorage';
 import useLocalStorage from '../hooks/useLocalStorage';
@@ -7,13 +8,13 @@ import { parseCSV, generateId, detectLanguageFromTags } from '../lib/utils';
 import { PHRASE_DICTIONARY, type LanguageCode } from '../data/phraseDictionary';
 import { PhraseContext } from './PhraseContextDefinition';
 
-const uniquePhrases = (items: PhraseItem[]) => items.filter((item, index, self) => index === self.findIndex(t => t.id === item.id));
+const uniquePhrases = (items: PhraseEntity[]) => items.filter((item, index, self) => index === self.findIndex(t => t.id === item.id));
 
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
 export const PhraseAppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // Use Cloud Storage for Syncable Data
-  const [phraseList, setPhraseList, isPhraseListReady] = useCloudStorage<PhraseItem[]>(
+  const [phraseList, setPhraseList, isPhraseListReady] = useCloudStorage<PhraseEntity[]>(
     'phraseList', 
     SAMPLE_DATA, 
     uniquePhrases
@@ -59,7 +60,7 @@ export const PhraseAppProvider: React.FC<{ children: ReactNode }> = ({ children 
     }
   }, [oldSavedUrl, savedUrls.length, setOldSavedUrl, setSavedUrls]);
 
-  const fetchFromUrl = async (url: string): Promise<PhraseItem[]> => {
+  const fetchFromUrl = async (url: string): Promise<PhraseEntity[]> => {
       try {
           const fetchUrl = new URL(url);
           fetchUrl.searchParams.append('_t', String(Date.now())); // Cache busting
@@ -73,7 +74,7 @@ export const PhraseAppProvider: React.FC<{ children: ReactNode }> = ({ children 
           const rows = parseCSV(cleanText);
           const startIdx = rows.length > 0 && rows[0].some(cell => cell.toLowerCase().includes('meaning')) ? 1 : 0;
           
-          const items: PhraseItem[] = [];
+          const items: PhraseEntity[] = [];
           for (let i = startIdx; i < rows.length; i++) {
               const row = rows[i];
               if (row.length < 2) continue;
@@ -93,10 +94,10 @@ export const PhraseAppProvider: React.FC<{ children: ReactNode }> = ({ children 
       }
   };
 
-  const mergePhraseList = useCallback((newItems: PhraseItem[]) => {
+  const mergePhraseList = useCallback((newItems: PhraseEntity[]) => {
       if (newItems.length === 0) return;
       
-      setPhraseList((prev: PhraseItem[]) => {
+      setPhraseList((prev: PhraseEntity[]) => {
           const itemMap = new Map(prev.map(item => [item.id, item]));
           let updatedCount = 0;
           let addedCount = 0;
@@ -142,7 +143,7 @@ export const PhraseAppProvider: React.FC<{ children: ReactNode }> = ({ children 
       return;
     }
 
-    const newItems: PhraseItem[] = PHRASE_DICTIONARY.map(entry => {
+    const newItems: PhraseEntity[] = PHRASE_DICTIONARY.map(entry => {
       const source = entry.translations[sourceLang] || entry.translations['en'];
       const target = entry.translations[targetLang];
       

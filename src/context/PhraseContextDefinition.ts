@@ -1,10 +1,11 @@
 import { createContext, type Dispatch, type SetStateAction } from 'react';
-import type { LearningStatus, PhraseItem, ViewMode, QuizItem } from '../types';
+import type { LearningStatus, ViewMode, QuizItem } from '../types';
+import type { PhraseEntity } from '../types/schema';
 import type { LanguageCode } from '../data/phraseDictionary';
 
 export interface PhraseAppContextType {
-  phraseList: PhraseItem[];
-  setPhraseList: Dispatch<SetStateAction<PhraseItem[]>>;
+  phraseList: PhraseEntity[];
+  setPhraseList: Dispatch<SetStateAction<PhraseEntity[]>>;
   status: LearningStatus;
   setStatus: Dispatch<SetStateAction<LearningStatus>>;
   voiceURI: string | null;
