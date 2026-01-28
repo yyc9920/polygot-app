@@ -4,47 +4,54 @@
 
 ## 🌳 Roadmap Tree
 
-### 🛠 Phase 1: Critical Data Integrity & Migration (The Foundation)
+### ✅ Phase 1: Critical Data Integrity & Migration (The Foundation) — COMPLETE
 
 *Objective: Stabilize the data layer to support synchronization and complex relationships without data loss.*
 
 **Prerequisites:** None (this is the foundation)
 
-* [ ] **Data Schema Definition & Validation**
-    * [ ] Define strict TypeScript interfaces for `PhraseEntity` (v2) vs `Phrase` (Legacy).
-    * [ ] Create Zod schemas for runtime validation of import/export data.
-    * [ ] **Add `schemaVersion` key** in IndexedDB to track migration state (start at `1`, target `2`).
-* [ ] **Legacy Data Migration Engine**
-    * [ ] **Step 0: Backup Before Migration**
-        * [ ] Before any migration, copy existing data to `phraseList_backup_v1` key in IndexedDB.
-        * [ ] Only delete backup after successful migration completion.
-        * [ ] Implement rollback function to restore from backup if migration fails midway.
-    * [ ] **Step 1: Idempotent ID Migration**
-        * [ ] Create a utility to convert content-based IDs (e.g., "hello world") to UUIDs.
-        * [ ] **Crucial:** Generate a `MigrationMap` (Old ID -> New UUID) to preserve playlist relationships.
-    * [ ] **Step 2: Metadata Injection** *(Must complete before Step 3 and Sync Logic)*
-        * [ ] Script to iterate all existing phrases and inject `createdAt` (default: now), `updatedAt` (default: now), and `isDeleted: false`.
-    * [ ] **Step 3: Playlist Reconciliation**
-        * [ ] Update `favorites` and custom playlists using the `MigrationMap` to ensure users don't lose their curated lists.
-        * [ ] Update `LearningStatus.completedIds` and `incorrectIds` arrays with new UUIDs.
-    * [ ] **Step 4: Persistence Upgrade**
-        * [ ] Write a "One-Time-Run" component that executes on app mount, detects `schemaVersion < 2`, runs migration, saves to `v2`, and updates `schemaVersion` to `2`.
-* [ ] **Tombstone Policy**
-    * [ ] Define `isDeleted` tombstone behavior:
-        * [ ] Tombstones sync to cloud (required for cross-device deletion propagation).
-        * [ ] Implement garbage collection: purge tombstones older than 30 days on app startup.
-        * [ ] Document tombstone TTL in code comments.
-* [ ] **Sync Logic Hardening**
-    * [ ] Implement `lastWriteWins` strategy using the new `updatedAt` timestamps.
-    * [ ] Replace full JSON equality checks with timestamp comparison to reduce computation.
-    * [ ] **Retry Queue Implementation** (per AGENTS.md guidelines):
-        * [ ] Store failed sync operations in IndexedDB under `sync-retry-queue` key.
-        * [ ] Trigger retry on `window.ononline` event and app initialization.
-        * [ ] Implement exponential backoff for server errors (1s, 2s, 4s).
-* [ ] **Migration Testing**
-    * [ ] Write comprehensive migration tests with fixture data (v1 schema samples).
-    * [ ] Test rollback scenario (migration failure recovery).
-    * [ ] Test edge cases: empty data, corrupted data, partial migration state.
+**Implementation Summary:**
+- `src/types/schema.ts` - Zod schemas for PhraseEntity (v2) and LegacyPhrase (v1)
+- `src/lib/migration.ts` - Migration engine with backup/rollback support
+- `src/lib/sync.ts` - Sync utilities (lastWriteWins, tombstone GC, retry queue)
+- `src/context/MigrationContext.tsx` - One-time-run migration on app mount
+- `src/hooks/useSyncRetry.ts` - Retry queue processing hook
+
+* [x] **Data Schema Definition & Validation**
+    * [x] Define strict TypeScript interfaces for `PhraseEntity` (v2) vs `Phrase` (Legacy).
+    * [x] Create Zod schemas for runtime validation of import/export data.
+    * [x] **Add `schemaVersion` key** in IndexedDB to track migration state (start at `1`, target `2`).
+* [x] **Legacy Data Migration Engine**
+    * [x] **Step 0: Backup Before Migration**
+        * [x] Before any migration, copy existing data to `phraseList_backup_v1` key in IndexedDB.
+        * [x] Only delete backup after successful migration completion.
+        * [x] Implement rollback function to restore from backup if migration fails midway.
+    * [x] **Step 1: Idempotent ID Migration**
+        * [x] Create a utility to convert content-based IDs (e.g., "hello world") to UUIDs.
+        * [x] **Crucial:** Generate a `MigrationMap` (Old ID -> New UUID) to preserve playlist relationships.
+    * [x] **Step 2: Metadata Injection** *(Must complete before Step 3 and Sync Logic)*
+        * [x] Script to iterate all existing phrases and inject `createdAt` (default: now), `updatedAt` (default: now), and `isDeleted: false`.
+    * [x] **Step 3: Playlist Reconciliation**
+        * [x] Update `favorites` and custom playlists using the `MigrationMap` to ensure users don't lose their curated lists.
+        * [x] Update `LearningStatus.completedIds` and `incorrectIds` arrays with new UUIDs.
+    * [x] **Step 4: Persistence Upgrade**
+        * [x] Write a "One-Time-Run" component that executes on app mount, detects `schemaVersion < 2`, runs migration, saves to `v2`, and updates `schemaVersion` to `2`.
+* [x] **Tombstone Policy**
+    * [x] Define `isDeleted` tombstone behavior:
+        * [x] Tombstones sync to cloud (required for cross-device deletion propagation).
+        * [x] Implement garbage collection: purge tombstones older than 30 days on app startup.
+        * [x] TTL constant defined in `src/lib/sync.ts` (TOMBSTONE_TTL_DAYS = 30).
+* [x] **Sync Logic Hardening**
+    * [x] Implement `lastWriteWins` strategy using the new `updatedAt` timestamps.
+    * [x] Replace full JSON equality checks with timestamp comparison to reduce computation.
+    * [x] **Retry Queue Implementation** (per AGENTS.md guidelines):
+        * [x] Store failed sync operations in IndexedDB under `sync-retry-queue` key.
+        * [x] Trigger retry on `window.ononline` event and app initialization.
+        * [x] Implement exponential backoff for server errors (1s, 2s, 4s).
+* [x] **Migration Testing**
+    * [x] Write comprehensive migration tests with fixture data (v1 schema samples).
+    * [x] Test rollback scenario (migration failure recovery).
+    * [x] Test edge cases: empty data, corrupted data, partial migration state.
 
 ### 🧹 Phase 2: Architecture & Service Extraction
 
