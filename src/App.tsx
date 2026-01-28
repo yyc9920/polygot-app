@@ -15,6 +15,7 @@ import useTheme from './hooks/useTheme';
 import { PhraseAppProvider, usePhraseAppContext } from './context/PhraseContext';
 import { AuthProvider } from './context/AuthContext';
 import { MusicProvider } from './context/MusicContext';
+import { MigrationProvider } from './context/MigrationContext';
 import useLanguage from './hooks/useLanguage';
 import { LoadingSpinner } from './components/LoadingSpinner';
 
@@ -109,12 +110,14 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <PhraseAppProvider>
-        <MusicProvider>
-          <AppContent />
-        </MusicProvider>
-      </PhraseAppProvider>
-    </AuthProvider>
+    <MigrationProvider>
+      <AuthProvider>
+        <PhraseAppProvider>
+          <MusicProvider>
+            <AppContent />
+          </MusicProvider>
+        </PhraseAppProvider>
+      </AuthProvider>
+    </MigrationProvider>
   );
 }
