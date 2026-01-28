@@ -71,7 +71,7 @@
         * [x] Service handles: IndexedDB operations, Firebase sync, retry queue processing.
         * [x] This enables testing business logic without React rendering.
     * [x] **MigrationService:** Extract migration logic from Phase 1 into testable service.
-    * [ ] **GeminiService:** Centralize AI calls. Update prompts to accept the *new* JSON schema structure.
+    * [x] **GeminiService:** Centralize AI calls. Update prompts to accept the *new* JSON schema structure.
 * [x] **UI/UX Standardization** — COMPLETE
     * [x] **Create generic `ConfirmDialog` component** for yes/no confirmations.
         * [x] Component accepts: `title`, `message`, `onConfirm`, `onCancel`, `confirmText`, `cancelText`, `variant`.

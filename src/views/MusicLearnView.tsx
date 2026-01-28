@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import YouTube from 'react-youtube';
 import { useMusicContext } from '../context/MusicContext';
 import { usePhraseAppContext } from '../context/PhraseContext';
-import { generateSongLyrics } from '../lib/gemini';
+import { GeminiService } from '../lib/services/GeminiService';
 import { detectLanguage } from '../lib/utils';
 import type { YouTubeVideo } from '../lib/youtube';
 import type { SongMaterials, PlaylistItem } from '../types';
@@ -98,7 +98,7 @@ export function MusicLearnView() {
         const targetLanguageName = LANGUAGE_NAMES[targetLang as keyof typeof LANGUAGE_NAMES] || targetLang;
         const userLocaleName = LANGUAGE_NAMES[language as keyof typeof LANGUAGE_NAMES] || language;
 
-        const data = await generateSongLyrics(video.artist, video.title, apiKey, targetLanguageName, userLocaleName);
+        const data = await GeminiService.generateSongLyrics(video.artist, video.title, apiKey, targetLanguageName, userLocaleName);
         
         // Cache using the target language to ensure correct retrieval later
         const effectiveCacheKey = `song_lyrics_${video.videoId}_${targetLang}`;

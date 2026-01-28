@@ -4,7 +4,7 @@ import YouTube from 'react-youtube';
 import { Music as MusicIcon, ArrowLeft } from 'lucide-react';
 import { BottomSheet } from '../../components/BottomSheet';
 import { LyricsView } from '../../components/music/LyricsView';
-import { generateSongLyrics } from '../../lib/gemini';
+import { GeminiService } from '../../lib/services/GeminiService';
 import { initialMusicState, type MusicViewState } from '../../context/MusicContextDefinition';
 import { useMusicContext } from '../../context/MusicContext';
 import type { PlaylistItem, SongMaterials } from '../../types';
@@ -62,7 +62,7 @@ export const HomeSongView = React.memo(function HomeSongView({
             const targetLanguageName = LANGUAGE_NAMES[targetLang as keyof typeof LANGUAGE_NAMES] || targetLang;
             const userLocaleName = LANGUAGE_NAMES[language as keyof typeof LANGUAGE_NAMES] || language;
             
-            const data = await generateSongLyrics(video.artist, video.title, apiKey, targetLanguageName, userLocaleName);
+            const data = await GeminiService.generateSongLyrics(video.artist, video.title, apiKey, targetLanguageName, userLocaleName);
             
             setSongLyrics(prev => ({ ...prev, [cacheKey]: data }));
             setLocalMusicState(prev => ({ ...prev, materials: data }));

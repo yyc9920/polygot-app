@@ -9,7 +9,7 @@ import useLanguage from '../../hooks/useLanguage';
 import { useToast } from '../../context/ToastContext';
 import type { PhraseEntity } from '../../types/schema';
 import type { SongMaterials } from '../../types';
-import { generatePhraseFromLyric } from '../../lib/gemini';
+import { GeminiService } from '../../lib/services/GeminiService';
 import { createPhraseEntity, detectLanguage, generateId } from '../../lib/utils';
 
 import type { MusicContextType } from '../../context/MusicContextDefinition';
@@ -83,7 +83,7 @@ export function LyricsView({ onMaterialsUpdate, contextOverrides }: LyricsViewPr
     setGeneratingIdx(index);
     try {
        const targetLanguageName = LANGUAGE_NAMES[language];
-       const phraseData = await generatePhraseFromLyric(line, translated, selectedVideo.artist, selectedVideo.title, apiKey, targetLanguageName);
+       const phraseData = await GeminiService.generatePhraseFromLyric(line, translated, selectedVideo.artist, selectedVideo.title, apiKey, targetLanguageName);
        
        if (phraseData && phraseData.meaning && phraseData.sentence) {
            const newPhrase = {

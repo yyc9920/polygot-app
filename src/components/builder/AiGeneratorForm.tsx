@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, Loader2 } from 'lucide-react';
-import { SchemaType, type Schema } from '@google/generative-ai';
 import { FunButton } from '../FunButton';
-import { callGemini } from '../../lib/gemini';
+import { GeminiService } from '../../lib/services/GeminiService';
 import { createPhraseEntity } from '../../lib/utils';
 import { usePhraseAppContext } from '../../context/PhraseContext';
 import type { PhraseEntity } from '../../types/schema';
@@ -30,45 +29,7 @@ export function AiGeneratorForm({ onGenerate }: AiGeneratorFormProps) {
     if (!aiPrompt) return;
     setIsGenerating(true);
     try {
-      const prompt = `Act like a function that generates a phrase list with a given situation or context.
-Input: Situation or context: '${aiPrompt}', Number of output data: ${aiCount}.
-Output: List of phrases.
-Contents:
-Meaning: Native language translation (e.g. Korean)
-Sentence: Target language sentence (e.g. Japanese)
-Pronunciation: Pronunciation guide (e.g. Romaji)
-Tags: Tags in Native language (e.g. "일상,비즈니스"). If context implies a specific language, add that as a tag (e.g. "일본어").
-    - Suggested Tag List(in Native Language):
-      1. 일상
-      2. 여행
-      3. 식사
-      4. 비즈니스
-      5. IT
-      6. 사회
-      7. 스포츠
-      8. 학습
-      9. 감정
-`;
-
-      const schema: Schema = {
-        type: SchemaType.ARRAY,
-        items: {
-            type: SchemaType.OBJECT,
-            properties: {
-                meaning: { type: SchemaType.STRING },
-                sentence: { type: SchemaType.STRING },
-                pronunciation: { type: SchemaType.STRING },
-                tags: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } }
-            },
-            required: ["meaning", "sentence"]
-        }
-      };
-
-      const resultText = await callGemini(prompt, apiKey, {
-          responseMimeType: "application/json",
-          responseSchema: schema
-      });
-      const rows = JSON.parse(resultText);
+      const rows = await GeminiService.generatePhrases(aiPrompt, aiCount, apiKey);
       
       const newItems: PhraseEntity[] = [];
       for (const row of rows) {

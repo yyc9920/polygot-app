@@ -3,7 +3,7 @@ import { usePhraseAppContext } from '../context/PhraseContext';
 import useLocalStorage from '../hooks/useLocalStorage';
 import useLanguage from '../hooks/useLanguage';
 import { useTTS } from '../hooks/useTTS';
-import { callGemini } from '../lib/gemini';
+import { GeminiService } from '../lib/services/GeminiService';
 import type { PhraseEntity } from '../types/schema';
 import { useToast } from '../context/ToastContext';
 
@@ -142,29 +142,14 @@ export function LearnView() {
       const pronStr = (item.pronunciation && !isEnglish) ? `Pronunciation: ${item.pronunciation}` : '';
       const targetLangName = LANGUAGE_NAMES[language] || 'English';
       
-      const prompt = `
-      Analyze this sentence as a friendly language tutor.
-      
-      Sentence: "${item.sentence}"
-      Meaning: "${item.meaning}"
-      ${pronStr}
-      ${tagsStr}
-
-      Please provide a structured explanation in ${targetLangName} using **Markdown** format:
-      - Use **bold** for key terms.
-      - Use lists for multiple points.
-      - Structure:
-        ### 🧩 Grammar
-        Brief breakdown...
-        ### 💡 Nuance
-        Contextual usage...
-        ### 📖 Phrase
-        Key words...
-
-      Keep the total response concise.
-      Do not contain greetings or any small talks. Just straight through the point.
-      `;
-      const text = await callGemini(prompt, apiKey);
+      const text = await GeminiService.explainPhrase(
+        item.sentence,
+        item.meaning,
+        pronStr,
+        tagsStr,
+        targetLangName,
+        apiKey
+      );
       setAiExplanation(text);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';
