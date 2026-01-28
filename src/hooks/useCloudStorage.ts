@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { getFirestore, doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { app } from '../lib/firebase';
 import { get, set } from 'idb-keyval';
+import { addToRetryQueue } from '../lib/sync';
 
 const db = getFirestore(app);
 
@@ -125,6 +126,10 @@ function useCloudStorage<T>(
                 lastCloudStr.current = currentStr;
             } catch (err) {
                 console.error("Error saving to cloud:", err);
+                const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+                addToRetryQueue(key, storedValue, errorMsg).catch(e => 
+                  console.error('Failed to add to retry queue:', e)
+                );
             }
         };
         
