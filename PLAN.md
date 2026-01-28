@@ -1,0 +1,148 @@
+# Polyglot Development Plan
+
+**Focus:** Data Integrity, Schema Migration, & Scalability
+
+## 🌳 Roadmap Tree
+
+### 🛠 Phase 1: Critical Data Integrity & Migration (The Foundation)
+
+*Objective: Stabilize the data layer to support synchronization and complex relationships without data loss.*
+
+**Prerequisites:** None (this is the foundation)
+
+* [ ] **Data Schema Definition & Validation**
+    * [ ] Define strict TypeScript interfaces for `PhraseEntity` (v2) vs `Phrase` (Legacy).
+    * [ ] Create Zod schemas for runtime validation of import/export data.
+    * [ ] **Add `schemaVersion` key** in IndexedDB to track migration state (start at `1`, target `2`).
+* [ ] **Legacy Data Migration Engine**
+    * [ ] **Step 0: Backup Before Migration**
+        * [ ] Before any migration, copy existing data to `phraseList_backup_v1` key in IndexedDB.
+        * [ ] Only delete backup after successful migration completion.
+        * [ ] Implement rollback function to restore from backup if migration fails midway.
+    * [ ] **Step 1: Idempotent ID Migration**
+        * [ ] Create a utility to convert content-based IDs (e.g., "hello world") to UUIDs.
+        * [ ] **Crucial:** Generate a `MigrationMap` (Old ID -> New UUID) to preserve playlist relationships.
+    * [ ] **Step 2: Metadata Injection** *(Must complete before Step 3 and Sync Logic)*
+        * [ ] Script to iterate all existing phrases and inject `createdAt` (default: now), `updatedAt` (default: now), and `isDeleted: false`.
+    * [ ] **Step 3: Playlist Reconciliation**
+        * [ ] Update `favorites` and custom playlists using the `MigrationMap` to ensure users don't lose their curated lists.
+        * [ ] Update `LearningStatus.completedIds` and `incorrectIds` arrays with new UUIDs.
+    * [ ] **Step 4: Persistence Upgrade**
+        * [ ] Write a "One-Time-Run" component that executes on app mount, detects `schemaVersion < 2`, runs migration, saves to `v2`, and updates `schemaVersion` to `2`.
+* [ ] **Tombstone Policy**
+    * [ ] Define `isDeleted` tombstone behavior:
+        * [ ] Tombstones sync to cloud (required for cross-device deletion propagation).
+        * [ ] Implement garbage collection: purge tombstones older than 30 days on app startup.
+        * [ ] Document tombstone TTL in code comments.
+* [ ] **Sync Logic Hardening**
+    * [ ] Implement `lastWriteWins` strategy using the new `updatedAt` timestamps.
+    * [ ] Replace full JSON equality checks with timestamp comparison to reduce computation.
+    * [ ] **Retry Queue Implementation** (per AGENTS.md guidelines):
+        * [ ] Store failed sync operations in IndexedDB under `sync-retry-queue` key.
+        * [ ] Trigger retry on `window.ononline` event and app initialization.
+        * [ ] Implement exponential backoff for server errors (1s, 2s, 4s).
+* [ ] **Migration Testing**
+    * [ ] Write comprehensive migration tests with fixture data (v1 schema samples).
+    * [ ] Test rollback scenario (migration failure recovery).
+    * [ ] Test edge cases: empty data, corrupted data, partial migration state.
+
+### 🧹 Phase 2: Architecture & Service Extraction
+
+*Objective: Decouple business logic from UI components to enable TDD and cleaner Native integration.*
+
+**Prerequisites:** Phase 1 complete (schema v2 deployed, sync logic hardened)
+
+* [ ] **Service Layer Implementation**
+    * [ ] **StorageService:** Refactor `useCloudStorage` hook into a standalone service class.
+        * [ ] Keep the hook as a thin React wrapper around the service.
+        * [ ] Service handles: IndexedDB operations, Firebase sync, retry queue processing.
+        * [ ] This enables testing business logic without React rendering.
+    * [ ] **MigrationService:** Extract migration logic from Phase 1 into testable service.
+    * [ ] **GeminiService:** Centralize AI calls. Update prompts to accept the *new* JSON schema structure.
+* [ ] **UI/UX Standardization**
+    * [ ] **Create generic `ConfirmDialog` component** for yes/no confirmations.
+        * [ ] Note: Existing `ConfirmationModal` is specific to AI phrase confirmation, not reusable.
+        * [ ] New component should accept: `title`, `message`, `onConfirm`, `onCancel`, `confirmText`, `cancelText`.
+    * [ ] **Migrate all `confirm()` calls** (17 occurrences across 8 files):
+        * [ ] `PhraseContext.tsx` (2): handleReset, handleDeleteAllData
+        * [ ] `CsvEditorModal.tsx` (2): empty content, no valid items
+        * [ ] `StarterPackageSelection.tsx` (1): purchase confirm
+        * [ ] `BuilderView.tsx` (1): delete by tags
+        * [ ] `QuizView.tsx` (1): quiz start confirm
+        * [ ] `PlaylistPanel.tsx` (1): remove from playlist
+        * [ ] `ContentSourcesSection.tsx` (1): remove URL
+        * [ ] `DataManagementSection.tsx` (1): overwrite confirm
+    * [ ] **Implement `ToastContext`** for non-blocking notifications.
+    * [ ] **Migrate all `alert()` calls** (34 occurrences across 16 files) to Toast notifications.
+    * [ ] **Add Error Reporting** for sync failures (currently swallowed with `console.error`).
+
+### 🧠 Phase 3: Pedagogical Engineering (SRS & AI)
+
+*Objective: Transform the app from a "dictionary" to a "learning engine."*
+
+**Prerequisites:** Phase 1 & 2 complete (stable schema, service layer for testability)
+
+* [ ] **SRS Data Integration**
+    * [ ] Extend `PhraseEntity` with FSRS fields: `stability`, `difficulty`, `elapsed_days`, `scheduled_days`, `reps`.
+    * [ ] **Schema Migration v2 → v3:** Add FSRS fields with defaults.
+        * [ ] Reuse migration infrastructure from Phase 1.
+        * [ ] Initialize existing words with "New Card" default states.
+        * [ ] Consider: Map "Favorite" status to higher initial stability.
+    * [ ] **Sync Strategy for FSRS:** These fields update frequently—consider:
+        * [ ] Separate sync cadence for SRS data vs content data.
+        * [ ] Conflict resolution: SRS fields use `max(local, cloud)` for `reps`, `lastWriteWins` for others.
+* [ ] **Context-Aware AI Agents**
+    * [ ] **Design vocabulary summary system** (don't send raw DB to Gemini):
+        * [ ] Extract: known word count by category, grammar patterns used, proficiency estimate.
+        * [ ] Send compressed summary (~500 tokens) instead of full phrase list.
+    * [ ] Refine Gemini prompts to use Chain-of-Thought:
+        1. Analyze user's vocabulary summary.
+        2. Identify grammatical gaps.
+        3. Generate sentences using *only* known words + 1 new target grammatical structure.
+* [ ] **Audio/Visual Pipeline**
+    * [ ] Cache TTS results locally **indexed by content hash** (not UUID).
+        * [ ] Key format: `tts_${hashContent(sentence)}_${voiceId}`
+        * [ ] Rationale: If user edits phrase text, old cache should be orphaned, not reused.
+        * [ ] Implement cache eviction for entries not accessed in 30 days.
+
+### 📱 Phase 4: Mobile Scaling & Growth
+
+*Objective: Native deployment and monetization.*
+
+**Prerequisites:** Phase 1-3 complete (stable data layer, clean architecture, learning features)
+
+* [ ] **Capacitor Transition**
+    * [ ] Initialize Capacitor project (`npx cap init`).
+    * [ ] Configure strict Content Security Policy (CSP) for mobile compliance.
+    * [ ] **Storage Migration Path:**
+        * [ ] Note: `useCloudStorage` already migrates `localStorage` → IndexedDB (lines 30-45).
+        * [ ] Verify IndexedDB works in Capacitor WebView (it should).
+        * [ ] If issues arise, migrate IndexedDB → Capacitor Preferences as fallback.
+        * [ ] Test migration sequence: localStorage → IDB → (optional) Capacitor Preferences.
+* [ ] **Monetization & Compliance**
+    * [ ] **Implement `EntitlementService`** - centralized feature gate:
+        * [ ] Single source of truth for premium status.
+        * [ ] All feature gates query this service (no scattered checks).
+        * [ ] Methods: `canUseAiTutor()`, `canUseCloudSync()`, `canUseSrsAnalytics()`.
+    * [ ] Implement "Freemium" logic:
+        * Free: unlimited local cards.
+        * Paid: AI Tutor, Cloud Sync, Advanced SRS analytics.
+    * [ ] Integrate RevenueCat or similar for cross-platform subscription management (targeting 15% Small Business fee).
+
+---
+
+## 📋 Cross-Cutting Concerns
+
+*These apply across all phases and should be tracked separately.*
+
+* [ ] **Cloud Schema Versioning**
+    * [ ] Define how multiple app versions interact with cloud data.
+    * [ ] Older app reads newer schema → graceful degradation (ignore unknown fields).
+    * [ ] Newer app reads older schema → auto-upgrade on next write.
+* [ ] **Performance Baselines**
+    * [ ] Establish metrics before Phase 1: app startup time, sync latency, phrase list render time.
+    * [ ] Re-measure after each phase to catch regressions.
+
+---
+
+**Instruction:** Await my command to begin **Phase 1**. We will start by creating the `PhraseEntity` definition and the `MigrationService`.
