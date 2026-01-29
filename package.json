@@ -11,9 +11,17 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:migration": "tsx scripts/test-migration-node.ts"
+    "test:migration": "tsx scripts/test-migration-node.ts",
+    "cap:sync": "npx cap sync",
+    "cap:android": "npx cap open android",
+    "cap:ios": "npx cap open ios",
+    "cap:build": "pnpm build && pnpm cap:sync"
   },
   "dependencies": {
+    "@capacitor/android": "^8.0.2",
+    "@capacitor/core": "^8.0.2",
+    "@capacitor/ios": "^8.0.2",
+    "@capacitor/preferences": "^8.0.0",
     "@google/generative-ai": "^0.24.1",
     "@react-spring/web": "^10.0.3",
     "@tailwindcss/typography": "^0.5.19",
@@ -35,6 +43,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.0.2",
     "@eslint/js": "^9.39.1",
     "@playwright/test": "^1.57.0",
     "@testing-library/dom": "^10.4.1",

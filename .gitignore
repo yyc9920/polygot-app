@@ -30,3 +30,7 @@ dist-ssr
 playwright-report/
 test-results/
 blob-report/
+
+# Capacitor native projects (regeneratable via cap sync)
+android/
+ios/
