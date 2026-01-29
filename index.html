@@ -2,9 +2,31 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self' capacitor: ionic: https://localhost;
+      script-src 'self' 'wasm-unsafe-eval';
+      style-src 'self' 'unsafe-inline';
+      img-src 'self' data: blob: https://*.googleapis.com https://*.googleusercontent.com https://i.ytimg.com;
+      font-src 'self' data:;
+      connect-src 'self' 
+        https://*.googleapis.com 
+        https://*.firebaseio.com 
+        https://*.firebase.google.com 
+        https://firestore.googleapis.com 
+        https://generativelanguage.googleapis.com 
+        https://identitytoolkit.googleapis.com 
+        https://securetoken.googleapis.com 
+        wss://*.firebaseio.com 
+        https://www.youtube.com 
+        https://youtube.com;
+      media-src 'self' blob: https://*.googlevideo.com;
+      frame-src 'self' https://www.youtube.com https://youtube.com;
+    ">
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>polyglot-app</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <title>Polyglot</title>
   </head>
   <body>
     <div id="root"></div>
