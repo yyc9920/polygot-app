@@ -40,8 +40,14 @@ export function ContentSourcesSection() {
 
   const handleSyncUrl = async (url: string) => {
     setIsSyncing(url);
-    await syncUrl(url);
+    const result = await syncUrl(url);
     setIsSyncing(null);
+    
+    if (result.success) {
+      toast.success(t('settings.syncSuccess').replace('{{count}}', String(result.count)));
+    } else {
+      toast.warning(t('settings.syncNoItems'));
+    }
   };
 
   return (

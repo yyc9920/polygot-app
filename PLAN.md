@@ -65,7 +65,7 @@
 - `src/components/Toast.tsx` - Non-blocking toast notifications
 - `src/context/ToastContext.tsx` - useToast() hook with success/error/warning/info methods
 
-* [ ] **Service Layer Implementation**
+* [x] **Service Layer Implementation**
     * [x] **StorageService:** Refactor `useCloudStorage` hook into a standalone service class.
         * [x] Keep the hook as a thin React wrapper around the service.
         * [x] Service handles: IndexedDB operations, Firebase sync, retry queue processing.
@@ -91,8 +91,8 @@
         * [x] Stacked display (max 3 visible)
     * [x] **Migrate all `alert()` calls** (41 occurrences across 17 files) to Toast notifications.
         * [x] All component files migrated
-        * [ ] PhraseContext.tsx has 4 remaining alerts (TODO: requires refactor to return results)
-    * [ ] **Add Error Reporting** for sync failures (currently swallowed with `console.error`).
+        * [x] PhraseContext.tsx alerts migrated (functions return results, callers show toasts)
+    * [x] **Add Error Reporting** for sync failures via SyncErrorService + useSyncErrorReporting hook.
 
 ### 🧠 Phase 3: Pedagogical Engineering (SRS & AI)
 
@@ -106,9 +106,10 @@
         * [x] Reuse migration infrastructure from Phase 1.
         * [x] Initialize existing words with "New Card" default states.
         * [x] Consider: Map "Favorite" status to higher initial stability.
-    * [ ] **Sync Strategy for FSRS:** These fields update frequently—consider:
-        * [ ] Separate sync cadence for SRS data vs content data.
-        * [ ] Conflict resolution: SRS fields use `max(local, cloud)` for `reps`, `lastWriteWins` for others.
+    * [x] **Sync Strategy for FSRS:** Implemented FSRSSyncService with:
+        * [x] Conflict resolution: `reps` and `lapses` use `max(local, cloud)`, other FSRS fields use `lastWriteWins`.
+        * [x] Integrated with PhraseContext via `mergePhrasesWithFSRS` merge strategy.
+        * [x] Throttling support via `shouldThrottleSync()` for rate limiting.
 * [x] **Context-Aware AI Agents**
     * [x] **Design vocabulary summary system** (don't send raw DB to Gemini):
         * [x] Extract: known word count by category, grammar patterns used, proficiency estimate.
@@ -117,11 +118,11 @@
         1. Analyze user's vocabulary summary.
         2. Identify grammatical gaps.
         3. Generate sentences using *only* known words + 1 new target grammatical structure.
-* [ ] **Audio/Visual Pipeline**
-    * [ ] Cache TTS results locally **indexed by content hash** (not UUID).
-        * [ ] Key format: `tts_${hashContent(sentence)}_${voiceId}`
-        * [ ] Rationale: If user edits phrase text, old cache should be orphaned, not reused.
-        * [ ] Implement cache eviction for entries not accessed in 30 days.
+* [x] **Audio/Visual Pipeline**
+    * [x] Cache TTS results locally **indexed by content hash** (not UUID).
+        * [x] Key format: `tts_${hashContent(sentence)}_${voiceId}` via TTSCacheService.
+        * [x] Rationale: If user edits phrase text, old cache should be orphaned, not reused.
+        * [x] Cache eviction for entries not accessed in 30 days via `evictStale()`.
 
 ### 📱 Phase 4: Mobile Scaling & Growth
 

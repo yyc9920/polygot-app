@@ -19,6 +19,7 @@ import { MigrationProvider } from './context/MigrationContext';
 import { DialogProvider } from './context/DialogContext';
 import { ToastProvider } from './context/ToastContext';
 import useLanguage from './hooks/useLanguage';
+import { useSyncErrorReporting } from './hooks/useSyncErrorReporting';
 import { LoadingSpinner } from './components/LoadingSpinner';
 
 const LearnView = lazy(() => import('./views/LearnView').then(module => ({ default: module.LearnView })));
@@ -32,6 +33,8 @@ function AppContent() {
   const { currentView, setCurrentView, customQuizQueue } = usePhraseAppContext();
   const { darkMode, toggleTheme } = useTheme();
   const { t } = useLanguage();
+  
+  useSyncErrorReporting();
 
   return (
     <div className={`fixed inset-0 flex flex-col transition-colors duration-300 ${darkMode ? 'dark bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'} font-sans`}>

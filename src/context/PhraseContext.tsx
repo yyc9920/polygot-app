@@ -8,17 +8,24 @@ import useLocalStorage from '../hooks/useLocalStorage';
 import { parseCSV, generateId, detectLanguageFromTags } from '../lib/utils';
 import { PHRASE_DICTIONARY, type LanguageCode } from '../data/phraseDictionary';
 import { PhraseContext } from './PhraseContextDefinition';
+import { FSRSSyncService } from '../lib/services/FSRSSyncService';
 
 const uniquePhrases = (items: PhraseEntity[]) => items.filter((item, index, self) => index === self.findIndex(t => t.id === item.id));
+
+const mergePhrasesWithFSRS = (local: PhraseEntity[], cloud: PhraseEntity[]): PhraseEntity[] => {
+  const merged = FSRSSyncService.mergePhraseLists(local, cloud);
+  return uniquePhrases(merged);
+};
 
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
 export const PhraseAppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Use Cloud Storage for Syncable Data
+  // Use Cloud Storage for Syncable Data with FSRS-aware merge strategy
   const [phraseList, setPhraseList, isPhraseListReady] = useCloudStorage<PhraseEntity[]>(
     'phraseList', 
     SAMPLE_DATA, 
-    uniquePhrases
+    uniquePhrases,
+    mergePhrasesWithFSRS
   );
   
   const [status, setStatus] = useCloudStorage<LearningStatus>('learningStatus', { completedIds: [], incorrectIds: [], points: 0, quizStats: {} });
@@ -131,20 +138,15 @@ export const PhraseAppProvider: React.FC<{ children: ReactNode }> = ({ children 
        const items = await fetchFromUrl(url);
        if (items.length > 0) {
            mergePhraseList(items);
-           // TODO: Replace with toast.success() - requires passing toast context to this function
-           alert(`Successfully synced ${items.length} items from URL.`);
-       } else {
-           // TODO: Replace with toast.warning() - requires passing toast context to this function
-           alert('No items found or failed to fetch from URL.');
+           return { success: true, count: items.length };
        }
+       return { success: false, count: 0 };
    };
 
    const addStarterPackage = (targetLang: LanguageCode, sourceLang: LanguageCode = 'en') => {
      const packageId = `starter_${targetLang}`;
      if (purchasedPackages.includes(packageId)) {
-       // TODO: Replace with toast.warning() - requires passing toast context to this function
-       alert('Package already purchased!');
-       return;
+       return { success: false, alreadyPurchased: true };
      }
 
      const newItems: PhraseEntity[] = PHRASE_DICTIONARY.map(entry => {
@@ -162,8 +164,7 @@ export const PhraseAppProvider: React.FC<{ children: ReactNode }> = ({ children 
 
      mergePhraseList(newItems);
      setPurchasedPackages(prev => [...prev, packageId]);
-     // TODO: Replace with toast.success() - requires passing toast context to this function
-     alert(`Successfully added Starter Package for ${targetLang}!`);
+     return { success: true };
    };
 
   // Auto-fetch data from savedUrls on mount/change

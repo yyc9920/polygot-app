@@ -60,6 +60,8 @@
     "urlExists": "URL already exists.",
     "removeUrl": "Remove this URL?",
     "syncNow": "Sync now",
+    "syncSuccess": "Successfully synced {{count}} items from URL.",
+    "syncNoItems": "No items found or failed to fetch from URL.",
     "aiConfiguration": "AI Configuration",
     "apiKeySetupGuide": "API Key Setup Guide",
     "googleGeminiApiKey": "Google Gemini API Key",
@@ -311,13 +313,23 @@
     "title": "Starter Packages (100 Phrases)",
     "description": "Jumpstart your learning with 100 essential phrases including Greetings, Travel, Dining, and more.",
     "purchaseConfirm": "Purchase Starter Package for {{lang}}? (Mock Payment)",
-    "purchased": "Purchased"
+    "purchased": "Purchased",
+    "addedSuccess": "Successfully added Starter Package for {{lang}}!",
+    "alreadyPurchased": "Package already purchased!"
   },
   "login": {
     "title": "Sign In",
     "description": "Sign in to save your progress and access your phrases from any device.",
     "googleSignIn": "Sign in with Google",
     "failed": "Failed to sign in"
+  },
+  "sync": {
+    "cloudSaveError": "Failed to save to cloud. Changes saved locally.",
+    "cloudLoadError": "Failed to load from cloud. Using local data.",
+    "localSaveError": "Failed to save data locally.",
+    "localLoadError": "Failed to load local data.",
+    "migrationError": "Data migration failed. Please restart the app.",
+    "unknownError": "An unexpected sync error occurred."
   },
   "error": {
     "generic": "Something went wrong. Please try again."

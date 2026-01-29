@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, type Dispatch, type SetStateAction } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { StorageService } from '../lib/services/StorageService';
+import { SyncErrorService } from '../lib/services/SyncErrorService';
 
 function useCloudStorage<T>(
   key: string,
@@ -29,6 +30,7 @@ function useCloudStorage<T>(
             }
         } catch (error) {
             console.error(error);
+            SyncErrorService.emit('local_load', key, error);
         } finally {
             if (mounted) {
                 setIsInitialized(true);
@@ -79,7 +81,10 @@ function useCloudStorage<T>(
 
     // Save to IDB
     StorageService.writeLocal(key, storedValue)
-        .catch(err => console.error('Error saving to IDB:', err));
+        .catch(err => {
+            console.error('Error saving to IDB:', err);
+            SyncErrorService.emit('local_save', key, err);
+        });
       
     // If logged in, save to Firestore
     if (user) {
@@ -94,6 +99,7 @@ function useCloudStorage<T>(
                 lastCloudStr.current = currentStr;
             } catch (err) {
                 console.error("Error saving to cloud:", err);
+                SyncErrorService.emit('cloud_save', key, err);
             }
         };
         

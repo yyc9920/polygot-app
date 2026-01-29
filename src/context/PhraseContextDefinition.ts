@@ -3,6 +3,16 @@ import type { LearningStatus, ViewMode, QuizItem } from '../types';
 import type { PhraseEntity } from '../types/schema';
 import type { LanguageCode } from '../data/phraseDictionary';
 
+export interface SyncUrlResult {
+  success: boolean;
+  count: number;
+}
+
+export interface AddPackageResult {
+  success: boolean;
+  alreadyPurchased?: boolean;
+}
+
 export interface PhraseAppContextType {
   phraseList: PhraseEntity[];
   setPhraseList: Dispatch<SetStateAction<PhraseEntity[]>>;
@@ -21,10 +31,10 @@ export interface PhraseAppContextType {
   reviewMode: boolean;
   setReviewMode: Dispatch<SetStateAction<boolean>>;
   purchasedPackages: string[];
-  addStarterPackage: (targetLang: LanguageCode, sourceLang?: LanguageCode) => void;
+  addStarterPackage: (targetLang: LanguageCode, sourceLang?: LanguageCode) => AddPackageResult;
   handleReset: () => void;
   handleDeleteAllData: () => void;
-  syncUrl: (url: string) => Promise<void>;
+  syncUrl: (url: string) => Promise<SyncUrlResult>;
   totalCount: number;
   customQuizQueue: QuizItem[];
   setCustomQuizQueue: Dispatch<SetStateAction<QuizItem[]>>;

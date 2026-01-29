@@ -2,26 +2,27 @@ import { Package, Check, ShoppingCart, Globe } from 'lucide-react';
 import { usePhraseAppContext } from '../context/PhraseContext';
 import useLanguage, { LANGUAGE_NAMES, type Language } from '../hooks/useLanguage';
 import { useDialog } from '../context/DialogContext';
+import { useToast } from '../context/ToastContext';
 import { type LanguageCode } from '../data/phraseDictionary';
 
 export function StarterPackageSelection() {
-  const { purchasedPackages,addStarterPackage } = usePhraseAppContext();
+  const { purchasedPackages, addStarterPackage } = usePhraseAppContext();
   const { t } = useLanguage();
   const { confirm } = useDialog();
-  
-  // TODO: Get current source language from somewhere if needed, currently hardcoded to 'en' or we can add a selector later.
-  // For now, let's assume the user wants to learn a new language FROM English, or we can use the app's current language.
-  // But wait, useLanguage hook provides the app's interface language.
-  // Ideally, 'Meaning' on the card should be in the user's native language.
+  const toast = useToast();
   
   const handlePurchase = async (langCode: string) => {
-    // Mock payment flow
     const confirmed = await confirm({
       title: t('common.confirm'),
       message: t('packages.purchaseConfirm').replace('{{lang}}', LANGUAGE_NAMES[langCode as Language])
     });
     if (confirmed) {
-      addStarterPackage(langCode as LanguageCode, 'en'); // Defaulting source to English for now
+      const result = addStarterPackage(langCode as LanguageCode, 'en');
+      if (result.success) {
+        toast.success(t('packages.addedSuccess').replace('{{lang}}', LANGUAGE_NAMES[langCode as Language]));
+      } else if (result.alreadyPurchased) {
+        toast.warning(t('packages.alreadyPurchased'));
+      }
     }
   };
 
