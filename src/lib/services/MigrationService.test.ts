@@ -4,8 +4,10 @@ import {
   type LegacyPhrase,
   type MigrationMap,
   type LearningStatus,
+  type PhraseEntity,
   isLegacyPhrase,
   isV2Phrase,
+  DEFAULT_FSRS_VALUES,
 } from '../../types/schema';
 
 vi.mock('idb-keyval', () => ({
@@ -220,6 +222,122 @@ describe('MigrationService', () => {
 
       expect(result.completedIds).toEqual(['new-uuid-1']);
       expect(result.quizStats).toBeUndefined();
+    });
+  });
+
+  describe('migrateV2ToV3Phrase', () => {
+    it('adds FSRS fields with default values to v2 phrase', () => {
+      const v2Phrase: PhraseEntity = {
+        id: 'uuid-123',
+        meaning: 'Hello',
+        sentence: '안녕하세요',
+        tags: ['greeting'],
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+        isDeleted: false,
+      };
+
+      const result = MigrationService.migrateV2ToV3Phrase(v2Phrase);
+
+      expect(result.state).toBe(DEFAULT_FSRS_VALUES.state);
+      expect(result.reps).toBe(DEFAULT_FSRS_VALUES.reps);
+      expect(result.lapses).toBe(DEFAULT_FSRS_VALUES.lapses);
+      expect(result.difficulty).toBe(DEFAULT_FSRS_VALUES.difficulty);
+      expect(result.due).toBeDefined();
+      expect(result.updatedAt).not.toBe(v2Phrase.updatedAt);
+    });
+
+    it('preserves existing FSRS fields if already present', () => {
+      const v3Phrase: PhraseEntity = {
+        id: 'uuid-123',
+        meaning: 'Hello',
+        sentence: '안녕하세요',
+        tags: ['greeting'],
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+        isDeleted: false,
+        state: 'review',
+        reps: 5,
+        lapses: 1,
+        difficulty: 0.5,
+        stability: 10,
+        due: '2024-02-01T00:00:00.000Z',
+      };
+
+      const result = MigrationService.migrateV2ToV3Phrase(v3Phrase);
+
+      expect(result.state).toBe('review');
+      expect(result.reps).toBe(5);
+      expect(result.lapses).toBe(1);
+      expect(result.difficulty).toBe(0.5);
+      expect(result.stability).toBe(10);
+      expect(result.due).toBe('2024-02-01T00:00:00.000Z');
+    });
+
+    it('preserves all original phrase fields', () => {
+      const v2Phrase: PhraseEntity = {
+        id: 'uuid-123',
+        meaning: 'Hello',
+        sentence: '안녕하세요',
+        pronunciation: 'an-nyeong-ha-se-yo',
+        tags: ['greeting', 'formal'],
+        memo: 'Very polite',
+        packageId: 'pkg-1',
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+        isDeleted: false,
+      };
+
+      const result = MigrationService.migrateV2ToV3Phrase(v2Phrase);
+
+      expect(result.id).toBe('uuid-123');
+      expect(result.meaning).toBe('Hello');
+      expect(result.sentence).toBe('안녕하세요');
+      expect(result.pronunciation).toBe('an-nyeong-ha-se-yo');
+      expect(result.tags).toEqual(['greeting', 'formal']);
+      expect(result.memo).toBe('Very polite');
+      expect(result.packageId).toBe('pkg-1');
+      expect(result.createdAt).toBe('2024-01-01T00:00:00.000Z');
+      expect(result.isDeleted).toBe(false);
+    });
+  });
+
+  describe('isV3Phrase', () => {
+    it('returns true for phrase with FSRS state field', () => {
+      const v3 = {
+        id: 'uuid-123',
+        meaning: 'Hello',
+        sentence: '안녕하세요',
+        tags: ['greeting'],
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+        isDeleted: false,
+        state: 'new',
+      };
+      expect(MigrationService.isV3Phrase(v3)).toBe(true);
+    });
+
+    it('returns false for v2 phrase without FSRS fields', () => {
+      const v2 = {
+        id: 'uuid-123',
+        meaning: 'Hello',
+        sentence: '안녕하세요',
+        tags: ['greeting'],
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+        isDeleted: false,
+      };
+      expect(MigrationService.isV3Phrase(v2)).toBe(false);
+    });
+
+    it('returns false for legacy phrase', () => {
+      const legacy = {
+        id: 'abc123',
+        meaning: 'Hello',
+        sentence: '안녕하세요',
+        tags: ['greeting'],
+      };
+      expect(MigrationService.isV3Phrase(legacy)).toBe(false);
     });
   });
 });

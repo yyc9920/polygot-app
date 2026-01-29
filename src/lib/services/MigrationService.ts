@@ -9,6 +9,7 @@ import {
   type LearningStatus,
   isLegacyPhrase,
   isV2Phrase,
+  DEFAULT_FSRS_VALUES,
 } from '../../types/schema';
 
 const STORAGE_KEYS = {
@@ -161,16 +162,29 @@ export const MigrationService = {
       const learningStatus = await get<LearningStatus>(STORAGE_KEYS.LEARNING_STATUS);
       
       const migrationMap: MigrationMap = {};
-      const migratedPhrases: PhraseEntity[] = [];
+      let migratedPhrases: PhraseEntity[] = [];
+      let v1ToV2Count = 0;
+      let v2ToV3Count = 0;
       
+      // Phase 1: v1 → v2 migration (legacy phrases)
       for (const phrase of phraseList) {
         if (isV2Phrase(phrase)) {
           migratedPhrases.push(phrase);
         } else if (isLegacyPhrase(phrase)) {
           const migrated = this.migrateLegacyPhrase(phrase, migrationMap);
           migratedPhrases.push(migrated);
+          v1ToV2Count++;
         }
       }
+      
+      // Phase 2: v2 → v3 migration (add FSRS fields)
+      migratedPhrases = migratedPhrases.map(phrase => {
+        if (!this.isV3Phrase(phrase)) {
+          v2ToV3Count++;
+          return this.migrateV2ToV3Phrase(phrase);
+        }
+        return phrase;
+      });
       
       await set(STORAGE_KEYS.PHRASE_LIST, migratedPhrases);
       await set(STORAGE_KEYS.MIGRATION_MAP, migrationMap);
@@ -180,6 +194,7 @@ export const MigrationService = {
         await set(STORAGE_KEYS.LEARNING_STATUS, migratedStatus);
       }
       
+      const totalMigrated = v1ToV2Count + v2ToV3Count;
       const now = new Date().toISOString();
       const newMetadata: StorageMetadata = {
         schemaVersion: SCHEMA_VERSION.CURRENT,
@@ -190,7 +205,7 @@ export const MigrationService = {
             fromVersion: metadata.schemaVersion,
             toVersion: SCHEMA_VERSION.CURRENT,
             migratedAt: now,
-            itemCount: Object.keys(migrationMap).length,
+            itemCount: totalMigrated,
           },
         ],
       };
@@ -200,7 +215,7 @@ export const MigrationService = {
       
       return {
         success: true,
-        migratedCount: Object.keys(migrationMap).length,
+        migratedCount: totalMigrated,
         migrationMap,
       };
     } catch (error) {
@@ -222,5 +237,24 @@ export const MigrationService = {
 
   async getMigrationMap(): Promise<MigrationMap> {
     return (await get<MigrationMap>(STORAGE_KEYS.MIGRATION_MAP)) || {};
-  }
+  },
+
+  isV3Phrase(phrase: unknown): boolean {
+    if (!isV2Phrase(phrase)) return false;
+    const p = phrase as Record<string, unknown>;
+    return typeof p.state === 'string';
+  },
+
+  migrateV2ToV3Phrase(phrase: PhraseEntity): PhraseEntity {
+    const now = new Date().toISOString();
+    return {
+      ...phrase,
+      state: phrase.state ?? DEFAULT_FSRS_VALUES.state,
+      reps: phrase.reps ?? DEFAULT_FSRS_VALUES.reps,
+      lapses: phrase.lapses ?? DEFAULT_FSRS_VALUES.lapses,
+      difficulty: phrase.difficulty ?? DEFAULT_FSRS_VALUES.difficulty,
+      due: phrase.due ?? now,
+      updatedAt: now,
+    };
+  },
 };

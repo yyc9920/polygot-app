@@ -1,16 +1,18 @@
 /**
- * Schema Definitions for Polyglot Data Layer (v2)
+ * Schema Definitions for Polyglot Data Layer (v3)
  * 
  * Version History:
  * - v1: PhraseItem - content-based IDs, no metadata
  * - v2: PhraseEntity - UUID-based IDs, timestamps, soft delete
+ * - v3: PhraseEntity + FSRS - spaced repetition scheduling fields
  */
 
 import { z } from 'zod';
 
 export const SCHEMA_VERSION = {
   LEGACY: 1,
-  CURRENT: 2,
+  V2: 2,
+  CURRENT: 3,
 } as const;
 
 export type SchemaVersion = typeof SCHEMA_VERSION[keyof typeof SCHEMA_VERSION];
@@ -23,6 +25,9 @@ export const SongDataSchema = z.object({
 });
 
 export type SongData = z.infer<typeof SongDataSchema>;
+
+export const FSRSStateSchema = z.enum(['new', 'learning', 'review', 'relearning']);
+export type FSRSState = z.infer<typeof FSRSStateSchema>;
 
 /** Legacy PhraseItem schema (v1) - content-based hash IDs, no timestamps */
 export const LegacyPhraseSchema = z.object({
@@ -38,7 +43,6 @@ export const LegacyPhraseSchema = z.object({
 
 export type LegacyPhrase = z.infer<typeof LegacyPhraseSchema>;
 
-/** PhraseEntity schema (v2) - UUID IDs, timestamps, soft delete support */
 export const PhraseEntitySchema = z.object({
   id: z.uuid(),
   meaning: z.string().min(1, 'Meaning is required'),
@@ -52,6 +56,16 @@ export const PhraseEntitySchema = z.object({
   updatedAt: z.iso.datetime(),
   isDeleted: z.boolean().default(false),
   deletedAt: z.iso.datetime().optional(),
+  // FSRS (Free Spaced Repetition Scheduler) fields - v3
+  stability: z.number().optional(),
+  difficulty: z.number().min(0).max(1).optional(),
+  elapsedDays: z.number().optional(),
+  scheduledDays: z.number().optional(),
+  reps: z.number().optional(),
+  lapses: z.number().optional(),
+  state: FSRSStateSchema.optional(),
+  due: z.iso.datetime().optional(),
+  lastReview: z.iso.datetime().optional(),
 });
 
 export type PhraseEntity = z.infer<typeof PhraseEntitySchema>;
@@ -163,7 +177,6 @@ export function validateImportData(data: unknown[]): ImportPhrase[] {
   });
 }
 
-/** Helper function to create a PhraseEntity with required v2 fields */
 export function createPhraseEntity(
   id: string,
   meaning: string,
@@ -181,5 +194,25 @@ export function createPhraseEntity(
     updatedAt: now,
     isDeleted: false,
     ...overrides,
+  };
+}
+
+export const DEFAULT_FSRS_VALUES = {
+  state: 'new' as const,
+  reps: 0,
+  lapses: 0,
+  difficulty: 0.3,
+} as const;
+
+export function initializeFSRSFields(phrase: PhraseEntity): PhraseEntity {
+  const now = new Date().toISOString();
+  return {
+    ...phrase,
+    state: phrase.state ?? DEFAULT_FSRS_VALUES.state,
+    reps: phrase.reps ?? DEFAULT_FSRS_VALUES.reps,
+    lapses: phrase.lapses ?? DEFAULT_FSRS_VALUES.lapses,
+    difficulty: phrase.difficulty ?? DEFAULT_FSRS_VALUES.difficulty,
+    due: phrase.due ?? now,
+    updatedAt: now,
   };
 }

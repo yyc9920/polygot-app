@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI, type Tool, type Schema, SchemaType } from "@google/generative-ai";
+import { VocabSummaryService, type VocabSummary } from './VocabSummaryService';
 
 export interface GeneratedPhrase {
   meaning: string;
@@ -7,11 +8,66 @@ export interface GeneratedPhrase {
   tags?: string[];
 }
 
+export interface GeneratePhrasesOptions {
+  context: string;
+  count: number;
+  apiKey: string;
+  vocabSummary?: VocabSummary;
+}
+
 interface GeminiOptions {
   maxTokens?: number;
   tools?: Tool[];
   responseMimeType?: string;
   responseSchema?: Schema;
+}
+
+function buildBasicPrompt(context: string, count: number): string {
+  return `
+Task: Generate a vocabulary list for language learning.
+Context: "${context}"
+Count: ${count} items.
+
+Requirements:
+1. "meaning": Native language translation (e.g. Korean if user asks in Korean, otherwise English).
+2. "sentence": Target language sentence or phrase.
+3. "pronunciation": Pronunciation guide (Romaji, Pinyin, IPA, etc).
+4. "tags": Array of relevant tags (e.g. "travel", "food", "business").
+
+Output: STRICT JSON Array of objects. No markdown formatting.
+`;
+}
+
+function buildAdaptivePrompt(context: string, count: number, learnerProfile: string): string {
+  return `
+You are a language tutor applying Comprehensible Input (i+1) theory.
+
+## Learner Profile
+${learnerProfile}
+
+## Task (Chain-of-Thought)
+Think step-by-step before generating:
+1. ANALYZE: Based on the profile, what is this learner's approximate level?
+2. IDENTIFY: What ONE new grammatical pattern or vocabulary set should I introduce?
+3. GENERATE: Create sentences using mostly familiar patterns + 1 new element per sentence.
+
+## Request
+Topic: "${context}"
+Count: ${count} items
+
+## Requirements
+1. "meaning": Native language translation matching learner's profile.
+2. "sentence": Target language sentence slightly above learner's current level (i+1).
+3. "pronunciation": Pronunciation guide (Romaji, Pinyin, IPA, etc).
+4. "tags": Array of relevant tags including the topic and any grammar points introduced.
+
+## Constraints
+- If learner has weak areas, avoid those topics unless specifically requested.
+- Build on recently learned sentences when possible.
+- Vary sentence structures to provide natural acquisition.
+
+Output: STRICT JSON Array of objects. No markdown, no explanations.
+`;
 }
 
 const callGemini = async (prompt: string, apiKey: string, options: GeminiOptions = {}) => {
@@ -55,19 +111,19 @@ const callGemini = async (prompt: string, apiKey: string, options: GeminiOptions
 
 export const GeminiService = {
   async generatePhrases(context: string, count: number, apiKey: string): Promise<GeneratedPhrase[]> {
-    const prompt = `
-    Task: Generate a vocabulary list for language learning.
-    Context: "${context}"
-    Count: ${count} items.
+    return this.generatePhrasesWithContext({ context, count, apiKey });
+  },
 
-    Requirements:
-    1. "meaning": Native language translation (e.g. Korean if user asks in Korean, otherwise English).
-    2. "sentence": Target language sentence or phrase.
-    3. "pronunciation": Pronunciation guide (Romaji, Pinyin, IPA, etc).
-    4. "tags": Array of relevant tags (e.g. "travel", "food", "business").
+  async generatePhrasesWithContext(options: GeneratePhrasesOptions): Promise<GeneratedPhrase[]> {
+    const { context, count, apiKey, vocabSummary } = options;
 
-    Output: STRICT JSON Array of objects. No markdown formatting.
-    `;
+    const learnerContext = vocabSummary
+      ? VocabSummaryService.toPromptContext(vocabSummary)
+      : null;
+
+    const prompt = learnerContext
+      ? buildAdaptivePrompt(context, count, learnerContext)
+      : buildBasicPrompt(context, count);
 
     const schema: Schema = {
       type: SchemaType.ARRAY,

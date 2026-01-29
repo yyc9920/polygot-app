@@ -100,20 +100,20 @@
 
 **Prerequisites:** Phase 1 & 2 complete (stable schema, service layer for testability)
 
-* [ ] **SRS Data Integration**
-    * [ ] Extend `PhraseEntity` with FSRS fields: `stability`, `difficulty`, `elapsed_days`, `scheduled_days`, `reps`.
-    * [ ] **Schema Migration v2 → v3:** Add FSRS fields with defaults.
-        * [ ] Reuse migration infrastructure from Phase 1.
-        * [ ] Initialize existing words with "New Card" default states.
-        * [ ] Consider: Map "Favorite" status to higher initial stability.
+* [x] **SRS Data Integration**
+    * [x] Extend `PhraseEntity` with FSRS fields: `stability`, `difficulty`, `elapsedDays`, `scheduledDays`, `reps`.
+    * [x] **Schema Migration v2 → v3:** Add FSRS fields with defaults.
+        * [x] Reuse migration infrastructure from Phase 1.
+        * [x] Initialize existing words with "New Card" default states.
+        * [x] Consider: Map "Favorite" status to higher initial stability.
     * [ ] **Sync Strategy for FSRS:** These fields update frequently—consider:
         * [ ] Separate sync cadence for SRS data vs content data.
         * [ ] Conflict resolution: SRS fields use `max(local, cloud)` for `reps`, `lastWriteWins` for others.
-* [ ] **Context-Aware AI Agents**
-    * [ ] **Design vocabulary summary system** (don't send raw DB to Gemini):
-        * [ ] Extract: known word count by category, grammar patterns used, proficiency estimate.
-        * [ ] Send compressed summary (~500 tokens) instead of full phrase list.
-    * [ ] Refine Gemini prompts to use Chain-of-Thought:
+* [x] **Context-Aware AI Agents**
+    * [x] **Design vocabulary summary system** (don't send raw DB to Gemini):
+        * [x] Extract: known word count by category, grammar patterns used, proficiency estimate.
+        * [x] Send compressed summary (~500 tokens) instead of full phrase list.
+    * [x] Refine Gemini prompts to use Chain-of-Thought:
         1. Analyze user's vocabulary summary.
         2. Identify grammatical gaps.
         3. Generate sentences using *only* known words + 1 new target grammatical structure.
