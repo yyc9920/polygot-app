@@ -9,29 +9,34 @@ import { parseCSV, generateId, detectLanguageFromTags } from '../lib/utils';
 import { PHRASE_DICTIONARY, type LanguageCode } from '../data/phraseDictionary';
 import { PhraseContext } from './PhraseContextDefinition';
 import { FSRSSyncService } from '../lib/services/FSRSSyncService';
+import { PerformanceMonitor } from '../lib/performance';
 
 const uniquePhrases = (items: PhraseEntity[]) => {
-  const seenIds = new Set<string>();
-  const seenContent = new Set<string>();
-  
-  return items.filter((item) => {
-    // 1. Filter by ID
-    if (seenIds.has(item.id)) return false;
+  return PerformanceMonitor.measure('PhraseContext:uniquePhrases', () => {
+    const seenIds = new Set<string>();
+    const seenContent = new Set<string>();
     
-    // 2. Filter by Content (handling potential migration duplicates with different IDs)
-    // Create a content hash from sentence + meaning (normalized)
-    const contentHash = `${item.sentence.trim().toLowerCase()}|${item.meaning.trim().toLowerCase()}`;
-    if (seenContent.has(contentHash)) return false;
-    
-    seenIds.add(item.id);
-    seenContent.add(contentHash);
-    return true;
+    return items.filter((item) => {
+      // 1. Filter by ID
+      if (seenIds.has(item.id)) return false;
+      
+      // 2. Filter by Content (handling potential migration duplicates with different IDs)
+      // Create a content hash from sentence + meaning (normalized)
+      const contentHash = `${item.sentence.trim().toLowerCase()}|${item.meaning.trim().toLowerCase()}`;
+      if (seenContent.has(contentHash)) return false;
+      
+      seenIds.add(item.id);
+      seenContent.add(contentHash);
+      return true;
+    });
   });
 };
 
 const mergePhrasesWithFSRS = (local: PhraseEntity[], cloud: PhraseEntity[]): PhraseEntity[] => {
-  const merged = FSRSSyncService.mergePhraseLists(local, cloud);
-  return uniquePhrases(merged);
+  return PerformanceMonitor.measure('PhraseContext:mergePhrasesWithFSRS', () => {
+    const merged = FSRSSyncService.mergePhraseLists(local, cloud);
+    return uniquePhrases(merged);
+  });
 };
 
 import { LoadingSpinner } from '../components/LoadingSpinner';
@@ -49,6 +54,10 @@ export const PhraseAppProvider: React.FC<{ children: ReactNode }> = ({ children 
   
   // Auto-detect learning language
   useEffect(() => {
+    if (isPhraseListReady) {
+      console.log(`[Performance] PhraseList Ready. Total items: ${phraseList.length}`);
+    }
+
     if (phraseList.length > 0) {
       const allTags = phraseList.flatMap(v => v.tags);
       const detectedLang = detectLanguageFromTags(allTags);
