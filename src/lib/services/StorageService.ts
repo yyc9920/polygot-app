@@ -79,8 +79,12 @@ export const StorageService = {
 
     try {
       const docRef = doc(db, 'users', userId, 'data', key);
+      // Sanitize undefined values before writing to Firestore
+      // Firestore does not support 'undefined', but JSON.stringify strips them
+      const sanitizedValue = JSON.parse(JSON.stringify(value));
+      
       await setDoc(docRef, { 
-        value, 
+        value: sanitizedValue, 
         updatedAt: new Date().toISOString() 
       }, { merge: true });
     } catch (err) {
