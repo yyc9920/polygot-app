@@ -10,10 +10,12 @@ import {
   DEFAULT_FSRS_VALUES,
 } from '../../types/schema';
 
-vi.mock('idb-keyval', () => ({
-  get: vi.fn(),
-  set: vi.fn(),
-  del: vi.fn(),
+vi.mock('./NativeStorageAdapter', () => ({
+  NativeStorageAdapter: {
+    get: vi.fn(),
+    set: vi.fn(),
+    remove: vi.fn(),
+  },
 }));
 
 vi.mock('uuid', () => ({

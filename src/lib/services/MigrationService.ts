@@ -1,4 +1,4 @@
-import { get, set, del } from 'idb-keyval';
+import { NativeStorageAdapter } from './NativeStorageAdapter';
 import { v4 as uuidv4 } from 'uuid';
 import {
   SCHEMA_VERSION,
@@ -29,10 +29,10 @@ export interface MigrationResult {
 
 export const MigrationService = {
   async getStorageMetadata(): Promise<StorageMetadata> {
-    const metadata = await get<StorageMetadata>(STORAGE_KEYS.METADATA);
+    const metadata = await NativeStorageAdapter.get<StorageMetadata>(STORAGE_KEYS.METADATA);
     if (metadata) return metadata;
     
-    const phraseList = await get<unknown[]>(STORAGE_KEYS.PHRASE_LIST);
+    const phraseList = await NativeStorageAdapter.get<unknown[]>(STORAGE_KEYS.PHRASE_LIST);
     const hasLegacyData = phraseList?.some(isLegacyPhrase) ?? false;
     const hasV2Data = phraseList?.some(isV2Phrase) ?? false;
     
@@ -48,7 +48,7 @@ export const MigrationService = {
   },
 
   async setStorageMetadata(metadata: StorageMetadata): Promise<void> {
-    await set(STORAGE_KEYS.METADATA, metadata);
+    await NativeStorageAdapter.set(STORAGE_KEYS.METADATA, metadata);
   },
 
   needsMigration(metadata: StorageMetadata): boolean {
@@ -57,10 +57,10 @@ export const MigrationService = {
 
   async createBackup(): Promise<boolean> {
     try {
-      const phraseList = await get<unknown[]>(STORAGE_KEYS.PHRASE_LIST);
+      const phraseList = await NativeStorageAdapter.get<unknown[]>(STORAGE_KEYS.PHRASE_LIST);
       if (!phraseList || phraseList.length === 0) return true;
       
-      await set(STORAGE_KEYS.PHRASE_LIST_BACKUP, phraseList);
+      await NativeStorageAdapter.set(STORAGE_KEYS.PHRASE_LIST_BACKUP, phraseList);
       return true;
     } catch (error) {
       console.error('Failed to create backup:', error);
@@ -70,13 +70,13 @@ export const MigrationService = {
 
   async restoreFromBackup(): Promise<boolean> {
     try {
-      const backup = await get<unknown[]>(STORAGE_KEYS.PHRASE_LIST_BACKUP);
+      const backup = await NativeStorageAdapter.get<unknown[]>(STORAGE_KEYS.PHRASE_LIST_BACKUP);
       if (!backup) {
         console.error('No backup found to restore');
         return false;
       }
       
-      await set(STORAGE_KEYS.PHRASE_LIST, backup);
+      await NativeStorageAdapter.set(STORAGE_KEYS.PHRASE_LIST, backup);
       return true;
     } catch (error) {
       console.error('Failed to restore from backup:', error);
@@ -85,7 +85,7 @@ export const MigrationService = {
   },
 
   async clearBackup(): Promise<void> {
-    await del(STORAGE_KEYS.PHRASE_LIST_BACKUP);
+    await NativeStorageAdapter.remove(STORAGE_KEYS.PHRASE_LIST_BACKUP);
   },
 
   migrateLegacyPhrase(legacy: LegacyPhrase, migrationMap: MigrationMap): PhraseEntity {
@@ -158,8 +158,8 @@ export const MigrationService = {
     }
     
     try {
-      const phraseList = await get<unknown[]>(STORAGE_KEYS.PHRASE_LIST) || [];
-      const learningStatus = await get<LearningStatus>(STORAGE_KEYS.LEARNING_STATUS);
+      const phraseList = await NativeStorageAdapter.get<unknown[]>(STORAGE_KEYS.PHRASE_LIST) || [];
+      const learningStatus = await NativeStorageAdapter.get<LearningStatus>(STORAGE_KEYS.LEARNING_STATUS);
       
       const migrationMap: MigrationMap = {};
       let migratedPhrases: PhraseEntity[] = [];
@@ -186,12 +186,12 @@ export const MigrationService = {
         return phrase;
       });
       
-      await set(STORAGE_KEYS.PHRASE_LIST, migratedPhrases);
-      await set(STORAGE_KEYS.MIGRATION_MAP, migrationMap);
+      await NativeStorageAdapter.set(STORAGE_KEYS.PHRASE_LIST, migratedPhrases);
+      await NativeStorageAdapter.set(STORAGE_KEYS.MIGRATION_MAP, migrationMap);
       
       if (learningStatus && Object.keys(migrationMap).length > 0) {
         const migratedStatus = this.migrateLearningStatus(learningStatus, migrationMap);
-        await set(STORAGE_KEYS.LEARNING_STATUS, migratedStatus);
+        await NativeStorageAdapter.set(STORAGE_KEYS.LEARNING_STATUS, migratedStatus);
       }
       
       const totalMigrated = v1ToV2Count + v2ToV3Count;
@@ -236,7 +236,7 @@ export const MigrationService = {
   },
 
   async getMigrationMap(): Promise<MigrationMap> {
-    return (await get<MigrationMap>(STORAGE_KEYS.MIGRATION_MAP)) || {};
+    return (await NativeStorageAdapter.get<MigrationMap>(STORAGE_KEYS.MIGRATION_MAP)) || {};
   },
 
   isV3Phrase(phrase: unknown): boolean {

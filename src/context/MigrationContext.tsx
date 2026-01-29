@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { MigrationService, type MigrationResult } from '../lib/services/MigrationService';
 import { purgeTombstones } from '../lib/sync';
-import { get, set } from 'idb-keyval';
+import { NativeStorageAdapter } from '../lib/services/NativeStorageAdapter';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import type { PhraseEntity } from '../types/schema';
 
@@ -44,12 +44,12 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
           if (result.success) {
             console.log(`[Migration] Successfully migrated ${result.migratedCount} phrases`);
             
-            const phraseList = await get<PhraseEntity[]>('phraseList');
+            const phraseList = await NativeStorageAdapter.get<PhraseEntity[]>('phraseList');
             if (phraseList && phraseList.length > 0) {
               const purged = purgeTombstones(phraseList);
               if (purged.length < phraseList.length) {
                 console.log(`[Migration] Purged ${phraseList.length - purged.length} old tombstones`);
-                await set('phraseList', purged);
+                await NativeStorageAdapter.set('phraseList', purged);
               }
             }
             

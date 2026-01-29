@@ -10,7 +10,24 @@ import { PHRASE_DICTIONARY, type LanguageCode } from '../data/phraseDictionary';
 import { PhraseContext } from './PhraseContextDefinition';
 import { FSRSSyncService } from '../lib/services/FSRSSyncService';
 
-const uniquePhrases = (items: PhraseEntity[]) => items.filter((item, index, self) => index === self.findIndex(t => t.id === item.id));
+const uniquePhrases = (items: PhraseEntity[]) => {
+  const seenIds = new Set<string>();
+  const seenContent = new Set<string>();
+  
+  return items.filter((item) => {
+    // 1. Filter by ID
+    if (seenIds.has(item.id)) return false;
+    
+    // 2. Filter by Content (handling potential migration duplicates with different IDs)
+    // Create a content hash from sentence + meaning (normalized)
+    const contentHash = `${item.sentence.trim().toLowerCase()}|${item.meaning.trim().toLowerCase()}`;
+    if (seenContent.has(contentHash)) return false;
+    
+    seenIds.add(item.id);
+    seenContent.add(contentHash);
+    return true;
+  });
+};
 
 const mergePhrasesWithFSRS = (local: PhraseEntity[], cloud: PhraseEntity[]): PhraseEntity[] => {
   const merged = FSRSSyncService.mergePhraseLists(local, cloud);
